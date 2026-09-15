@@ -1,0 +1,129 @@
+% ============================================================
+% 1. TỔNG QUAN ĐỀ TÀI
+% ============================================================
+
+\subsection*{1. Bối cảnh và vấn đề thực tế}
+
+Trong một phòng máy hoặc phòng thực hành, người quản trị thường phải theo dõi đồng thời nhiều máy tính. Một máy có thể vẫn đang bật nhưng dịch vụ quan trọng đã ngừng phản hồi; một máy khác có thể mất kết nối mạng; một máy khác lại có mức sử dụng CPU hoặc RAM tăng bất thường. Nếu chỉ chờ người dùng báo lỗi rồi mới đến từng máy kiểm tra, thời gian phát hiện và xử lý sự cố sẽ kéo dài, đồng thời khó biết ai đang phụ trách sự cố nào.
+
+Đồ án \textbf{LabGuard} được đề xuất như một hệ thống giám sát và quản lý sự cố nhẹ cho phòng máy, kế thừa thiết kế từ tài liệu Master Plan \cite{labguard2026}, bám sát chuẩn đầu ra kiến thức của môn học Lập trình mạng căn bản (NT106) tại UIT \cite{uit_nt106_2022}. Mỗi máy cần giám sát chạy một chương trình nhỏ gọi là \textbf{Agent}. Agent gửi trạng thái máy về máy chủ trung tâm. Máy chủ không chỉ lưu dữ liệu mà còn đánh giá các điều kiện bất thường, tạo \textbf{Incident} (phiếu sự cố), ghi lại quá trình xử lý và đồng bộ trạng thái cho nhiều quản trị viên cùng lúc.
+
+\begin{beginnerbox}
+\textbf{Hiểu nhanh 5 từ khóa trước khi đọc tiếp:}
+\begin{itemize}
+    \item \textbf{Agent}: chương trình chạy trên máy được giám sát, có nhiệm vụ thu thập trạng thái và gửi về server.
+    \item \textbf{Telemetry}: dữ liệu trạng thái gửi từ xa, ví dụ CPU, RAM, uptime, trạng thái cổng dịch vụ.
+    \item \textbf{Heartbeat}: gói ``nhịp tim'' gửi định kỳ để server biết Agent vẫn còn hoạt động.
+    \item \textbf{Incident}: bản ghi một sự cố cần được theo dõi từ lúc phát hiện đến lúc xử lý xong.
+    \item \textbf{Admin Dashboard}: ứng dụng quản trị dùng để xem máy, xem sự cố và thao tác ACK/START/RESOLVE.
+\end{itemize}
+\end{beginnerbox}
+
+\subsection*{2. Vấn đề của cách theo dõi đơn giản}
+
+Một chương trình chỉ hiển thị CPU/RAM trên dashboard chưa đủ để trở thành một hệ thống xử lý sự cố. Vấn đề thực tế không chỉ là ``máy đang có CPU bao nhiêu phần trăm'', mà còn là:
+\begin{itemize}
+    \item máy nào đang mất liên lạc và mất từ khi nào;
+    \item dịch vụ nào trên máy không còn phản hồi;
+    \item một cảnh báo đã tồn tại từ trước hay vừa mới phát sinh;
+    \item ai đang nhận xử lý sự cố;
+    \item trạng thái đã phục hồi hay chưa;
+    \item sau khi server hoặc ứng dụng khởi động lại, lịch sử sự cố có còn hay không;
+    \item nếu hai quản trị viên thao tác cùng lúc thì hệ thống phải xử lý xung đột thế nào;
+    \item nếu mạng chập chờn, dữ liệu bị gửi trùng hoặc mất kết nối, hệ thống có tạo cảnh báo sai hoặc nhân đôi Incident hay không.
+\end{itemize}
+
+Vì vậy, giá trị cốt lõi của LabGuard nằm ở \textbf{vòng đời xử lý sự cố, tính đúng đắn khi mạng không ổn định và khả năng phối hợp nhiều quản trị viên}, chứ không nằm ở việc vẽ nhiều biểu đồ.
+
+\subsection*{3. Hệ thống đề xuất}
+
+Phiên bản tối thiểu (MVP) của LabGuard gồm ba nhóm thành phần: \textbf{Agent}, \textbf{Central Server} và \textbf{Admin Client}. Central Server giữ trạng thái nghiệp vụ chính và làm việc với SQL Server. Sau khi MVP ổn định, hệ thống có thể mở rộng thêm Gateway và hai Collector để minh họa multi-server và load balancing.
+
+\begin{figure}[!ht]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.6cm and 1.8cm,
+        box/.style={draw=lgblue, rounded corners=2mm, fill=lglight, minimum width=3.0cm, minimum height=1cm, align=center},
+        db/.style={cylinder, shape border rotate=90, aspect=0.25, draw=lgblue, fill=blue!5, minimum height=1.3cm, minimum width=2.0cm, align=center},
+        arr/.style={-{Latex[length=2.5mm]}, thick, draw=lgblue}
+    ]
+        \node[box] (a1) {Agent PC-01};
+        \node[box, below=0.6cm of a1] (a2) {Agent PC-02};
+        \node[box, below=0.6cm of a2] (an) {Agent PC-n};
+        \node[box, right=of a2] (central) {Central Server\\(Cơ chế Incident)};
+        \node[db, right=of central] (db) {SQL Server};
+        \node[box, above=1.2cm of db] (admin1) {Admin Client A};
+        \node[box, below=1.2cm of db] (admin2) {Admin Client B};
+        \draw[arr] (a1.east) -- (central.west);
+        \draw[arr] (a2.east) -- (central.west);
+        \draw[arr] (an.east) -- (central.west);
+        \draw[arr] (central.east) -- (db.west);
+        \draw[arr,<->] (central.north east) -- (admin1.west);
+        \draw[arr,<->] (central.south east) -- (admin2.west);
+    \end{tikzpicture}
+    \caption{Kiến trúc MVP của LabGuard.}
+    \label{fig:labguard-mvp}
+\end{figure}
+
+\begin{examplebox}
+Một kịch bản điển hình:
+\begin{enumerate}
+    \item PC07 đang gửi heartbeat bình thường.
+    \item Agent trên PC07 không còn kết nối được tới cổng dịch vụ 8080 trong nhiều lần kiểm tra liên tiếp.
+    \item Central Server tạo một Incident loại \texttt{SERVICE\_DOWN}.
+    \item Admin A bấm \texttt{ACKNOWLEDGE}, sau đó \texttt{START} để nhận xử lý.
+    \item Dịch vụ hoạt động trở lại, Agent báo trạng thái phục hồi.
+    \item Incident chuyển sang \texttt{RECOVERED}; Admin xác nhận và chuyển sang \texttt{RESOLVED}.
+    \item Toàn bộ lịch sử vẫn được lưu trong cơ sở dữ liệu.
+\end{enumerate}
+\end{examplebox}
+
+\subsection*{4. Đối tượng sử dụng và phạm vi sử dụng}
+
+Đối tượng chính của hệ thống là quản trị viên phòng máy, người trực vận hành và người xem read-only như giảng viên khi demo. MVP chỉ xét một tổ chức và một phòng lab mặc định; \texttt{LabCode} chỉ dùng như nhãn lọc. Đồ án không đặt mục tiêu xây dựng nền tảng multi-tenant hoặc hệ thống phân quyền phức tạp theo từng phòng.
+
+\begin{table}[!ht]
+\centering
+\caption{Nhóm người dùng chính của LabGuard.}
+\label{tab:personas}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3.2cm} X X}
+\toprule
+Đối tượng & Nhu cầu chính & Luồng sử dụng điển hình \\
+\midrule
+Admin phòng máy & Quan sát toàn phòng, phân công xử lý, cấp tài khoản & Dashboard $\rightarrow$ Assign $\rightarrow$ History \\
+Operator trực & Biết máy nào cần xử lý và tránh trùng công việc & Lab View $\rightarrow$ ACK/START $\rightarrow$ Resolve \\
+Viewer / giảng viên & Xem trạng thái nhưng không thay đổi dữ liệu & Devices / Incidents / Health ở chế độ read-only \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection*{5. Use case chính}
+
+\begin{table}[!ht]
+\centering
+\caption{Các use case cốt lõi của LabGuard.}
+\label{tab:usecases}
+\small
+\begin{tabularx}{\textwidth}{p{1.2cm} X X}
+\toprule
+\textbf{UC} & \textbf{Luồng chính} & \textbf{Trường hợp lỗi cần xử lý} \\
+\midrule
+UC01 & Seed Admin $\rightarrow$ login; Mở rộng: invite $\rightarrow$ signup $\rightarrow$ login & Invite hết hạn hoặc đã dùng phải bị từ chối \\
+UC02 & Agent enroll $\rightarrow$ TLS/auth $\rightarrow$ metrics/heartbeat & Token/certificate sai $\rightarrow$ Blocked; mạng lỗi $\rightarrow$ Backoff \\
+UC03 & Lab View $\rightarrow$ Device Detail & Dữ liệu cũ phải hiển thị rõ là stale/Unknown \\
+UC04 & Nhiều mẫu bất thường $\rightarrow$ mở/cập nhật Incident & Replay hoặc null không được tạo spam Incident \\
+UC05 & ACK $\rightarrow$ START $\rightarrow$ RECOVERED $\rightarrow$ RESOLVE & Hai Admin thao tác đồng thời phải phát hiện conflict \\
+UC06 & History/report theo khoảng thời gian & Viewer không có quyền mutation \\
+UC07 & Reconnect $\rightarrow$ tạo session generation mới & Session cũ và batch trùng phải bị loại \\
+UC08 (P1) & Gateway chọn Collector khỏe và ít kết nối hơn & Collector chết $\rightarrow$ Agent reconnect sang node khác \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection*{6. Điểm khác biệt của đồ án}
+
+Theo Master Plan nguồn, LabGuard được định hướng như một \textbf{sản phẩm môn Lập trình mạng} thay vì một dashboard quản lý dữ liệu. Trọng tâm thiết kế là TCP/TLS, nhiều client, xử lý kết nối mất/khôi phục, giao thức tầng ứng dụng có framing, đồng bộ trạng thái nhiều Admin, lưu bền dữ liệu, kiểm thử lỗi mạng và -- nếu MVP đạt yêu cầu -- mở rộng multi-server/load balancing.
+
+\begin{warningbox}
+Tài liệu nguồn chưa xác minh rubric chính thức của lớp và chưa chạy sản phẩm thực tế. Vì vậy, mọi ngưỡng như ``50 Agent'', ``offline 20 giây'' hoặc kế hoạch P1 chỉ là \textbf{mục tiêu thiết kế}, không phải kết quả đã đo hay cam kết điểm số.
+\end{warningbox}

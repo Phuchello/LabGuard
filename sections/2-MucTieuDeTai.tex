@@ -1,0 +1,35 @@
+% ============================================================
+% 2. MỤC TIÊU ĐỀ TÀI
+% ============================================================
+
+\subsection*{a) Mục tiêu tổng quát}
+
+Xây dựng một hệ thống \textbf{LabGuard} có khả năng giám sát nhiều máy tính trong phòng lab thông qua kết nối mạng, phát hiện một số tình trạng bất thường cơ bản, tổ chức vòng đời xử lý sự cố và hỗ trợ nhiều quản trị viên phối hợp theo thời gian thực. Hệ thống được triển khai chủ yếu bằng C\#, WinForms, TCP/TLS và SQL Server, qua đó thể hiện các kiến thức cốt lõi của môn NT106 như socket, I/O mạng, multi-client, concurrency, cơ sở dữ liệu, bảo mật kết nối, triển khai LAN và kiểm thử lỗi mạng.
+
+\subsection*{b) Mục tiêu cụ thể}
+
+\begin{itemize}
+    \item \textbf{Xây dựng Agent Windows}: thu thập CPU, RAM vật lý, NIC, uptime; gửi heartbeat và telemetry; kiểm tra một số cổng TCP cục bộ; tự reconnect khi mạng lỗi.
+
+    \item \textbf{Xây dựng Central Server}: tiếp nhận nhiều Agent đồng thời, xác thực phiên, xử lý message framing, lưu dữ liệu, quản lý trạng thái online/offline và thực thi các rule phát hiện sự cố.
+
+    \item \textbf{Xây dựng Incident Engine}: hỗ trợ ít nhất các nhóm sự cố như mất heartbeat, CPU cao, RAM cao và service/port không phản hồi; chống tạo trùng Incident và lưu lịch sử thay đổi trạng thái.
+
+    \item \textbf{Xây dựng Admin Client bằng WinForms}: login, Dashboard, Lab View, Device Detail, Incident List/Detail, History/Report và Server Health; hai Admin có thể quan sát trạng thái realtime.
+
+    \item \textbf{Thiết kế giao thức tầng ứng dụng trên TCP}: dùng length-prefix để xác định biên message, JSON UTF-8 làm payload và quy định rõ các trường version, messageType, requestId, deviceId, timestamp và payload.
+
+    \item \textbf{Áp dụng bảo mật phù hợp}: dùng TLS cho dữ liệu truyền trên mạng; mật khẩu được băm bằng KDF có salt; quyền thao tác được kiểm tra ở phía server; không tự thiết kế thuật toán mã hóa riêng.
+
+    \item \textbf{Kiểm thử multi-client và lỗi mạng}: sử dụng Agent Simulator tạo 10/20/50 kết nối độc lập; kiểm thử disconnect, reconnect, malformed packet, duplicate packet, server restart và reconnect storm.
+
+    \item \textbf{Triển khai LAN thực tế}: ít nhất 2--3 laptop vật lý, kết hợp simulated agents để chứng minh sản phẩm không chỉ chạy localhost.
+
+    \item \textbf{Mở rộng có điều kiện P1}: sau khi MVP ổn định, xây Gateway và hai Collector để minh họa health check, least-connections, failover có gián đoạn và load balancing ở mức phù hợp đồ án môn học.
+
+    \item \textbf{Chuẩn bị vấn đáp cá nhân}: mỗi thành viên sở hữu phần kỹ thuật riêng, có task, test, bằng chứng và bộ câu hỏi vấn đáp bám đúng code/module mình thực hiện.
+\end{itemize}
+
+\begin{beginnerbox}
+\textbf{MVP là gì?} MVP (Minimum Viable Product) là phiên bản nhỏ nhất nhưng đã chạy được một luồng sản phẩm hoàn chỉnh. Với LabGuard, MVP không có nghĩa là ``demo giả''. MVP phải có Agent thật $\rightarrow$ TCP/TLS $\rightarrow$ Central $\rightarrow$ SQL $\rightarrow$ Admin, có Incident và có kiểm thử LAN. Gateway/Collector là phần nâng cao, không được làm trước khi MVP ổn định.
+\end{beginnerbox}

@@ -1,0 +1,260 @@
+% ============================================================
+% 5. KẾ HOẠCH THỰC HIỆN
+% ============================================================
+
+\subsection*{1. Nguyên tắc phân công nhóm 3 người}
+
+Ba thành viên được chia ownership sao cho mỗi người đều có networking/backend thật để phục vụ cả triển khai lẫn vấn đáp cá nhân. Không có vai trò ``chỉ làm UI''.
+
+\begin{table}[!ht]
+\centering
+\caption{Ma trận phân bổ ngân sách giờ kỹ thuật chi tiết theo 3 Lane (ADR-007).}
+\label{tab:workload}
+\scriptsize
+\begin{tabularx}{\textwidth}{p{0.6cm} X c c c c c c c c}
+\toprule
+\textbf{Lane} & \textbf{Ownership chính} & \textbf{P0 Core} & \textbf{Harness} & \textbf{Integ.} & \textbf{Viva} & \textbf{P1} & \textbf{Buffer} & \textbf{Tổng} & \textbf{Giờ/tuần} \\
+\midrule
+A & Agent / Simulator / Load / Gateway & 24.0 h & 10.0 h & 6.0 h & 5.0 h & 15.0 h & 9.0 h & 69.0 h & 13.8 h/t \\
+B & Central / SQL / Rule / Auth / Fanout & 27.0 h & 9.0 h & 6.0 h & 5.0 h & 16.0 h & 9.0 h & 72.0 h & 14.4 h/t \\
+C & Admin WinForms / Cache / Multi-Admin & 25.5 h & 9.0 h & 6.0 h & 5.0 h & 16.0 h & 9.0 h & 70.5 h & 14.1 h/t \\
+\midrule
+\multicolumn{2}{l}{\textbf{Tổng cộng toàn dự án (5 tuần)}} & \textbf{76.5 h} & \textbf{28.0 h} & \textbf{18.0 h} & \textbf{15.0 h} & \textbf{47.0 h} & \textbf{27.0 h} & \textbf{211.5 h} & \textbf{42.3 h/t} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Tổng ngân sách kỹ thuật toàn dự án là 211.5 giờ. Kế hoạch đầy đủ này chỉ phù hợp khi nhóm duy trì khoảng 14--15 giờ/người/tuần (thành viên A: 13.8 h/tuần, B: 14.4 h/tuần, C: 14.1 h/tuần; định nghĩa 1 ngày tập trung = 3 giờ kỹ thuật). So với ước tính sơ bộ ~135 giờ của Master Plan nguồn (vốn chỉ tính code tính năng), mức tăng thêm là hoàn toàn minh bạch do bổ sung: 3 bộ test harness độc lập (28.0 h), tích hợp kiểm thử dồn dập (18.0 h), diễn tập vấn đáp kỹ thuật (15.0 h) và dự phòng rủi ro gỡ lỗi (27.0 h).
+
+\textbf{Phương án 12 giờ/người/tuần (Năng lực trần 180 giờ):} Nếu nhóm duy trì định mức 12 giờ/người/tuần ($3 \times 12 \times 5 = 180.0\text{ giờ}$), đồ án chủ động kích hoạt cơ chế DEFER toàn bộ P1 ($-47.0\text{ giờ}$). Khi đó khối lượng công việc cam kết thực tế giảm xuống còn $211.5 - 47.0 = 164.5\text{ giờ}$ (thành viên A: $69.0 - 15.0 = 54.0\text{ giờ}$; B: $72.0 - 16.0 = 56.0\text{ giờ}$; C: $70.5 - 16.0 = 54.5\text{ giờ}$). Khối lượng 164.5 giờ này đã bao gồm đủ $27.0\text{ giờ}$ dự phòng (buffer) cho các thành viên. Khoảng chênh lệch $180.0 - 164.5 = 15.5\text{ giờ}$ đóng vai trò là dung lượng năng lực dự phòng ngoài cam kết (\textit{capacity headroom}), không bị tính dồn vào khối lượng cam kết và không tính trùng với 27 giờ buffer. Mô hình phân công đảm bảo mỗi người có một lane P0 độc lập; P1 bổ sung extension component theo đúng ownership đã chốt.
+
+\begin{warningbox}
+Nếu thực tế mỗi người chỉ có khoảng 8 giờ/tuần, tổng 5 tuần chỉ khoảng 120 giờ và còn thiếu buffer học/debug. Khi đó phải chuyển sang 6 tuần hoặc cắt P1/giảm phụ. Không được dùng AI như lý do để giả định thời gian học bằng 0.
+\end{warningbox}
+
+\subsection*{2. Kế hoạch theo tuần}
+
+\subsubsection*{Tuần 1 -- Contract, DB, TLS/auth và heartbeat một Agent}
+
+\begin{itemize}
+    \item \textbf{A}: A001--A006: wire contract/fixtures; FrameCodec + partial reads; Agent TCP connection + writer queue; TLS client + token enroll; CPU/RAM/NIC/uptime; heartbeat + batch sender.
+    \item \textbf{B}: B001--B004: schema migration/seed; repository + transaction boundary; Central TLS accept + bounded ingress; session registry + server auth \& PBKDF2.
+    \item \textbf{C}: C001--C004: UI shell + navigation; Admin TCP/TLS RPC client; login/signup WinForms UI; request/response correlation + timeout.
+\end{itemize}
+
+\textbf{Checkpoint:} M0/M1 transport: parser fixtures, migration, TLS/auth, heartbeat. M1 đạt được khi luồng mỏng (Thin Vertical Slice) thành công: 1 metric thật từ Agent $\rightarrow$ Central $\rightarrow$ CSDL SQL $\rightarrow$ Admin query hiển thị.
+
+\subsubsection*{Tuần 2 -- Multi-Agent ingest, rule và subscription}
+
+\begin{itemize}
+    \item \textbf{A}: A007--A010: service TCP probe; simulator 10/20/50 socket; reconnect/backoff + metric replay; failure injection + counters.
+    \item \textbf{B}: B005--B008: ingest + dedup (DeviceId+BootId+BatchId) + commit ACK; liveness monotonic deadline; rule hysteresis/streak; Incident persistence + unique active.
+    \item \textbf{C}: C005--C007: bộ nhận snapshot + khởi tạo cache; đồng bộ delta event + điều phối UI thread (\texttt{Invoke}); Dashboard + Lab View + Device Detail.
+\end{itemize}
+
+\textbf{Checkpoint:} M2: 20 simulated Agent chạy 30 phút không crash; parser/dedup/rule/bounds pass; create/recovery + snapshot chạy được.
+
+\subsubsection*{Tuần 3 -- Incident collaboration, history, retention và MVP gate}
+
+\begin{itemize}
+    \item \textbf{A}: A011--A012: log xoay vòng, evidence LAN; kiểm thử Agent end-to-end trên hai máy thật.
+    \item \textbf{B}: B009--B012: xử lý command (ACK, START, RESOLVE) với OCC; lỗi restart/DB, health, retention và gate M4.
+    \item \textbf{C}: C008--C012: Incident list/detail và action binding; RBAC UI, session lifecycle; History/Report/Health views; MVP UI integration; review và quyết định P1 GO/DEFER.
+\end{itemize}
+
+\textbf{Checkpoint:} M3/M4: 2 Admin conflict được xử lý; workflow đủ; history/role/restart/retention pass. P0 freeze cuối tuần 3.
+
+\subsubsection*{Tuần 4 -- P1 có điều kiện hoặc ổn định core}
+
+Nếu M4 không đạt, tuần 4 chỉ sửa core. Nếu M4 đạt và không còn lỗi nghiêm trọng:
+\begin{itemize}
+    \item \textbf{A}: A013--A014: Gateway least-connections admission; duplex relay và health polling.
+    \item \textbf{B}: B013--B017: internal Collector listener/dispatch; session generation across Collector; loss recovery/offline suppression; tune SQL/index/ingest budget; regression parser/auth/incident.
+    \item \textbf{C}: C013--C016: ứng dụng Collector dùng chung (cho 2 instance); upstream multiplex, reply router; readiness và bounded buffer; kiểm thử lỗi đa Admin.
+\end{itemize}
+
+\textbf{Checkpoint:} readiness/routing/fencing pass. Kill/failover có thể kéo sang đầu tuần 5; nếu prerequisite trễ thì cắt P1.
+
+\subsubsection*{Tuần 5 -- Freeze, regression, proof, release và viva}
+
+\begin{itemize}
+    \item \textbf{A}: A015--A020: tích hợp LB, collector kill, Internet deploy/fallback; load/reconnect storm; proof, release scripts và viva A.
+    \item \textbf{B}: B018--B020: khôi phục DB và chứng minh crash consistency; audit tài liệu hệ thống; viva B và backup handover.
+    \item \textbf{C}: C017--C020: kiểm thử hồi quy UI, settings cleanup; diễn tập demo, chuẩn bị backup; release checklist, README và viva C.
+\end{itemize}
+
+\textbf{Freeze rule:} giữa tuần 5 ngừng thêm feature; chỉ sửa lỗi critical có regression test. Chốt video/config/commit/package cùng phiên bản.
+
+\subsection*{3. Gantt chart 5 tuần theo phong cách đề cương}
+
+\hspace*{-0.8cm}
+\resizebox{\textwidth}{!}{
+\begin{ganttchart}[
+    x unit=1.35cm,
+    y unit chart=0.62cm,
+    canvas/.append style={fill=none, draw=black!5, line width=1pt},
+    hgrid style/.style={draw=black!8, line width=.7pt},
+    vgrid={*1{draw=black!8, line width=.7pt}},
+    title/.style={draw=none, fill=none},
+    title label font=\bfseries,
+    bar label font=\small\color{black!75},
+    bar label node/.append style={text width=8.5cm, align=left},
+    bar/.append style={draw=none, fill=primaryblue},
+    group/.append style={fill=secondarygreen},
+    group label node/.append style={text width=8.5cm, align=left, font=\bfseries},
+    milestone/.append style={fill=criticalred, draw=criticalred},
+    milestone label font=\small\itshape
+]{1}{5}
+\gantttitlelist{1,...,5}{1}\\
+\ganttgroup{P0 -- MVP}{1}{3}\\
+\ganttbar{Contract, protocol, TLS/auth, DB skeleton}{1}{1}\\
+\ganttbar{Multi-Agent ingest, liveness, rule engine}{2}{2}\\
+\ganttbar{Incident collaboration, history, LAN MVP}{3}{3}\\
+\ganttgroup{P1 -- chỉ khi M4 đạt}{4}{5}\\
+\ganttbar{Gateway + 2 Collector + readiness/routing}{4}{4}\\
+\ganttbar{Kill/failover/load test và release proof}{5}{5}\\
+\ganttgroup{Release + Viva}{1}{5}\\
+\ganttbar{Recall/viva hằng ngày + review cuối tuần}{1}{5}\\
+\ganttmilestone{M0 Architecture Frozen}{1}\\
+\ganttmilestone{M2 Multi-Agent Stable}{2}\\
+\ganttmilestone{M4 Product MVP / P1 Gate}{3}\\
+\ganttmilestone{M5 High-score Networking (nếu pass)}{4}\\
+\ganttmilestone{M6/M7 Release + Viva Ready}{5}
+\end{ganttchart}
+}
+
+\subsection*{4. Milestones và exit criteria}
+
+\begin{table}[!ht]
+\centering
+\caption{Milestone chính của dự án.}
+\label{tab:milestones}
+\small
+\begin{tabularx}{\textwidth}{p{1cm} p{3.8cm} p{2.2cm} X}
+\toprule
+\textbf{M} & \textbf{Mục tiêu} & \textbf{Thời điểm} & \textbf{Exit criteria} \\
+\midrule
+M0 & Architecture Frozen & Đầu W1 & Nhóm review contract/schema/owner; môi trường 3 máy; blocker được ghi rõ \\
+M1 & Single Agent End-to-End & Cuối W1--đầu W2 & TLS/auth/HB/metric $\rightarrow$ Central $\rightarrow$ DB $\rightarrow$ Admin query \\
+M2 & Multi-Agent Stable & Cuối W2 & 20 sim/30 phút, 0 crash, parser/dedup/rule/bounds pass \\
+M3 & Incident Workflow Complete & W3 & ACK/assign/start/recover/resolve + history; 2 Admin conflict \\
+M4 & Product MVP & Cuối W3 & P0 flow 2 máy thật, roles/TLS/restart/retention/UI, không còn Sev1/2 \\
+M5 & High-score Networking & Cuối W4--đầu W5 nếu làm & 2 Collector thật, selection/readiness/fencing/kill-failover proof \\
+M6 & Release Candidate & W5 & Actual tests, restore, clean-machine package, README, known issues, freeze \\
+M7 & Viva Ready & Cuối W5 & 3 người trả lời/live-code/debug phần mình; 2 dry-run demo \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection*{5. Dependency graph}
+
+\begin{figure}[!ht]
+\centering
+\begin{tikzpicture}[
+  node distance=1.15cm and 1.25cm,
+  box/.style={draw=lgblue, rounded corners=2mm, fill=lglight, minimum width=3.1cm, minimum height=0.85cm, align=center},
+  arr/.style={-{Latex[length=2.3mm]}, thick, draw=lgblue}
+]
+\node[box] (contract) {Contract + schema};
+\node[box, below left=of contract] (agent) {Agent transport};
+\node[box, below=of contract] (central) {Central pipeline};
+\node[box, below right=of contract] (admin) {Admin RPC + auth};
+\node[box, below=1.4cm of central] (ingest) {Ingest + rule};
+\node[box, below right=1.2cm and -0.2cm of ingest] (incident) {Incident collaboration};
+\node[box, below=of incident] (mvp) {MVP gate};
+\node[box, below left=of mvp] (p1) {P1 tùy chọn};
+\node[box, below=of mvp] (release) {Release};
+\node[box, below right=of mvp] (viva) {Viva};
+\draw[arr] (contract) -- (agent);
+\draw[arr] (contract) -- (central);
+\draw[arr] (contract) -- (admin);
+\draw[arr] (agent) -- (ingest);
+\draw[arr] (central) -- (ingest);
+\draw[arr] (ingest) -- (incident);
+\draw[arr] (admin) -- (incident);
+\draw[arr] (incident) -- (mvp);
+\draw[arr] (mvp) -- (p1);
+\draw[arr] (mvp) -- (release);
+\draw[arr] (p1) -- (release);
+\draw[arr] (release) -- (viva);
+\end{tikzpicture}
+\caption{Quan hệ phụ thuộc ở mức cao.}
+\label{fig:dependency}
+\end{figure}
+
+Chuỗi nhạy tiến độ trong blueprint là C008 $\rightarrow$ B009 $\rightarrow$ B010/B011 $\rightarrow$ C011 $\rightarrow$ M4 rồi mới đến Collector/Gateway. UI sử dụng DTO fixtures/mock để không phải chờ toàn bộ server hoàn thành.
+
+Trong trường hợp gate M4 quyết định hoãn (DEFER) P1 để tập trung tối đa cho độ ổn định MVP, đồ án áp dụng quy tắc tách rời phụ thuộc (DAG Decoupling): LG-A-016 (Rehearsal/Load) phụ thuộc trực tiếp vào LG-A-012 (MVP proof) thay vì LG-A-015; LG-B-016 (SQL Tuning) phụ thuộc vào LG-B-012 (Incident Acceptance) thay vì LG-B-015; LG-C-016 (Multi-Admin Concurrency) phụ thuộc vào LG-C-011 (MVP UI) thay vì LG-C-015. Nhờ vậy, dependency graph tách P0 khỏi P1 để việc trì hoãn nhánh P1 không chặn đường hoàn thành MVP.
+
+\subsection*{6. Quy tắc co giãn lịch}
+
+\begin{table}[!ht]
+\centering
+\caption{Phương án co giãn scope theo thời gian thực tế.}
+\small
+\begin{tabularx}{\textwidth}{p{2cm} X}
+\toprule
+\textbf{Thời lượng} & \textbf{Quyết định} \\
+\midrule
+3 tuần & 1 lab, 1 server, 2 máy thật + 10 sim, 4 rule, Incident + auth/TLS; cắt P1/P2/P3, giảm polish nhưng không bỏ test core \\
+4 tuần & Bỏ 9 task P1; tập trung MVP + viva; UI dùng mock sớm; giữ kiểm tra khả thi Internet \\
+5 tuần & Baseline có điều kiện 12--15 giờ/người/tuần; M4 cuối W3; P1 chỉ khi gate pass \\
+6 tuần & W4 ổn định core; W5 P1; W6 release/viva, soak/restore/failure test; không tự thêm AI \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{P1 cutoff:} nếu cuối W3 chưa đạt M4, còn Sev1/2 hoặc không còn khoảng 9 giờ/người ngoài reserve, 9 task P1 phải DEFER. Các test P1 ghi SKIPPED, M5 ghi DEFERRED thay vì giả vờ DONE.
+
+\subsection*{7. Kế hoạch kiểm thử}
+
+Kế hoạch nguồn có 33 scenario thiết kế. Tài liệu này nhóm lại thành các tầng:
+\begin{enumerate}
+    \item \textbf{Unit}: FrameCodec/parser, rule threshold/hysteresis, state transition, LB selection.
+    \item \textbf{Integration}: Agent$\leftrightarrow$Central, Admin$\leftrightarrow$Central, SQL persistence, auth/TLS.
+    \item \textbf{Failure}: kill Agent, disconnect mạng, malformed/duplicate packet, restart Central, DB degraded, reconnect storm.
+    \item \textbf{Load}: 10/20/50 simulated Agents; theo dõi crash, queue/drop, latency và resource.
+    \item \textbf{Deployment}: localhost chỉ dùng khi dev; bằng chứng chính phải có LAN trên máy thật; Internet proof tùy hạ tầng.
+\end{enumerate}
+
+\begin{beginnerbox}
+Mỗi test nên có bốn dòng cố định: \textbf{Setup} (chuẩn bị gì), \textbf{Action} (làm gì), \textbf{Expected} (đúng phải ra sao), \textbf{Evidence} (log/screenshot/CSV nào chứng minh). Cách này giúp demo và vấn đáp không dựa vào ``em nhớ là nó chạy''.
+\end{beginnerbox}
+
+\subsection*{8. Demo cuối kỳ dự kiến}
+
+Kịch bản nguồn khoảng 7 phút 45 giây:
+\begin{enumerate}
+    \item Login và mở Lab View.
+    \item Chứng minh 2 máy thật + một số simulated Agent đang online.
+    \item Kill một Agent thật $\rightarrow$ offline Incident.
+    \item Admin ACK/START.
+    \item Agent reconnect $\rightarrow$ RECOVERED $\rightarrow$ RESOLVED.
+    \item Tạo \texttt{SERVICE\_DOWN} và chứng minh rule không spam.
+    \item Mở Admin thứ hai, chứng minh realtime/xung đột quyền.
+    \item Nếu P1 pass: hiển thị 2 Collector, LB và collector kill.
+    \item Chứng minh LAN/Internet theo topology thật; nếu Internet live lỗi thì dùng phương án backup đã chuẩn bị.
+    \item Kết thúc bằng test evidence và ownership của từng thành viên.
+\end{enumerate}
+
+\subsection*{9. Vấn đáp cá nhân và Definition of Done}
+
+Mỗi thành viên có 20 task card và 30 câu hỏi vấn đáp trong blueprint gốc. Một task chỉ được coi là DONE khi: code chạy; edge case chính được xử lý; exception/logging hợp lý; test có ý nghĩa; tài liệu cập nhật; PR được review; flow networking chạy LAN nếu liên quan; owner giải thích được API/flow/failure và vượt viva tương ứng.
+
+\begin{vivabox}
+Quy tắc bắt buộc với code có AI hỗ trợ: owner phải chỉ được đoạn code nằm ở file/class nào, input/output là gì, failure path là gì, test nào chứng minh, và vì sao chọn API đó. ``AI viết cho em'' không phải câu trả lời chấp nhận được trong vấn đáp.
+\end{vivabox}
+
+\subsection*{10. Git workflow và release checklist}
+
+\begin{itemize}
+    \item \texttt{main} luôn build/test; không cần branch \texttt{develop} cho nhóm 3 nếu quy trình PR đủ rõ.
+    \item Branch theo task: \texttt{feature/LG-A-002-frame-codec}, \texttt{fix/LG-B-009-ack-conflict}.
+    \item Mỗi task có issue + branch + PR nhỏ + ít nhất một review khác owner.
+    \item Thay đổi Shared.Protocol cần cả nhóm review.
+    \item Không force-push \texttt{main}; không commit password/certificate private key/DB secret.
+    \item Commit convention: \texttt{feat(protocol)}, \texttt{fix(incident)}, \texttt{test(parser)}, \texttt{docs(viva)}.
+    \item Môi trường thực thi: Chuẩn hóa trên .NET 9.0 SDK (baseline của dự án hiện được kiểm thử trên môi trường phát triển của nhóm; tính tương thích phòng máy UIT cần được xác thực trước khi triển khai thực tế \cite{mslearn_dotnet_support}); khuyến nghị nâng cấp sang .NET 10 LTS sau khi đối soát trên máy trạm đích.
+\end{itemize}
+
+Trước release: không còn Sev1/2; restore/retention/bounded queue được kiểm tra; TLS/auth/role negative test pass; LAN proof có 2 máy thật; số simulated client được ghi rõ; P1 chỉ được claim nếu routing/kill/fencing pass; package/config/cert/migration/runbook/README đủ cho máy sạch; video/config/tag/checksum cùng commit; ba owner tự demo và vấn đáp phần mình.

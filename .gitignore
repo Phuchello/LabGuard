@@ -1,0 +1,47 @@
+# ==========================================
+# LabGuard — .gitignore
+# ==========================================
+
+# --- .NET Build & Output ---
+[Bb]in/
+[Oo]bj/
+[Tt]est[Rr]esults/
+*.dmp
+
+# --- Visual Studio & IDEs ---
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+.vscode/
+
+# --- Python Intermediates ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+env/
+venv/
+
+# --- LaTeX Build Intermediates ---
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lot
+*.lof
+*.fls
+*.fdb_latexmk
+
+# --- Scratch & Temporary Logs ---
+scratch/*.log
+*.tmp
+*.bak

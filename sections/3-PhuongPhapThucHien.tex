@@ -1,0 +1,73 @@
+% ============================================================
+% 3. PHƯƠNG PHÁP THỰC HIỆN
+% ============================================================
+
+\begin{enumerate}
+    \item \textbf{Khảo sát yêu cầu và đóng băng phạm vi MVP}
+
+    Nhóm xác định rõ các chức năng bắt buộc, các chức năng nâng cao và các nội dung không làm. Các quyết định kỹ thuật được ghi lại trước khi triển khai để tránh thay đổi protocol/schema tùy tiện giữa dự án. Phần P1 multi-server chỉ được bắt đầu sau khi MVP qua gate cuối tuần 3.
+
+    \item \textbf{Thiết kế kiến trúc theo từng mức độ phức tạp}
+
+    Giai đoạn đầu dùng kiến trúc đơn giản: nhiều Agent kết nối trực tiếp đến Central Server; Admin Client cũng kết nối đến Central; chỉ Central truy cập SQL Server. Khi core ổn định, P1 bổ sung Gateway và hai Collector ở lớp Agent-facing nhưng vẫn giữ Central là nơi duy nhất quyết định nghiệp vụ Incident.
+
+    \begin{beginnerbox}
+    \textbf{Tại sao không làm multi-server ngay từ đầu?} Nếu ngay tuần đầu đã thêm Gateway, hai Collector, failover và load balancing, nhóm sẽ phải debug nhiều tầng cùng lúc. Khi một message không tới DB, rất khó biết lỗi nằm ở Agent, Gateway, Collector hay Central. Vì vậy Master Plan yêu cầu chứng minh một luồng end-to-end đơn giản trước, sau đó mới thêm phân tán.
+    \end{beginnerbox}
+
+    \item \textbf{Thiết kế giao thức TCP có framing}
+
+    TCP \cite{rfc9293} được chọn cho các kết nối chính vì ứng dụng cần truyền dữ liệu có thứ tự và tin cậy. Tuy nhiên TCP là một \textbf{byte stream}; một lần gọi \texttt{ReadAsync} không đồng nghĩa với một message hoàn chỉnh. Do đó LabGuard sử dụng \textbf{length-prefix framing}: trước mỗi JSON envelope UTF-8 có đúng 4 byte biểu diễn độ dài $N$ (kiểu \texttt{uint32} theo trật tự mạng Big-Endian). Giá trị $N$ chỉ tính riêng kích thước payload JSON, không tính 4 byte header prefix.
+
+    \begin{examplebox}
+    Giả sử cần gửi chuỗi JSON dài 120 byte. Bên gửi truyền tổng cộng 124 byte trên wire dạng \texttt{[00 00 00 78] [120 byte JSON UTF-8]} (với \texttt{0x00000078 = 120}). Phía nhận trước hết đọc đủ 4 byte để biết message dài bao nhiêu, kiểm tra giới hạn an toàn, rồi tiếp tục đọc cho tới khi đủ 120 byte. Nếu hệ điều hành trả về 30 byte ở lần đọc đầu và 90 byte ở lần sau (hiện tượng \textit{partial read}), bộ giải mã \texttt{FrameCodec} vẫn gom đủ đúng 120 byte trước khi chuyển sang tầng phân tích JSON. Về lý thuyết, JSON hợp lệ (RFC 8259 \cite{rfc8259}) bắt buộc escape ký tự xuống dòng thành \texttt{\textbackslash n} nên giao thức phân tách bằng newline trên JSON đơn dòng vẫn có thể dùng được; tuy nhiên LabGuard chọn length-prefix vì nó cung cấp contract nhị phân tường minh, biết trước kích thước để cấp phát bộ đệm một lần và kiểm soát parser chặt chẽ.
+    \end{examplebox}
+
+    Kích thước frame được giới hạn ở mức thiết kế $N \leq 256$ KiB để ngăn ngừa tấn công làm tràn bộ nhớ RAM (OutOfMemory DoS). Envelope chuẩn hóa gồm \texttt{version}, \texttt{messageType}, \texttt{requestId}, \texttt{deviceId}, \texttt{sentAtUtc} và \texttt{payload} (trong đó cờ \texttt{isReplay} được đặt bên trong payload của telemetry và service status).
+
+    \item \textbf{Xây dựng Agent và cơ chế liveness}
+
+    Agent thu thập CPU host, RAM vật lý, NIC, uptime và kết quả kiểm tra cổng TCP cục bộ. Heartbeat được gửi định kỳ mỗi 5 giây để Central Server đánh giá liveness. Nếu mất kết nối, Agent chuyển sang chế độ lùi lũy tiến ngẫu nhiên (\textit{exponential backoff with jitter}) rồi reconnect thay vì lặp lại kết nối liên tục làm quá tải server.
+
+    \begin{beginnerbox}
+    \textbf{Heartbeat khác ``TCP Connected'' thế nào?} Thuộc tính \texttt{Socket.Connected} trong .NET \cite{mslearn_sockets} chỉ phản ánh trạng thái của kết nối tại thời điểm của thao tác I/O gần nhất; nếu máy client bị mất nguồn hoặc đứt cáp đột ngột, server vẫn thấy \texttt{Connected == true}. Heartbeat là bằng chứng sống ở tầng ứng dụng: nếu quá 20 giây kể từ heartbeat hợp lệ gần nhất (tính theo đồng hồ đơn điệu phía server để tránh sai lệch NTP), server chủ động đánh dấu thiết bị là \texttt{OFFLINE} và đóng socket.
+    \end{beginnerbox}
+
+    \item \textbf{Xây dựng Central Server, rule engine và Incident Engine}
+
+    Central xử lý nhiều socket đồng thời bằng mô hình bất đồng bộ trên ThreadPool \cite{mslearn_sockets}. Theo tài liệu chính thức từ Microsoft \cite{mslearn_networkstream}, lớp \texttt{NetworkStream} chỉ bảo đảm an toàn cho 1 thao tác đọc và 1 thao tác ghi đồng thời; việc nhiều tác vụ cùng gọi ghi đồng thời không được hỗ trợ an toàn nếu không tự đồng bộ. Do đó LabGuard sử dụng hàng đợi gửi đơn luồng (\texttt{System.Threading.Channels} \cite{mslearn_channels}) cho từng kết nối. Central xác thực Agent/Admin, nhận telemetry, khử trùng lặp (\textit{deduplication}) batch dựa trên bộ ba \texttt{DeviceId + BootId + BatchId}, cập nhật trạng thái thiết bị, đánh giá rule và lưu dữ liệu. Incident được tạo theo khóa logic để một điều kiện bất thường chỉ có duy nhất một Incident active thay vì mỗi chu kỳ gửi dữ liệu lại tạo thêm một ticket rác.
+
+    Rule không chỉ dựa vào một ngưỡng tức thời mà áp dụng \textbf{streak} (số mẫu vi phạm liên tiếp) và \textbf{hysteresis} (vùng trễ giữa ngưỡng mở và ngưỡng phục hồi) để tránh hiện tượng cảnh báo nhấp nháy (\textit{alert flapping}) khi giá trị dao động sát ngưỡng.
+
+    \begin{examplebox}
+    Với CPU: mở cảnh báo \texttt{HIGH\_CPU} khi CPU $\geq 90\%$ trong 3 mẫu liên tiếp (chu kỳ lấy mẫu 5 giây, khoảng thời gian từ mẫu 1 đến mẫu 3 là 10 giây); chỉ coi là phục hồi khi CPU $\leq 75\%$ trong 3 mẫu liên tiếp. Khoảng cách trễ 15\% giúp hệ thống lọc nhiễu hiệu quả khi CPU dao động quanh ngưỡng 90\%.
+    \end{examplebox}
+
+    \item \textbf{Thiết kế cơ sở dữ liệu và tính nhất quán}
+
+    SQL Server 2022 Express là cơ sở dữ liệu baseline duy nhất của đề tài; chỉ Central Server truy cập trực tiếp DB. Dữ liệu gồm users, devices, telemetry, services, incidents, incident history, collector health và audit log. Incident cần transaction và \texttt{rowversion} để xử lý trường hợp hai Admin cùng thao tác một bản ghi.
+
+    \begin{beginnerbox}
+    \textbf{Race condition và rowversion:} Giả sử Incident đang OPEN. Admin A và B cùng đọc trạng thái rồi gần như đồng thời bấm ACK. Trong SQL Server, cột kiểm soát tương tranh phải được khai báo bằng kiểu chuyên biệt \texttt{rowversion} \cite{mslearn_rowversion}, được client xử lý như token nhị phân 8 byte opaque (không phải ngày giờ); một cột \texttt{binary(8)} thông thường không có hành vi tự động cập nhật tương đương. Mỗi khi dòng dữ liệu bị sửa đổi, \texttt{rowversion} tự động đổi sang số mới. Server thực hiện câu lệnh có điều kiện \texttt{WHERE rowversion = @oldVersion}; thao tác đến sau sẽ nhận 0 dòng bị ảnh hưởng và server trả mã \texttt{CONFLICT}.
+    \end{beginnerbox}
+
+    \item \textbf{Xây dựng Admin Client và đồng bộ realtime}
+
+    Admin Client hiển thị snapshot ban đầu rồi nhận các delta/event mới. Khi reconnect, client cần đồng bộ lại state thay vì giả định cache cũ vẫn đúng. UI không được block trong lúc chờ network; dữ liệu cập nhật từ background task phải được marshal về UI thread bằng \texttt{Control.Invoke}, \texttt{BeginInvoke} hoặc \texttt{InvokeAsync} \cite{mslearn_winforms_threadsafe} tùy target framework (.NET 9+ hỗ trợ InvokeAsync). Việc ẩn hoặc làm mờ nút trên UI chỉ là cải thiện trải nghiệm người dùng (UX), không thay thế bảo mật; Central Server bắt buộc phải kiểm tra quyền (server-side authorization) đối với mọi lệnh nhận được trước khi thực thi.
+
+    \item \textbf{Bảo mật ở mức phù hợp đồ án}
+
+    TLS/SslStream \cite{rfc8446,mslearn_sslstream} được áp dụng từ đầu cho kết nối. Về lưu trữ mật khẩu: OWASP recommends Argon2id for new systems generally. If FIPS-140 compliance is required, OWASP recommends PBKDF2-HMAC-SHA256 with a work factor of 600,000 or more. LabGuard deliberately chooses PBKDF2 for BCL availability and course-scope simplicity; 600,000 is therefore the project baseline referenced from OWASP and must still be measured on the actual lab hardware \cite{owasp_password_storage}. Salt 16 byte và key 32 byte là tham số thiết kế; lưu algorithm và work factor để hỗ trợ nâng cấp; so sánh hash thời gian hằng số qua \texttt{FixedTimeEquals}; session gắn socket và server kiểm tra authorization cho mutation. Đồ án không tự chế thuật toán mã hóa.
+
+    \begin{beginnerbox}
+    \textbf{Phân biệt 4 khái niệm bảo mật:} \textbf{Encryption} (bảo vệ tính bí mật trên đường truyền); \textbf{Hashing} (băm một chiều mật khẩu kèm salt ngẫu nhiên); \textbf{Authentication} (xác định danh tính người dùng/máy trạm); \textbf{Authorization} (kiểm tra quyền hạn thực thi phía server).
+    \end{beginnerbox}
+
+    \item \textbf{Kiểm thử tăng dần và failure injection}
+
+    Nhóm kiểm thử parser, threshold, state transition, DB transaction, multi-client, reconnect và các failure case trước khi polish UI. Agent Simulator tạo nhiều socket độc lập để kiểm tra tải mà không cần 20--50 máy thật. Mỗi test phải có setup, action, expected result và evidence/log.
+
+    \item \textbf{Triển khai, demo và audit}
+
+    MVP dự kiến thử nghiệm và demo trên 3 máy tính xách tay: máy 1 chạy Central và SQL, máy 2 chạy Agent kèm Simulator, máy 3 chạy Admin cùng Agent. Triển khai Internet chỉ được tính hoàn thành khi có bằng chứng sơ đồ mạng và route hợp lệ. ChatGPT Work đóng vai trò auditor độc lập: rà soát tính nhất quán, rủi ro, phạm vi và bằng chứng thực nghiệm; không coi kết quả thẩm định tài liệu là bằng chứng sản phẩm chạy thực tế.
+\end{enumerate}

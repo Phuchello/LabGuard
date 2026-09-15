@@ -1,0 +1,236 @@
+% ============================================================
+% 4. CÁC NỘI DUNG CHÍNH VÀ GIỚI HẠN
+% ============================================================
+
+\subsection{Nội dung 1: Xác lập yêu cầu, phạm vi và contract kỹ thuật}
+
+\begin{itemize}
+    \item \textbf{Mục tiêu:} thống nhất giữa ba thành viên về chức năng P0/P1, message envelope, schema chính, ownership và tiêu chí DONE trước khi code tăng nhanh.
+    \item \textbf{Phương pháp thực hiện:} tạo fixtures mẫu cho protocol, migration ban đầu, mock DTO cho UI, thống nhất quy tắc branch/PR và ghi các thay đổi lớn bằng decision record.
+\end{itemize}
+
+\begin{table}[!ht]
+\centering
+\caption{Phạm vi ưu tiên theo Master Plan.}
+\label{tab:scope-priority}
+\small
+\begin{tabularx}{\textwidth}{p{1.2cm} X X}
+\toprule
+\textbf{Mức} & \textbf{Nội dung} & \textbf{Ý nghĩa} \\
+\midrule
+P0 & Agent Windows, telemetry, heartbeat, local TCP probe, reconnect; Central nhiều Agent; Incident; DB; WinForms; auth/roles; TLS; simulator; LAN & Bắt buộc để có một sản phẩm NT106 hoàn chỉnh \\
+P1 & Gateway least-connections, 2 Collector, readiness/failover/fencing & Chỉ làm sau MVP gate; dùng để tăng chiều sâu multi-server \\
+P2 & Manual probe allowlist nâng cao, threshold versioning, minute aggregates, latency rule, weighted LB & Stretch feature sau release candidate nếu còn thời gian \\
+P3 & Agent Linux, multi-lab phức tạp, Central HA, AI/anomaly & Hướng tương lai, không nằm trong cam kết 5 tuần \\
+Không làm & Remote desktop/shell, restart service từ xa, đọc file/process nhạy cảm, Kubernetes, Redis/Kafka, web frontend lớn & Tránh lệch trọng tâm và scope explosion \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Nội dung 2: Agent, telemetry và kết nối mạng phía client}
+
+\begin{itemize}
+    \item \textbf{Mục tiêu:} mỗi Agent có thể kết nối an toàn đến server, gửi trạng thái định kỳ, phát hiện lỗi cục bộ và tự phục hồi kết nối khi mạng gián đoạn.
+    \item \textbf{Dữ liệu P0:} CPU host, RAM vật lý, NIC, uptime và kết quả TCP service probe trong allowlist tối đa 5 mục ở bản MVP.
+    \item \textbf{Kỹ thuật chính:} TcpClient/SslStream, writer queue, heartbeat, batching, reconnect backoff, local log và Agent Simulator.
+\end{itemize}
+
+\begin{examplebox}
+Agent Simulator không phải ``vẽ giả 50 máy'' trên UI. Mỗi simulated Agent phải có \textbf{socket riêng, DeviceId riêng, heartbeat riêng và state riêng}. Khi đó server thực sự phải xử lý 10/20/50 client concurrent, phù hợp để kiểm thử multi-client mà không cần 50 máy vật lý.
+\end{examplebox}
+
+\subsection{Nội dung 3: Central Server, liveness và rule engine}
+
+Central là thành phần nghiệp vụ trung tâm của MVP. Server nhận kết nối TLS, parse frame có giới hạn, bind session với identity, cập nhật device registry, commit telemetry và gửi ACK phù hợp. Liveness được đánh giá dựa trên heartbeat/deadline đo bằng monotonic clock của server chứ không chỉ dựa vào trạng thái socket.
+
+Bốn nhóm rule P0 dự kiến:
+\begin{enumerate}
+    \item \texttt{DEVICE\_OFFLINE}: không nhận heartbeat hợp lệ trong khoảng thời gian $> 20$ giây (đo bằng \texttt{Stopwatch} / monotonic clock tại server, độc lập với wall-clock client);
+    \item \texttt{HIGH\_CPU}: CPU vượt ngưỡng $\ge 90\%$ trong 3 sample liên tiếp (chu kỳ lấy mẫu 5 giây, khoảng thời gian từ mẫu 1 đến mẫu 3 là 10 giây); phục hồi khi CPU $\le 75\%$ trong 3 sample liên tiếp (dải trễ hysteresis 15\% chống rung lắc trạng thái);
+    \item \texttt{HIGH\_MEMORY}: RAM vượt ngưỡng quy định trong 3 sample liên tiếp (chu kỳ 5 giây);
+    \item \texttt{SERVICE\_DOWN}: TCP probe tới cổng dịch vụ thất bại trong 2 lần thăm dò liên tiếp (timeout 2 giây/lần, chu kỳ 5 giây); tự động phục hồi sau 2 lần thăm dò thành công liên tiếp.
+\end{enumerate}
+
+\begin{beginnerbox}
+\textbf{Deduplication} nghĩa là nhận ra dữ liệu hoặc lệnh đã được xử lý trước đó và không thực hiện lại ngoài ý muốn. Khóa chống trùng lặp batch telemetry tại server là bộ ba \texttt{DeviceId + BootId + BatchId}; khóa chống trùng lặp lệnh quản trị là \texttt{UserId + CommandId} kèm kiểm tra request digest. Trường \texttt{requestId} chỉ dùng làm Correlation ID khớp gói tin, không thay thế khóa dedup nghiệp vụ. Cờ \texttt{isReplay} nằm trong payload như một chỉ báo hỗ trợ chẩn đoán, không phải khóa chống trùng.
+\end{beginnerbox}
+
+\subsection{Nội dung 4: Incident Management và cộng tác nhiều Admin}
+
+Incident có luồng chính:
+\begin{center}
+\texttt{OPEN $\rightarrow$ ACKNOWLEDGED $\rightarrow$ IN\_PROGRESS $\rightarrow$ RECOVERED $\rightarrow$ RESOLVED}
+\end{center}
+
+Hệ thống cần xử lý cả trường hợp recovery xảy ra trước khi Admin ACK hoặc lỗi tái phát trước khi Resolve. Vì vậy blueprint tách \textbf{ConditionState} (ACTIVE/RECOVERED/UNKNOWN) khỏi workflow do người vận hành thao tác. Tách hai lớp state giúp không ép trạng thái vật lý và trạng thái công việc phải luôn thay đổi cùng lúc.
+
+\begin{figure}[!ht]
+\centering
+\begin{tikzpicture}[
+  node distance=1.3cm and 1.35cm,
+  st/.style={draw=lgblue, rounded corners=2mm, fill=lglight, minimum width=2.6cm, minimum height=0.9cm, align=center},
+  arr/.style={-{Latex[length=2.3mm]}, thick, draw=lgblue}
+]
+\node[st] (open) {OPEN};
+\node[st, right=of open] (ack) {ACKNOWLEDGED};
+\node[st, right=of ack] (prog) {IN\_PROGRESS};
+\node[st, below=1.2cm of prog] (rec) {RECOVERED};
+\node[st, left=of rec] (res) {RESOLVED};
+\draw[arr] (open) -- (ack);
+\draw[arr] (ack) -- (prog);
+\draw[arr] (prog) -- (rec);
+\draw[arr] (rec) -- (res);
+\draw[arr,dashed] (open) to[bend right=25] node[midway,below left,sloped=false,font=\scriptsize,fill=white,inner sep=1pt]{recovery sớm} (rec);
+\draw[arr,dashed] (rec) to[bend right=40] node[midway,right=3pt,sloped=false,font=\scriptsize,fill=white,inner sep=1.5pt]{relapse (tái phát)} (prog);
+\end{tikzpicture}
+\caption{Sơ đồ vòng đời Incident rút gọn. Kiến trúc LabGuard phân tách hai biến trạng thái độc lập: \textbf{ConditionState} (gồm: ACTIVE, RECOVERED, UNKNOWN do Rule Engine tự động đánh giá) và \textbf{WorkflowState} (gồm: OPEN, ACKNOWLEDGED, IN\_PROGRESS, RECOVERED, RESOLVED do quản trị viên thao tác).}
+\label{fig:incident-state}
+\end{figure}
+
+\begin{vivabox}
+Người phụ trách Server/Incident cần giải thích được: ``Nếu hai Admin cùng bấm ACK thì điều gì xảy ra?'' Câu trả lời không dừng ở ``dùng lock''. Phải chỉ ra server kiểm tra version/transaction ở đâu, thao tác nào thắng, thao tác nào nhận CONFLICT và UI cập nhật lại state thế nào.
+\end{vivabox}
+
+\subsection{Nội dung 5: Giao thức ứng dụng, realtime và phục hồi phiên}
+
+Giao thức dự kiến dùng cấu trúc frame chuẩn gồm:
+\begin{itemize}
+    \item \textbf{4 byte tiền tố độ dài}: số nguyên 32-bit không dấu theo thứ tự byte mạng (Big-Endian), biểu diễn độ dài payload $N$ byte ($N$ không tính 4 byte header, giới hạn tối đa 256 KiB);
+    \item \textbf{$N$ byte payload}: chuỗi JSON mã hóa UTF-8 tuân thủ RFC 8259 \cite{rfc8259}.
+\end{itemize}
+Envelope JSON chuẩn hóa các trường thông điệp:
+\begin{itemize}
+    \item \texttt{version}: phiên bản giao thức (kiểu số nguyên, ví dụ: 1);
+    \item \texttt{messageType}: định danh thông điệp chuẩn (gồm 69 message type được chuẩn hóa trong \texttt{CONTRACT\_MATRIX.md}, với 34 message thuộc phạm vi cam kết P0-MVP như \texttt{HEARTBEAT}, \texttt{LOGIN}, \texttt{INCIDENT\_ACK}...);
+    \item \texttt{requestId}: định danh duy nhất của frame (UUID v4) phục vụ đối soát tương quan (Correlation ID giữa Request và Response);
+    \item \texttt{deviceId}: mã định danh máy trạm gửi bản tin;
+    \item \texttt{sentAtUtc}: mốc thời gian phát bản tin tại client theo chuẩn ISO-8601 UTC;
+    \item \texttt{payload}: đối tượng dữ liệu tương ứng với từng loại thông điệp (chứa cờ \texttt{isReplay} đối với bản tin telemetry và trạng thái dịch vụ; khử trùng lặp batch bằng bộ ba \texttt{DeviceId + BootId + BatchId} lưu tại bảng \texttt{ProcessedBatches}, khử trùng lặp command bằng \texttt{UserId + CommandId} lưu tại bảng \texttt{ProcessedCommands}).
+\end{itemize}
+Session bind identity sau xác thực TLS. Metrics chỉ được ACK sau khi server đạt điểm commit đã định. Các mutation quan trọng dùng request/command identifier và version để hỗ trợ retry an toàn và loại trừ thao tác trùng lặp (deduplication).
+
+Đối với Admin, server gửi \textbf{snapshot} ban đầu và sau đó là \textbf{delta/event}. Mỗi event có sequence/version để client phát hiện việc bỏ lỡ update. Khi reconnect, client không đơn giản tiếp tục dùng cache cũ mà phải thực hiện cơ chế đồng bộ lại theo protocol.
+
+\begin{beginnerbox}
+\textbf{Snapshot} là ``ảnh chụp trạng thái đầy đủ tại một thời điểm''. \textbf{Delta} là ``phần thay đổi kể từ snapshot''. Cách này giảm dữ liệu realtime vì server không cần gửi toàn bộ danh sách thiết bị mỗi khi chỉ một máy thay đổi trạng thái.
+\end{beginnerbox}
+
+\subsection{Nội dung 6: Database, lịch sử và retention}
+
+Master Plan chọn SQL Server 2022 Express \cite{mslearn_sql_express_limits} và quy định chỉ Central truy cập trực tiếp. Thiết kế cần PK/FK, index phù hợp, transaction cho Incident, sử dụng cột \texttt{rowversion} \cite{mslearn_rowversion} cho optimistic concurrency và cơ chế retention telemetry. Cột \texttt{rowversion} trong SQL Server là kiểu dữ liệu nhị phân 8 byte tự động tăng sau mỗi lần cập nhật dòng, \textbf{không phải} mốc thời gian ngày giờ (\texttt{datetime}), dùng để phát hiện xung đột dữ liệu giữa các phiên Admin mà không cần khóa bảng lâu dài. Khử trùng lặp batch telemetry được lưu bền vững vào bảng \texttt{ProcessedBatches} (TTL 24 giờ); khử trùng lặp command Admin được kiểm tra kèm mã băm \texttt{RequestDigest} và lưu vào bảng \texttt{ProcessedCommands} (TTL 7 ngày). Các bảng \texttt{AuditLogs} và \texttt{IncidentHistory} phục vụ tra cứu lịch sử, không dùng làm bảng idempotency. Ingest Ring Buffer chỉ là hàng đợi bộ nhớ có chặn trên (bounded queue), không phải nơi chống trùng bền vững. Dữ liệu raw dự kiến giữ 48 giờ trong bản thiết kế, sau đó purge theo \texttt{ReceivedUtc}; đây là mục tiêu thiết kế và phải được điều chỉnh sau khi đo thực tế.
+
+Các nhóm bảng dự kiến gồm:
+\begin{itemize}
+    \item Users / invitations / sessions hỗ trợ xác thực;
+    \item Devices và Services;
+    \item Metrics/telemetry;
+    \item Incidents và IncidentHistory;
+    \item CollectorNodes (P1);
+    \item AuditLogs và các bảng hỗ trợ.
+\end{itemize}
+
+\subsection{Nội dung 7: Bảo mật và phân quyền}
+
+Kết nối Agent/Admin sử dụng TLS. Password không được lưu plaintext và không được ``mã hóa để sau đó giải mã'', mà được băm một chiều bằng PBKDF2-HMAC-SHA256 với 600.000 iterations (vòng lặp), salt ngẫu nhiên 16 byte (128-bit) cho mỗi tài khoản, khóa dẫn xuất 32 byte (256-bit), lưu trữ work factor và so sánh constant-time. Server có ba role chuẩn hóa: Admin, Operator và Viewer; mutation bắt buộc chứng thực phía server (server-side authorization). Xác thực P0-MVP vận hành với tài khoản Admin được seed sẵn qua \texttt{LOGIN}/\texttt{LOGOUT}; quy trình mở rộng tùy chọn cho phép Admin tạo mã mời (\texttt{CREATE\_INVITE}) và người dùng mới đăng ký qua endpoint tiền xác thực (\texttt{SIGN\_UP} yêu cầu \texttt{inviteCode} hợp lệ, kiểm tra atomic và tiêu thụ một lần). UI ẩn/disable nút chỉ phục vụ UX.
+
+\begin{warningbox}
+LabGuard không hướng tới remote shell/remote desktop và không cho phép client gửi command hệ điều hành tùy ý. Việc loại bỏ các chức năng này vừa giảm rủi ro bảo mật vừa giữ đồ án tập trung vào networking/incident management.
+\end{warningbox}
+
+\subsection{Nội dung 8: UI/UX theo hướng sản phẩm}
+
+Các màn hình chính gồm: Login, Dashboard, Lab View, Devices và Device Detail, Incidents và Incident Detail, History, Reports cùng Server Health. Thiết kế ưu tiên nền sáng, control native, status có cả chữ và icon thay vì chỉ dựa vào màu. Mỗi màn hình phải xác định nguồn dữ liệu, event realtime nào cập nhật UI, network request nào được gửi và trạng thái loading/empty/error/stale.
+
+\begin{beginnerbox}
+UI đẹp không thay thế networking. Một màn hình Lab View chỉ có giá trị kỹ thuật khi ô ``PC07 Offline'' thật sự xuất phát từ heartbeat timeout của một Agent/socket, không phải từ dữ liệu hard-code.
+\end{beginnerbox}
+
+\subsection{Nội dung 9: Multi-server và Load Balancing (P1 có điều kiện)}
+
+Sau M4, nếu MVP ổn định, kiến trúc có thể mở rộng:
+
+\begin{figure}[!ht]
+\centering
+\resizebox{0.92\linewidth}{!}{%
+\begin{tikzpicture}[
+  node distance=1.4cm and 1.8cm,
+  box/.style={draw=lgblue, rounded corners=2mm, fill=lglight, minimum width=2.7cm, minimum height=0.9cm, align=center},
+  arr/.style={-{Latex[length=2.3mm]}, thick, draw=lgblue}
+]
+\node[box] (agents) {Agent(s)};
+\node[box, right=of agents] (gw) {L4 Gateway\\least-connections};
+\node[box, above right=0.55cm and 1.6cm of gw] (c1) {Collector 01};
+\node[box, below right=0.55cm and 1.6cm of gw] (c2) {Collector 02};
+\node[box, right=3.0cm of gw] (central) {Central\\Business Logic};
+\node[box, right=of central] (sql) {SQL Server};
+\draw[arr] (agents) -- (gw);
+\draw[arr] (gw) -- (c1);
+\draw[arr] (gw) -- (c2);
+\draw[arr] (c1) -- (central);
+\draw[arr] (c2) -- (central);
+\draw[arr] (central) -- (sql);
+\end{tikzpicture}%
+}
+\caption{Kiến trúc P1: Gateway + hai Collector, trong khi Central vẫn giữ nghiệp vụ.}
+\label{fig:p1-architecture}
+\end{figure}
+
+Gateway chỉ làm nhiệm vụ chuyển tiếp byte (byte relay) và chọn Collector theo thuật toán ít kết nối nhất (\textit{least-connections}) kết hợp kiểm tra sức khỏe tương tự cơ chế cân bằng tải TCP L4 trong thực tế \cite{nginx_tcp_lb}. Trong phân công P1, Sinh viên C phát triển một ứng dụng Collector dùng chung; khi kiểm thử và triển khai, hai node Collector 01 và Collector 02 là hai instance của cùng một Collector binary (chạy độc lập với cấu hình port hoặc máy khác nhau), bảo đảm không bị lệch giao thức. Mỗi Collector có đầy đủ parser, xác thực, hàng đợi và socket thật. Collector liên tục báo trạng thái sẵn sàng (readiness); Gateway không điều phối kết nối mới tới các node không khỏe mạnh. Blueprint không yêu cầu di chuyển socket đang mở hoặc chuyển đổi dự phòng không gián đoạn; nếu Collector gặp sự cố, Agent được phép ngắt kết nối và tự động kết nối lại sang node khác (thời gian failover p95 $\le 45$ giây là mục tiêu thiết kế [DESIGN TARGET]).
+
+\begin{beginnerbox}
+\textbf{Readiness} trả lời ``node hiện có sẵn sàng nhận kết nối mới không?''; \textbf{failover} là chuyển sang node khác khi node hiện tại lỗi; \textbf{fencing} là ngăn node cũ/stale tiếp tục hành xử như nó còn quyền sau một thay đổi phiên/thế hệ. Đây là các khái niệm P1, không cần dùng để hiểu MVP ban đầu.
+\end{beginnerbox}
+
+\subsection{Nội dung 10: Thực nghiệm và đánh giá}
+
+Kế hoạch nguồn nêu 33 scenario, bao gồm unit/integration/failure/load. Các nhóm kiểm thử cần có:
+\begin{itemize}
+    \item parser: partial reads, nhiều frame dính nhau, length sai, frame quá lớn;
+    \item rule/Incident: streak, hysteresis, dedup, recovery, relapse, hai Admin conflict;
+    \item Agent/Server: disconnect, reconnect, duplicate batch, malformed message;
+    \item persistence: restart Central, DB degraded, restore và crash consistency;
+    \item multi-client: 10/20/50 simulated Agent, 2 Admin realtime;
+    \item P1: routing/readiness/collector kill/failover nếu được triển khai;
+    \item deployment: localhost, LAN trên máy thật và bằng chứng Internet nếu hạ tầng cho phép.
+\end{itemize}
+
+Chỉ được báo cáo kết quả hiệu năng khi test thật có raw CSV/run configuration. Các con số trong blueprint là \textbf{target}, không được trình bày như kết quả thực nghiệm.
+
+\subsubsection{Giới hạn của đề tài}
+
+\begin{itemize}
+    \item MVP chỉ một tổ chức và một lab mặc định; không multi-tenancy phức tạp.
+    \item Không remote desktop, remote shell, thao tác hệ điều hành tùy ý hoặc restart service từ xa.
+    \item Không Kubernetes, Redis/Kafka hoặc distributed framework nặng chỉ để tăng số công nghệ.
+    \item Không AI/anomaly detection trong cam kết 5 tuần.
+    \item P1 Gateway + 2 Collector là tùy điều kiện; nếu M4 chưa đạt hoặc còn lỗi nghiêm trọng thì phải DEFER.
+    \item Internet live phụ thuộc NAT/CGNAT (RFC 6598 \cite{rfc6598})/firewall/hạ tầng. Nếu không thể demo live, cần mô tả topology trung thực và có bằng chứng thay thế phù hợp yêu cầu môn.
+    \item Rubric/checklist chính thức của lớp chưa được xác minh trong Master Plan nguồn; vì vậy tài liệu này không cam kết điểm số.
+\end{itemize}
+
+\subsection{Bảng truy vết yêu cầu cốt lõi}
+
+\begin{table}[!ht]
+\centering
+\caption{Functional Requirements được bảo toàn từ Master Plan.}
+\label{tab:fr-trace}
+\scriptsize
+\begin{tabularx}{\textwidth}{p{1.1cm} p{3.1cm} X >{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+\textbf{FR} & \textbf{Chức năng} & \textbf{Acceptance ở mức thiết kế} & \textbf{Task/Test} \\
+\midrule
+FR01 & Auth/enrollment & Token bind DeviceId; invitation một lần & A004/B004/C003; T13--T15 \\
+FR02 & Telemetry & CPU host, RAM physical, NIC, uptime; error=null & A005/A006; T07/T18 \\
+FR03 & Service check & Local TCP allowlist $\leq 5$, timeout 2s & A007; T06/T18 \\
+FR04 & Multi-client & Socket riêng; parser có boundary/bounds & A002/A003/\-B003/A008; T01--T05/T28 \\
+FR05 & Detection & 4 rule; streak/hysteresis; một active ticket/key & B005--B008; T06--T10 \\
+FR06 & Collaboration & Command phân quyền, version, history & B009/C008/C009; T11--T13 \\
+FR07 & Realtime & Snapshot+delta, version merge, slow-client isolation & C005/C006/C016; T16--T17 \\
+FR08 & History/report & Paging, bounded query, CSV cơ bản & B011/C010; T21/T30 \\
+FR09 & Recovery & Retry/dedup, restart grace, DB degraded & A009/B010; T10/T19--T20 \\
+FR10 & Deployment & 2 máy thật, simulator, LAN/Internet proof & A012/A016/\-A018/A019; T31--T33 \\
+FR11 & Security & TLS, KDF, role, limits, no secrets & A004/B004/\-C002/C009; T03--T04/T13--T15 \\
+FR12 & P1 & 2 Collector instance cùng binary, routing/health/failover & A013--A015/\-B013--B015/\-C013--C015; T23--T27 \\
+\bottomrule
+\end{tabularx}
+\end{table}
