@@ -1,0 +1,1 @@
+{"version":1,"messageType":"ERROR","requestId":"c0000000-0000-4000-8000-000000000016","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"errorCode":"ERR_INVALID_PAYLOAD","errorMessage":"Invalid envelope payload.","details":null}}

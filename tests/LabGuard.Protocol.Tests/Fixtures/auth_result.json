@@ -1,0 +1,1 @@
+{"version":1,"messageType":"AUTH_RESULT","requestId":"c0000000-0000-4000-8000-000000000008","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"success":true,"sessionId":"s0000000-0000-4000-8000-000000000001","assignedDeviceId":"PC-LAB1-01","errorMessage":null}}

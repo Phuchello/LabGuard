@@ -1,0 +1,1 @@
+{"version":1,"messageType":"HELLO_AGENT","requestId":"c0000000-0000-4000-8000-000000000005","deviceId":"PC-LAB1-01","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"agentVersion":"1.0.0","osVersion":"Microsoft Windows 11 Pro","hostname":"LAB01-PC01","macAddress":"00:1A:2B:3C:4D:5E"}}

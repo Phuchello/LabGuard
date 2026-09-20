@@ -1,0 +1,1 @@
+{"version":1,"messageType":"HEARTBEAT_ACK","requestId":"c0000000-0000-4000-8000-000000000009","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"serverTimeUtc":"2026-09-20T10:00:00.0000000Z","acknowledgedSequence":1}}

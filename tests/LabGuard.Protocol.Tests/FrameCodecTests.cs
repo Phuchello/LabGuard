@@ -28,7 +28,7 @@ public class FrameCodecTests
     }
 
     // =========================================================================
-    // TEST 2: Partial Header (Chunks: 1b, 1b, 2b)
+    // TEST 2: Partial Header (Chunks: 1b, 1b, 2b and 1b, 1b, 1b, 1b)
     // =========================================================================
     [Fact]
     public async Task ReadFrameAsync_PartialHeader_AssemblesCorrectly()
@@ -41,6 +41,25 @@ public class FrameCodecTests
 
         // Stream yields header in fragments: 1 byte, 1 byte, 2 bytes, then payload in one chunk
         using var chunkedStream = new ChunkedStream(frameData, 1, 1, 2, payload.Length);
+
+        // Act
+        byte[]? result = await FrameCodec.ReadFrameAsync(chunkedStream);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(payload, result);
+    }
+
+    [Fact]
+    public async Task ReadFrameAsync_HeaderByteByByte_1ByteChunks_AssemblesCorrectly()
+    {
+        // Arrange: Header arrives 1 byte at a time (1, 1, 1, 1)
+        byte[] payload = Encoding.UTF8.GetBytes("{\"test\":\"header_1byte_at_a_time\"}");
+        byte[] frameData = new byte[FrameCodec.HeaderSize + payload.Length];
+        BinaryPrimitives.WriteUInt32BigEndian(frameData.AsSpan(0, 4), (uint)payload.Length);
+        payload.CopyTo(frameData.AsSpan(4));
+
+        using var chunkedStream = new ChunkedStream(frameData, 1, 1, 1, 1, payload.Length);
 
         // Act
         byte[]? result = await FrameCodec.ReadFrameAsync(chunkedStream);
@@ -76,6 +95,33 @@ public class FrameCodecTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(500, result.Length);
+        Assert.Equal(payload, result);
+    }
+
+    [Fact]
+    public async Task ReadFrameAsync_PayloadByteByByte_AssemblesCorrectly()
+    {
+        // Arrange: 100-byte test payload arriving 1 byte at a time
+        byte[] payload = Encoding.UTF8.GetBytes("{\"msg\":\"1_byte_chunked_payload_for_testing_partial_reads_in_frame_codec\"}");
+        byte[] frameData = new byte[FrameCodec.HeaderSize + payload.Length];
+        BinaryPrimitives.WriteUInt32BigEndian(frameData.AsSpan(0, 4), (uint)payload.Length);
+        payload.CopyTo(frameData.AsSpan(4));
+
+        // Header in 1 chunk (4b), then payload 1 byte at a time
+        var chunks = new List<int> { 4 };
+        for (int i = 0; i < payload.Length; i++)
+        {
+            chunks.Add(1);
+        }
+
+        using var chunkedStream = new ChunkedStream(frameData, chunks.ToArray());
+
+        // Act
+        byte[]? result = await FrameCodec.ReadFrameAsync(chunkedStream);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(payload.Length, result.Length);
         Assert.Equal(payload, result);
     }
 
@@ -211,5 +257,143 @@ public class FrameCodecTests
         using var stream = new MemoryStream();
         byte[] oversized = new byte[FrameCodec.MaxPayloadSize + 1];
         await Assert.ThrowsAsync<ArgumentException>(() => FrameCodec.WriteFrameAsync(stream, oversized));
+    }
+
+    [Fact]
+    public void Encode_And_Decode_RoundTrip_ReturnsOriginalBytes()
+    {
+        byte[] payload = Encoding.UTF8.GetBytes("{\"test\":\"encode_decode\"}");
+        byte[] framed = FrameCodec.Encode(payload);
+
+        Assert.Equal(FrameCodec.HeaderSize + payload.Length, framed.Length);
+        uint declaredLength = BinaryPrimitives.ReadUInt32BigEndian(framed.AsSpan(0, 4));
+        Assert.Equal((uint)payload.Length, declaredLength);
+
+        byte[] decoded = FrameCodec.Decode(framed);
+        Assert.Equal(payload, decoded);
+    }
+
+    [Fact]
+    public void Decode_FrameTooShort_ThrowsInvalidDataException()
+    {
+        byte[] tooShort = [0x00, 0x01];
+        var ex = Assert.Throws<InvalidDataException>(() => FrameCodec.Decode(tooShort));
+        Assert.Contains("Frame too short", ex.Message);
+    }
+
+    [Fact]
+    public void Decode_ZeroLength_ThrowsInvalidDataException()
+    {
+        byte[] zeroLen = [0x00, 0x00, 0x00, 0x00];
+        var ex = Assert.Throws<InvalidDataException>(() => FrameCodec.Decode(zeroLen));
+        Assert.Contains("payload length is 0", ex.Message);
+    }
+
+    [Fact]
+    public void Decode_OversizedLength_ThrowsInvalidDataException()
+    {
+        byte[] header = new byte[4];
+        BinaryPrimitives.WriteUInt32BigEndian(header, FrameCodec.MaxPayloadSize + 1);
+        var ex = Assert.Throws<InvalidDataException>(() => FrameCodec.Decode(header));
+        Assert.Contains("exceeds maximum allowed size", ex.Message);
+    }
+
+    [Fact]
+    public void Decode_TruncatedPayload_ThrowsEndOfStreamException()
+    {
+        byte[] frame = new byte[FrameCodec.HeaderSize + 5];
+        BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(0, 4), 10); // claims 10 bytes, only has 5
+        var ex = Assert.Throws<EndOfStreamException>(() => FrameCodec.Decode(frame));
+        Assert.Contains("Incomplete frame", ex.Message);
+    }
+
+    // =========================================================================
+    // TEST 9: Exact Max Payload Boundary (262,144 bytes / 256 KiB)
+    // =========================================================================
+    [Fact]
+    public async Task WriteAndRead_ExactMaxPayloadSize_262144Bytes_Succeeds()
+    {
+        // Arrange: Exactly 262,144 bytes payload
+        byte[] payload = new byte[FrameCodec.MaxPayloadSize];
+        Array.Fill(payload, (byte)'Z');
+
+        using var stream = new MemoryStream();
+
+        // Act
+        await FrameCodec.WriteFrameAsync(stream, payload);
+        stream.Position = 0;
+        byte[]? result = await FrameCodec.ReadFrameAsync(stream);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(FrameCodec.MaxPayloadSize, result.Length);
+        Assert.Equal(payload, result);
+    }
+
+    [Fact]
+    public async Task ReadFrameAsync_ExactMaxPayloadSize_WithMaxPayloadSizeArgument_Succeeds()
+    {
+        byte[] payload = new byte[FrameCodec.MaxPayloadSize];
+        Array.Fill(payload, (byte)'B');
+
+        byte[] framed = FrameCodec.Encode(payload);
+        using var stream = new MemoryStream(framed);
+
+        byte[]? result = await FrameCodec.ReadFrameAsync(stream, maxPayloadSize: FrameCodec.MaxPayloadSize);
+
+        Assert.NotNull(result);
+        Assert.Equal(FrameCodec.MaxPayloadSize, result.Length);
+        Assert.Equal(payload, result);
+    }
+
+    // =========================================================================
+    // TEST 10: ReadExactlyBytesAsync Dedicated Unit Tests
+    // =========================================================================
+    [Fact]
+    public async Task ReadExactlyBytesAsync_FullBuffer_Succeeds()
+    {
+        byte[] source = [1, 2, 3, 4, 5, 6, 7, 8];
+        using var stream = new MemoryStream(source);
+        byte[] dest = new byte[8];
+
+        await FrameCodec.ReadExactlyBytesAsync(stream, dest, 0, 8);
+
+        Assert.Equal(source, dest);
+    }
+
+    [Fact]
+    public async Task ReadExactlyBytesAsync_PartialChunks_AssemblesBuffer()
+    {
+        byte[] source = [10, 20, 30, 40, 50];
+        using var chunkedStream = new ChunkedStream(source, 2, 1, 2);
+        byte[] dest = new byte[5];
+
+        await FrameCodec.ReadExactlyBytesAsync(chunkedStream, dest, 0, 5);
+
+        Assert.Equal(source, dest);
+    }
+
+    [Fact]
+    public async Task ReadExactlyBytesAsync_PrematureEof_ThrowsEndOfStreamException()
+    {
+        byte[] source = [10, 20]; // only 2 bytes available when expecting 5
+        using var stream = new MemoryStream(source);
+        byte[] dest = new byte[5];
+
+        var ex = await Assert.ThrowsAsync<EndOfStreamException>(() => FrameCodec.ReadExactlyBytesAsync(stream, dest, 0, 5));
+        Assert.Contains("closed prematurely", ex.Message);
+    }
+
+    [Fact]
+    public async Task ReadExactlyBytesAsync_InvalidArguments_Throws()
+    {
+        using var stream = new MemoryStream([1, 2, 3]);
+        byte[] dest = new byte[5];
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => FrameCodec.ReadExactlyBytesAsync(null!, dest, 0, 1));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => FrameCodec.ReadExactlyBytesAsync(stream, null!, 0, 1));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => FrameCodec.ReadExactlyBytesAsync(stream, dest, -1, 1));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => FrameCodec.ReadExactlyBytesAsync(stream, dest, 0, -1));
+        await Assert.ThrowsAsync<ArgumentException>(() => FrameCodec.ReadExactlyBytesAsync(stream, dest, 3, 3)); // 3 + 3 = 6 > 5
     }
 }

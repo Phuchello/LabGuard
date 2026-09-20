@@ -142,29 +142,38 @@ public class ClientConnection : IAsyncDisposable
 
     private async Task HandleFrameAsync(byte[] frameBytes, CancellationToken ct)
     {
-        WireEnvelope<JsonElement>? envelope;
-        try
-        {
-            envelope = ProtocolSerializer.DeserializeEnvelope(frameBytes);
-        }
-        catch (JsonException ex)
-        {
-            Log($"JSON deserialization failed: {ex.Message}");
-            await SendErrorAsync(Guid.NewGuid().ToString("D"), ErrorCodes.InvalidPayload, "Malformed JSON envelope.", ct).ConfigureAwait(false);
-            State = ConnectionState.Closed;
-            return;
-        }
-
-        // Strict envelope validation
-        var validation = EnvelopeValidator.Validate(envelope);
+        // Strict raw-JSON validation BEFORE normal dispatch/deserialization
+        var (validation, envelope) = EnvelopeValidator.ValidateAndParse(frameBytes);
         if (!validation.IsValid)
         {
             Log($"Envelope validation failed: {validation.ErrorMessage}");
-            string corrId = (envelope != null && EnvelopeValidator.IsCanonicalUuidV4(envelope.RequestId))
-                ? envelope.RequestId
-                : Guid.NewGuid().ToString("D");
+            string corrId = (validation.RequestId != null && EnvelopeValidator.IsCanonicalUuidV4(validation.RequestId))
+                ? validation.RequestId
+                : (envelope != null && EnvelopeValidator.IsCanonicalUuidV4(envelope.RequestId))
+                    ? envelope.RequestId
+                    : Guid.NewGuid().ToString("D");
 
-            await SendErrorAsync(corrId, validation.ErrorCode ?? ErrorCodes.InvalidPayload, validation.ErrorMessage ?? "Invalid envelope.", ct).ConfigureAwait(false);
+            string? msgType = validation.MessageType ?? envelope?.MessageType;
+
+            // Handshake special case: if awaiting auth and client sent AUTH_AGENT with invalid payload
+            if (State == ConnectionState.AwaitingAuth &&
+                msgType == MessageTypes.AuthAgent &&
+                validation.ErrorCode == ErrorCodes.InvalidPayload &&
+                validation.ErrorMessage?.Contains("payload must be a JSON object", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var invalidFormatResult = new AuthResultPayload
+                {
+                    Success = false,
+                    ErrorMessage = "AUTH_AGENT payload must be a JSON object."
+                };
+                await SendEnvelopeAsync(MessageTypes.AuthResult, corrId, invalidFormatResult, ct).ConfigureAwait(false);
+                State = ConnectionState.Closed;
+                return;
+            }
+
+            string errorCode = validation.ErrorCode ?? ErrorCodes.InvalidPayload;
+
+            await SendErrorAsync(corrId, errorCode, validation.ErrorMessage ?? "Invalid envelope.", ct).ConfigureAwait(false);
             State = ConnectionState.Closed;
             return;
         }

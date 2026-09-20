@@ -2,6 +2,26 @@
 
 Bảng phân chia công việc thực tế cho 3 thành viên nhóm trong giai đoạn tự chủ lập trình (Team Takeover).
 
+## 0. Đã hoàn thành gần nhất (Recently Completed)
+- [x] **LG-A-001 — Wire Contract & Protocol Fixtures & Final Freeze Patch:**
+  - [x] Đóng băng và tài liệu hóa chuẩn khung truyền: 6 trường envelope cố định, 4-byte Big-Endian length prefix, max payload 262,144 bytes, bảng mã lỗi và ma trận kiểm tra trong `CONTRACT_MATRIX.md`.
+  - [x] Triển khai `Encode`, `Decode`, `ReadEnvelopeAsync` trong `FrameCodec.cs` (xác thực nghiêm ngặt qua `EnvelopeValidator.ValidateAndParse`, ném `InvalidDataException` khi vi phạm).
+  - [x] Triển khai xác thực nghiêm ngặt phong bì raw JSON `ValidateRawJson` và `ValidateAndParse` trong `EnvelopeValidator.cs` (kiểm tra phân biệt hoa thường, cấm trường trùng lặp, payload phải là JSON object, version != 1 trả về `ERR_INVALID_VERSION` duy nhất, bắt buộc ký hiệu UTC `Z` hoặc `+00:00`).
+  - [x] Áp dụng `ValidateAndParse` trước khi phân phối / deserialize trên toàn bộ socket pipeline của Central (`ClientConnection.cs`), Agent (`AgentSocketClient.cs`), và Admin (`AdminClient.cs`).
+  - [x] Chuẩn hóa mã lỗi canonical: `ERR_MALFORMED_JSON` cho JSON sai cú pháp, `ERR_INVALID_VERSION` cho phiên bản khác 1.
+  - [x] Tạo đầy đủ đúng 16 fixtures chuẩn canonical (WBS_TASKS.csv): `heartbeat.json`, `heartbeat_ack.json`, `metric_batch.json`, `batch_ack.json`, `service_status.json`, `hello_agent.json`, `hello_ack.json`, `auth_agent.json`, `auth_result.json`, `agent_goodbye.json`, `goodbye_ack.json`, `login.json`, `login_result.json`, `incident_ack.json`, `command_result.json`, `error.json` và cập nhật `ProtocolFixtures.cs`.
+  - [x] Xây dựng bộ kiểm thử tự động toàn diện `WireContractAndFixturesTests.cs` (99/99 tests pass) và kiểm thử từ chối trường lạ qua kết nối TCP thực tế (53/53 tests pass).
+- [x] **LG-A-002 — FrameCodec & partial-read / message-framing verification:**
+  - [x] Hiện thực `FrameCodec.cs` với `ReadExactlyBytesAsync(Stream, byte[], offset, count, ct)` tích lũy byte qua vòng lặp, xử lý phân mảnh TCP (partial reads).
+  - [x] Tiền tố độ dài 4-byte UInt32 Big-Endian, `MaxPayloadSize = 262_144` bytes (256 KiB) và alias `MaxFrameSize = 262_144`.
+  - [x] Kiểm tra giới hạn: từ chối frame 0 byte (`InvalidDataException`) và frame > 262,144 bytes TRƯỚC KHI cấp phát bộ nhớ đệm payload (`InvalidDataException`).
+  - [x] Xử lý ngắt dòng: Graceful EOF tại ranh giới frame trả về `null`; EOF giữa chừng (mid-header hoặc mid-payload) ném `EndOfStreamException`.
+  - [x] Phân tách độc lập khi nhiều frame dính liền (coalesced frames).
+  - [x] Bộ kiểm thử tự động `FrameCodecTests.cs` (107/107 passed) và kịch bản độc lập `scratch/test_frame_codec/Program.cs` (10/10 passed).
+  - [x] Cập nhật bảng theo dõi `LabGuard_Task_Tracker.xlsx`: LG-A-002 / TEST-A02 chuyển sang `Xong` / `PASS`.
+- **Last Safe Checkpoint:** `LG-A-002 CLOSED` (165/165 tests pass trên toàn bộ Solution, 0 warnings).
+- **Exact Next Action:** A — Agent / Protocol: Triển khai tiếp nhiệm vụ **`LG-A-003` — Agent TCP connection và writer queue** theo tiến trình Master WBS (`WBS_TASKS.csv`). Không nhảy cóc trực tiếp sang RBAC.
+
 ---
 
 ## A — Agent / Simulator / Mạng thực tế

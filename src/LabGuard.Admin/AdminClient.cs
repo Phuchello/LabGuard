@@ -238,8 +238,8 @@ public class AdminClient : IAsyncDisposable
                     break;
                 }
 
-                var envelope = ProtocolSerializer.DeserializeEnvelope(frameBytes);
-                if (envelope == null)
+                var (validation, envelope) = EnvelopeValidator.ValidateAndParse(frameBytes);
+                if (!validation.IsValid || envelope == null)
                 {
                     continue;
                 }
@@ -324,8 +324,13 @@ public class AdminClient : IAsyncDisposable
             throw new EndOfStreamException("Server closed connection.");
         }
 
-        return ProtocolSerializer.DeserializeEnvelope(bytes)
-            ?? throw new InvalidOperationException("Failed to deserialize envelope.");
+        var (validation, envelope) = EnvelopeValidator.ValidateAndParse(bytes);
+        if (!validation.IsValid || envelope == null)
+        {
+            throw new InvalidDataException($"Invalid response envelope from server: [{validation.ErrorCode}] {validation.ErrorMessage}");
+        }
+
+        return envelope;
     }
 
     private async Task WriteEnvelopeAsync<T>(WireEnvelope<T> envelope, CancellationToken ct)

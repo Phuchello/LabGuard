@@ -169,7 +169,7 @@ public class TcpHandshakeIntegrationTests : IAsyncDisposable
     // TEST 5: Invalid/malformed JSON payload does not crash Central
     // =========================================================================
     [Fact]
-    public async Task MalformedJsonPayload_DoesNotCrashCentral_ReturnsInvalidPayloadError()
+    public async Task MalformedJsonPayload_DoesNotCrashCentral_ReturnsMalformedJsonError()
     {
         _server = CreateAndStartServer();
         using var tcpClient = new TcpClient();
@@ -189,7 +189,7 @@ public class TcpHandshakeIntegrationTests : IAsyncDisposable
 
         var error = ProtocolSerializer.ExtractPayload<ErrorPayload>(response.Payload);
         Assert.NotNull(error);
-        Assert.Equal(ErrorCodes.InvalidPayload, error.ErrorCode);
+        Assert.Equal(ErrorCodes.MalformedJson, error.ErrorCode);
 
         // Verify Central is still alive and accepts legitimate clients
         await using var client2 = new AgentSocketClient(LogTrace);
@@ -630,7 +630,7 @@ public class TcpHandshakeIntegrationTests : IAsyncDisposable
 
         var error = ProtocolSerializer.ExtractPayload<ErrorPayload>(resp.Payload);
         Assert.NotNull(error);
-        Assert.Equal(ErrorCodes.InvalidPayload, error.ErrorCode);
+        Assert.Equal(ErrorCodes.InvalidVersion, error.ErrorCode);
     }
 
     // =========================================================================
@@ -897,6 +897,36 @@ public class TcpHandshakeIntegrationTests : IAsyncDisposable
         {
             Assert.Contains(_traceLogs, l => l.Contains("Received correlated GOODBYE_ACK"));
         }
+    }
+
+    [Fact]
+    public async Task ClientConnection_ReceivePath_RejectsUnknownOuterEnvelopeField_WithInvalidPayload()
+    {
+        _server = CreateAndStartServer();
+        using var tcpClient = new TcpClient();
+        await tcpClient.ConnectAsync(IPAddress.Loopback, _server.Port);
+        var stream = tcpClient.GetStream();
+
+        // Send a frame with an unauthorized extra outer field: "unauthorizedExtraField"
+        string rawJson = "{\"version\":1,\"messageType\":\"HELLO_AGENT\",\"requestId\":\"c0000000-0000-4000-8000-000000000001\",\"deviceId\":\"PC-TEST-01\",\"sentAtUtc\":\"2026-09-20T10:00:00.0000000Z\",\"payload\":{},\"unauthorizedExtraField\":\"HACK\"}";
+        byte[] payloadBytes = Encoding.UTF8.GetBytes(rawJson);
+        byte[] frameBytes = FrameCodec.Encode(payloadBytes);
+
+        await stream.WriteAsync(frameBytes);
+        await stream.FlushAsync();
+
+        // Central should send back an ERROR frame with ERR_INVALID_PAYLOAD
+        byte[]? responsePayload = await FrameCodec.ReadFrameAsync(stream);
+        Assert.NotNull(responsePayload);
+
+        var responseEnvelope = ProtocolSerializer.DeserializeEnvelope(responsePayload);
+        Assert.NotNull(responseEnvelope);
+        Assert.Equal(MessageTypes.Error, responseEnvelope.MessageType);
+
+        var errorPayload = ProtocolSerializer.ExtractPayload<ErrorPayload>(responseEnvelope.Payload);
+        Assert.NotNull(errorPayload);
+        Assert.Equal(ErrorCodes.InvalidPayload, errorPayload.ErrorCode);
+        Assert.Contains("unauthorizedExtraField", errorPayload.ErrorMessage);
     }
 
     public async ValueTask DisposeAsync()
