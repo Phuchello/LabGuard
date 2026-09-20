@@ -14,6 +14,10 @@ public static class ErrorCodes
     public const string InvalidPayload = "ERR_INVALID_PAYLOAD";
     public const string FrameTooLarge = "ERR_FRAME_TOO_LARGE";
     public const string FrameZeroLength = "ERR_FRAME_ZERO_LENGTH";
+    public const string MalformedJson = "ERR_MALFORMED_JSON";
+    public const string StreamTruncated = "ERR_STREAM_TRUNCATED";
+    public const string InvalidVersion = "ERR_INVALID_VERSION";
+    public const string DeviceOffline = "ERR_DEVICE_OFFLINE";
     public const string UnknownMessageType = "ERR_UNKNOWN_MESSAGE_TYPE";
     public const string DeviceNotFound = "ERR_DEVICE_NOT_FOUND";
     public const string IncidentNotFound = "ERR_INCIDENT_NOT_FOUND";

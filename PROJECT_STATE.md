@@ -25,16 +25,47 @@
 
 ---
 
+- **Task LG-A-001 (Wire Contract & Protocol Fixtures & Final Freeze Patch):** Đã hoàn thành (DONE).
+  - Đóng băng giao ước wire protocol: Envelope đúng 6 trường cố định (`version`, `messageType`, `requestId`, `deviceId`, `sentAtUtc`, `payload`), cấm trường lạ và kiểm tra phân biệt hoa thường nghiêm ngặt ở outer envelope (`ValidateRawJson` / `ValidateAndParse`).
+  - Kiểm tra kiểu dữ liệu `payload`: Bắt buộc `JsonValueKind.Object` (từ chối string, number, boolean, array, null, undefined).
+  - Chuẩn hóa lỗi phiên bản: `version != 1` trả về mã lỗi canonical `ERR_INVALID_VERSION` duy nhất.
+  - Chuẩn hóa lỗi JSON hỏng: JSON sai cú pháp trả về mã lỗi canonical `ERR_MALFORMED_JSON` trên toàn bộ pipeline.
+  - Ràng buộc mốc thời gian UTC: `sentAtUtc` bắt buộc chứa ký hiệu chỉ định UTC rõ ràng (`Z` hoặc `+00:00`), từ chối chuỗi không múi giờ.
+  - Đóng khung TCP: UInt32 Big-Endian 4-byte header biểu diễn duy nhất payload byte count; max payload 262,144 bytes; xử lý luồng byte TCP (phân mảnh & dính gói); `FrameCodec.ReadEnvelopeAsync` xác thực nghiêm ngặt và ném `InvalidDataException` khi vi phạm.
+  - Đúng 16 fixtures chuẩn canonical (theo chỉ tiêu WBS_TASKS.csv): `HEARTBEAT`, `HEARTBEAT_ACK`, `METRIC_BATCH`, `BATCH_ACK`, `SERVICE_STATUS`, `HELLO_AGENT`, `HELLO_ACK`, `AUTH_AGENT`, `AUTH_RESULT`, `AGENT_GOODBYE`, `GOODBYE_ACK`, `LOGIN`, `LOGIN_RESULT`, `INCIDENT_ACK`, `COMMAND_RESULT`, `ERROR` (minified, không BOM, <= 262,144 bytes, deserialize vào DTO tương ứng).
+  - Phân định rõ ràng: 16 canonical fixtures đóng băng giao ước cốt lõi vs. kiểm thử tương thích 69 bản tin toàn catalog.
+
+- **Task LG-A-002 (FrameCodec & partial-read / message-framing verification):** Đã hoàn thành (DONE).
+  - Hiện thực và chuẩn hóa `FrameCodec.cs`:
+    - Tiền tố độ dài 4-byte UInt32 Big-Endian (`BinaryPrimitives.ReadUInt32BigEndian` / `WriteUInt32BigEndian`).
+    - Hằng số `MaxPayloadSize = 262_144` bytes (256 KiB) và alias `MaxFrameSize = 262_144` theo đúng interface contract trong WBS.
+    - Phương thức phụ trợ tích lũy byte `ReadExactlyBytesAsync(Stream, byte[], offset, count, ct)` xử lý triệt để hiện tượng phân mảnh TCP (TCP partial reads), ném `EndOfStreamException` khi kênh truyền bị đóng bất ngờ.
+    - Kiểm tra giới hạn nghiêm ngặt: Từ chối frame 0 byte (`InvalidDataException`) và từ chối frame vượt quá 262,144 bytes TRƯỚC KHI cấp phát bộ nhớ đệm payload (`InvalidDataException`), chống tấn công cạn kiệt RAM (DoS/OOM).
+    - Đóng kết nối an toàn: Trả về `null` khi gặp Graceful EOF tại ranh giới frame; ném `EndOfStreamException` khi gặp EOF giữa header hoặc giữa payload.
+    - Tách frame độc lập: Phân tách hoàn hảo khi nhiều frame dính liền trong một luồng stream (Packet Coalescing).
+  - Bộ kiểm thử tự động toàn diện `FrameCodecTests.cs` (100% pass) kiểm chứng đầy đủ 9 kịch bản quy định trong WBS và kịch bản phụ trợ `ReadExactlyBytesAsync`.
+  - Chương trình kiểm chứng độc lập `scratch/test_frame_codec/Program.cs` và log thực thi `scratch/test_frame_codec/test_frame_codec_run.log` (10/10 scenarios passed).
+  - Đồng bộ Task Tracker `LabGuard_Task_Tracker.xlsx`: LG-A-002 / TEST-A02 chuyển sang `Xong` / `PASS`.
+
+---
+
 ## 2. KẾT QUẢ KIỂM THỬ HIỆN TẠI (AUTOMATED TEST COUNT)
 
-**Tổng số kiểm thử tự động:** **77 / 77 tests PASSED (100%)**
-- `LabGuard.Protocol.Tests`: **20 / 20 passed** (Kiểm thử FrameCodec, DTO serialize/deserialize).
+**Tổng số kiểm thử tự động:** **165 / 165 tests PASSED (100%)**
+- `LabGuard.Protocol.Tests`: **107 / 107 passed** (Kiểm thử FrameCodec, ReadExactlyBytesAsync, chunking 1-byte header/payload, coalescing 3 frames, boundary 262,144 bytes, WireEnvelope, raw JSON validation, 8 yêu cầu wire contract, 16 canonical fixtures minified/no-BOM/DTO deserialization, strict casing, duplicate keys, non-object payloads, strict uppercase 'Z'/'+00:00' UTC designator, ReadEnvelopeAsync strictness).
 - `LabGuard.Agent.Tests`: **5 / 5 passed** (Kiểm thử `ReplayBuffer` FIFO, drop-oldest, cờ `isReplay`).
-- `LabGuard.Central.Tests`: **52 / 52 passed** (Kiểm thử RuleEngine streak, ClientConnection, DatabaseRepository, OCC Conflict 409, Idempotency và luồng sự cố TCP).
+- `LabGuard.Central.Tests`: **53 / 53 passed** (Kiểm thử RuleEngine streak, ClientConnection, DatabaseRepository, OCC Conflict 409, Idempotency, luồng sự cố TCP và từ chối trường lạ qua kết nối TCP thực tế).
 
 *Minh chứng giao diện & báo cáo:*
 - Ảnh chụp màn hình Dashboard Milestone 4: [docs/screenshots/dashboard_milestone4.png](docs/screenshots/dashboard_milestone4.png)
 - Báo cáo chi tiết các mốc trước: `docs/history/product-milestones/`
+
+---
+
+## 2.1. CHECKPOINT AN TOÀN & HÀNH ĐỘNG TIẾP THEO (CHECKPOINT & NEXT ACTION)
+
+- **Last Safe Checkpoint:** `LG-A-002 CLOSED` (165/165 automated tests pass, zero regressions, zero warnings).
+- **Exact Next Action:** Triển khai tiếp nhiệm vụ **`LG-A-003` — Agent TCP connection và writer queue** theo tiến trình Master WBS (`WBS_TASKS.csv`). Không nhảy cóc trực tiếp sang RBAC.
 
 ---
 

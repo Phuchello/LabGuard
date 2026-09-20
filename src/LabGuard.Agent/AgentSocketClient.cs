@@ -439,8 +439,11 @@ public class AgentSocketClient : IAsyncDisposable
             throw new EndOfStreamException("Server closed connection while waiting for response frame.");
         }
 
-        var envelope = ProtocolSerializer.DeserializeEnvelope(frameBytes)
-            ?? throw new InvalidOperationException("Failed to deserialize wire envelope from response bytes.");
+        var (validation, envelope) = EnvelopeValidator.ValidateAndParse(frameBytes);
+        if (!validation.IsValid || envelope == null)
+        {
+            throw new InvalidDataException($"Received invalid envelope from server: [{validation.ErrorCode}] {validation.ErrorMessage}");
+        }
 
         if (envelope.MessageType != MessageTypes.HeartbeatAck)
         {

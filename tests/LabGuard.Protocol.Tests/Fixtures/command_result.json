@@ -1,0 +1,1 @@
+{"version":1,"messageType":"COMMAND_RESULT","requestId":"c0000000-0000-4000-8000-000000000015","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"commandId":"c0000000-0000-4000-8000-000000000005","success":true,"statusCode":200,"errorCode":null,"errorMessage":null,"updatedRowVersionHex":"0x0000000000000002"}}

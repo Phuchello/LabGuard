@@ -15,30 +15,54 @@
 
 ---
 
-## II. CẤU TRÚC KHUNG TRUYỀN DÙNG CHUNG (WIRE ENVELOPE)
+## II. CẤU TRÚC KHUNG TRUYỀN DÙNG CHUNG (WIRE ENVELOPE) — FROZEN SPECIFICATION
 
 ### 1. Phân khung nhị phân (Binary Length-Prefix Framing)
-- **4 byte Header:** Số nguyên 32-bit không dấu (`uint32`) theo thứ tự byte mạng Big-Endian (RFC 1700), biểu diễn độ dài payload $N$ byte ($0 < N \le 256\text{ KiB} = 262,144\text{ bytes}$).
-- **$N$ byte Payload:** Chuỗi JSON mã hóa UTF-8 tuân thủ RFC 8259.
-- **Ranh giới khung truyền:** Độ dài $N$ không tính 4 byte header. Tổng số byte trên socket là $4 + N$.
-- **Xử lý ngắt kết nối (EOF):** Bộ đọc khung truyền sử dụng `ReadExactlyBytesAsync`. Nếu kết nối bị đóng trước khi nhận đủ 4 byte prefix hoặc đủ $N$ byte payload, phương thức ném ngay ngoại lệ `EndOfStreamException` và hủy stream an toàn; không bao giờ chuyển dữ liệu bị cắt cụt sang bộ giải mã JSON.
+- **4-byte Header (Length Prefix):**
+  - Định dạng: Số nguyên 32-bit không dấu (`UInt32`), chính xác 4 bytes.
+  - Thứ tự byte: **Big-Endian / Network Byte Order** (RFC 1700 / RFC 9293).
+  - Ý nghĩa: Biểu diễn **DUY NHẤT** số lượng byte của payload JSON UTF-8 ($N$ bytes).
+  - **KHÔNG** bao gồm 4 byte của chính header length prefix.
+  - Tổng số byte thực tế trên đường truyền wire socket: $\text{TotalBytes} = 4 + N$.
+- **$N$-byte Payload:**
+  - Chuỗi JSON được mã hóa UTF-8 (RFC 8259), **không có BOM** (Byte Order Mark).
+  - Giới hạn kích thước payload: $0 < N \le \text{MAX\_JSON\_BYTES} = 262,144\text{ bytes}$ (256 KiB).
+  - Giới hạn tổng frame: $\text{MAX\_WIRE\_FRAME\_SIZE} = 4 + 262,144 = 262,148\text{ bytes}$.
+- **Nguyên lý dòng byte TCP (TCP is a Byte Stream):**
+  - TCP là luồng byte liên tục (stream-oriented), không có khái niệm ranh giới gói tin ứng dụng (packet boundary).
+  - **Tuyệt đối không giả định một lệnh `Receive()`/`ReadAsync()` tương đương một message.**
+  - Dữ liệu có thể bị phân mảnh (fragmentation: header 4 byte hoặc payload bị chia thành nhiều mảnh nhỏ) hoặc dính gói (coalescing: nhiều frames nằm liền kề trong cùng một buffer đọc).
+  - Bộ giải mã `FrameCodec` sử dụng vòng lặp đọc chính xác (`exact-length reads`) để đảm bảo đọc đủ 4 byte header rồi mới đọc đúng $N$ byte payload trước khi chuyển sang bộ giải mã JSON.
+- **Xử lý ngắt kết nối & lỗi luồng:**
+  - Nếu kết nối bị đóng sạch sẽ ngay tại ranh giới frame (0 byte đọc được khi bắt đầu đọc header mới), phương thức trả về `null` báo hiệu đóng phiên an toàn (Clean EOF).
+  - Nếu kết nối bị đóng giữa chừng khi đang đọc dở 4 byte header hoặc đang đọc dở $N$ byte payload, phương thức ném ngay ngoại lệ `EndOfStreamException` (`ERR_STREAM_TRUNCATED`) và đóng hủy kết nối socket; không bao giờ chuyển dữ liệu bị cắt cụt sang bộ giải mã JSON.
+  - Nếu độ dài $N = 0$, ném ngoại lệ `InvalidDataException` (`ERR_FRAME_ZERO_LENGTH`).
+  - Nếu độ dài $N > 262,144$, ném ngay ngoại lệ `InvalidDataException` (`ERR_FRAME_TOO_LARGE`) và đóng socket.
 
-### 2. Envelope JSON thống nhất (Outer Envelope)
-Mọi bản tin wire trao đổi đều dùng đúng 6 trường envelope cố định:
+### 2. Envelope JSON thống nhất (Outer Envelope) — Bắt buộc đúng 6 trường
+Mọi bản tin trao đổi trong toàn bộ hệ thống LabGuard (Agent, Central Server, Admin Client) bắt buộc phải sử dụng phong bì JSON chuẩn mực gồm **CHÍNH XÁC 6 TRƯỜNG**, không được thêm bất kỳ trường nào khác ở outer envelope:
+
 ```json
 {
   "version": 1,
   "messageType": "<EXACT_MESSAGE_TYPE_UPPERCASE>",
   "requestId": "550e8400-e29b-41d4-a716-446655440000",
   "deviceId": "PC-LAB1-07",
-  "sentAtUtc": "2026-09-13T07:15:30.1234567Z",
+  "sentAtUtc": "2026-09-20T10:00:00.0000000Z",
   "payload": { }
 }
 ```
-*Ghi chú chuẩn hóa:*
-- `sentAtUtc`: Mốc thời gian ISO-8601 UTC do bên gửi tạo ra. Không dùng tên trường `timestamp`.
-- `requestId`: Định danh UUID v4 duy nhất của frame phục vụ đối soát tương quan (Correlation ID) giữa Request và Response; không dùng làm khóa khử trùng lặp nghiệp vụ.
-- `isReplay`: Đối với bản tin telemetry và service status, cờ `isReplay` nằm **bên trong `payload`**, không đặt ở root envelope.
+
+#### Ma trận kiểu dữ liệu và quy tắc xác thực (Data Types & Validation Rules):
+| Tên trường | Kiểu dữ liệu | Ràng buộc kỹ thuật & Quy tắc xác thực | Hành vi khi vi phạm |
+|:---|:---|:---|:---|
+| `version` | `int` (Integer) | Bắt buộc phải bằng đúng `1`. Không chấp nhận giá trị khác (`0`, `2`, `-1`, ...). | Từ chối bản tin, trả mã lỗi `ERR_INVALID_VERSION`. |
+| `messageType` | `string` | Chuỗi ký tự in hoa, không rỗng, phải nằm trong danh mục 69 bản tin chuẩn (`MessageTypes`). | Từ chối bản tin, trả mã lỗi `ERR_UNKNOWN_MESSAGE_TYPE`. |
+| `requestId` | `string` | Bắt buộc là chuỗi UUID version 4 chuẩn theo RFC 4122, định dạng 36 ký tự có dấu gạch ngang (`D` format: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` với $y \in \{8, 9, a, b\}$). Dùng làm Correlation ID. | Từ chối bản tin, trả mã lỗi `ERR_INVALID_PAYLOAD`. |
+| `deviceId` | `string` | Chuỗi định danh thiết bị hoặc node gửi tin, không được để trống hoặc chỉ chứa khoảng trắng. | Từ chối bản tin, trả mã lỗi `ERR_INVALID_PAYLOAD`. |
+| `sentAtUtc` | `string` | Mốc thời gian ISO-8601 UTC do bên gửi tạo ra, bắt buộc có độ lệch zero offset (`Z` hoặc `+00:00`). Không chấp nhận múi giờ địa phương khác 0 (ví dụ `+07:00`). Không dùng tên `timestamp`. | Từ chối bản tin, trả mã lỗi `ERR_INVALID_PAYLOAD`. |
+| `payload` | `object` | Đối tượng JSON chứa nội dung chuyên biệt của bản tin. Bắt buộc phải tồn tại, không được là `null` hoặc `undefined`. | Từ chối bản tin, trả mã lỗi `ERR_INVALID_PAYLOAD`. |
+| *(Trường khác)* | *(Bất kỳ)* | **TUYỆT ĐỐI KHÔNG ĐƯỢC THÊM TRƯỜNG NGOÀI 6 TRƯỜNG TRÊN.** Cờ `isReplay`, `token`, phân trang... phải nằm bên trong `payload`. | Từ chối bản tin với `ERR_INVALID_PAYLOAD` nếu phát hiện trường lạ ở outer envelope. |
 
 ---
 
@@ -243,6 +267,103 @@ Catalog được đối chiếu bằng phép so sánh tập hợp tên message v
 
 ## V. CHI TIẾT ĐẶC TẢ PAYLOAD & PHẢN HỒI (DTO FIXTURES)
 
+### 0. Bộ 16 Fixtures Giao Thức Chuẩn Canonical (LG-A-001 Frozen Fixtures)
+
+> [!NOTE]
+> **Phân định phạm vi nghiệm thu:** 16 fixtures dưới đây là bộ fixture chuẩn canonical chính thức của **LG-A-001** (theo chỉ tiêu `WBS_TASKS.csv`), bao quát toàn bộ các luồng giao tiếp cốt lõi P0 Core (Handshake, Auth, Liveness, Telemetry, Disconnect, Admin Auth, Incident Command, Error). Việc kiểm thử toàn diện danh mục 69 bản tin là phạm vi tương thích đầy đủ (Full Catalog Compatibility Scope) được quản lý riêng biệt.
+
+Tất cả 16 fixture canonical đều:
+- Tuân thủ đúng 6 trường outer envelope chuẩn (`version`, `messageType`, `requestId`, `deviceId`, `sentAtUtc`, `payload`).
+- Phân biệt hoa thường chính xác (`StringComparer.Ordinal`).
+- Chứa `payload` dạng đối tượng JSON (`JsonValueKind.Object`).
+- Mã hóa UTF-8, **không chứa UTF-8 BOM**.
+- Được **minified** (không chứa khoảng trắng phân cách token, không chứa ký tự xuống dòng `\r` hay `\n`).
+- Kích thước luôn nhỏ hơn giới hạn tối đa `MAX_JSON_BYTES = 262,144 bytes`.
+- Được lưu tại thư mục `tests/LabGuard.Protocol.Tests/Fixtures/*.json` và nhúng trong `ProtocolFixtures.cs`.
+- Tương thích và deserialize chính xác vào DTO tương ứng.
+
+#### 1. `HEARTBEAT` (`heartbeat.json`)
+```json
+{"version":1,"messageType":"HEARTBEAT","requestId":"c0000000-0000-4000-8000-000000000001","deviceId":"PC-LAB1-01","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"sequenceNumber":1,"uptimeSeconds":3600}}
+```
+
+#### 2. `HEARTBEAT_ACK` (`heartbeat_ack.json`)
+```json
+{"version":1,"messageType":"HEARTBEAT_ACK","requestId":"c0000000-0000-4000-8000-000000000009","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"serverTimeUtc":"2026-09-20T10:00:00.0000000Z","acknowledgedSequence":1}}
+```
+
+#### 3. `METRIC_BATCH` (`metric_batch.json`)
+```json
+{"version":1,"messageType":"METRIC_BATCH","requestId":"c0000000-0000-4000-8000-000000000002","deviceId":"PC-LAB1-01","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"bootId":"b0000000-0000-4000-8000-000000000001","batchId":"b0000000-0000-4000-8000-000000000002","sampleCount":2,"uptimeSeconds":3600,"isReplay":false,"samples":[{"metricName":"CPU","metricValue":45.5,"unit":"%","recordedAtUtc":"2026-09-20T10:00:00.0000000Z"},{"metricName":"RAM","metricValue":62.0,"unit":"%","recordedAtUtc":"2026-09-20T10:00:00.0000000Z"}]}}
+```
+
+#### 4. `BATCH_ACK` (`batch_ack.json`)
+```json
+{"version":1,"messageType":"BATCH_ACK","requestId":"c0000000-0000-4000-8000-000000000010","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"bootId":"b0000000-0000-4000-8000-000000000001","batchId":"b0000000-0000-4000-8000-000000000002","accepted":true,"samplesRecorded":2,"errorMessage":null}}
+```
+
+#### 5. `SERVICE_STATUS` (`service_status.json`)
+```json
+{"version":1,"messageType":"SERVICE_STATUS","requestId":"c0000000-0000-4000-8000-000000000011","deviceId":"PC-LAB1-01","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"isReplay":false,"services":[{"serviceName":"HTTP","port":80,"isListening":true,"responseTimeMs":4,"lastCheckedUtc":"2026-09-20T10:00:00.0000000Z"},{"serviceName":"SSH","port":22,"isListening":true,"responseTimeMs":12,"lastCheckedUtc":"2026-09-20T10:00:00.0000000Z"}]}}
+```
+
+#### 6. `HELLO_AGENT` (`hello_agent.json`)
+```json
+{"version":1,"messageType":"HELLO_AGENT","requestId":"c0000000-0000-4000-8000-000000000005","deviceId":"PC-LAB1-01","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"agentVersion":"1.0.0","osVersion":"Microsoft Windows 11 Pro","hostname":"LAB01-PC01","macAddress":"00:1A:2B:3C:4D:5E"}}
+```
+
+#### 7. `HELLO_ACK` (`hello_ack.json`)
+```json
+{"version":1,"messageType":"HELLO_ACK","requestId":"c0000000-0000-4000-8000-000000000006","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"serverVersion":"1.0.0","capabilities":["TLS","JSON_FRAMING","OCC"],"serverTimeUtc":"2026-09-20T10:00:00.0000000Z","heartbeatIntervalSeconds":5}}
+```
+
+#### 8. `AUTH_AGENT` (`auth_agent.json`)
+```json
+{"version":1,"messageType":"AUTH_AGENT","requestId":"c0000000-0000-4000-8000-000000000007","deviceId":"PC-LAB1-01","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"preSharedToken":"LABGUARD_TOKEN_2026","clientNonce":"a0000000000000000000000000000001"}}
+```
+
+#### 9. `AUTH_RESULT` (`auth_result.json`)
+```json
+{"version":1,"messageType":"AUTH_RESULT","requestId":"c0000000-0000-4000-8000-000000000008","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"success":true,"sessionId":"s0000000-0000-4000-8000-000000000001","assignedDeviceId":"PC-LAB1-01","errorMessage":null}}
+```
+
+#### 10. `AGENT_GOODBYE` (`agent_goodbye.json`)
+```json
+{"version":1,"messageType":"AGENT_GOODBYE","requestId":"c0000000-0000-4000-8000-000000000012","deviceId":"PC-LAB1-01","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"reason":"NORMAL_SHUTDOWN","uptimeSeconds":7200}}
+```
+
+#### 11. `GOODBYE_ACK` (`goodbye_ack.json`)
+```json
+{"version":1,"messageType":"GOODBYE_ACK","requestId":"c0000000-0000-4000-8000-000000000013","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"success":true}}
+```
+
+#### 12. `LOGIN` (`login.json`)
+```json
+{"version":1,"messageType":"LOGIN","requestId":"c0000000-0000-4000-8000-000000000003","deviceId":"ADMIN-CONSOLE","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"username":"admin","password":"AdminPassword123!"}}
+```
+
+#### 13. `LOGIN_RESULT` (`login_result.json`)
+```json
+{"version":1,"messageType":"LOGIN_RESULT","requestId":"c0000000-0000-4000-8000-000000000014","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"success":true,"sessionToken":"t0000000-0000-4000-8000-000000000001","userId":1,"role":"Admin","fullName":"Administrator","errorMessage":null}}
+```
+
+#### 14. `INCIDENT_ACK` (`incident_ack.json`)
+```json
+{"version":1,"messageType":"INCIDENT_ACK","requestId":"c0000000-0000-4000-8000-000000000004","deviceId":"ADMIN-CONSOLE","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"commandId":"c0000000-0000-4000-8000-000000000005","commandType":"INCIDENT_ACK","incidentId":1,"expectedRowVersion":"0x0000000000000001","commandParams":{}}}
+```
+
+#### 15. `COMMAND_RESULT` (`command_result.json`)
+```json
+{"version":1,"messageType":"COMMAND_RESULT","requestId":"c0000000-0000-4000-8000-000000000015","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"commandId":"c0000000-0000-4000-8000-000000000005","success":true,"statusCode":200,"errorCode":null,"errorMessage":null,"updatedRowVersionHex":"0x0000000000000002"}}
+```
+
+#### 16. `ERROR` (`error.json`)
+```json
+{"version":1,"messageType":"ERROR","requestId":"c0000000-0000-4000-8000-000000000016","deviceId":"CENTRAL-SERVER","sentAtUtc":"2026-09-20T10:00:00.0000000Z","payload":{"errorCode":"ERR_INVALID_PAYLOAD","errorMessage":"Invalid envelope payload.","details":null}}
+```
+
+---
+
 ### 1. `HEARTBEAT` (Agent $\rightarrow$ Central) & `HEARTBEAT_ACK`
 - **Envelope:** `messageType = "HEARTBEAT"`
 - **Payload `HEARTBEAT`:**
@@ -403,9 +524,13 @@ Catalog được đối chiếu bằng phép so sánh tập hợp tên message v
 
 | Error Code | Ý Nghĩa Kỹ Thuật | Phía Bắt & Xử Lý | Hành Vi Hệ Thống |
 |:---|:---|:---:|:---|
-| `ERR_FRAME_TOO_LARGE` | Frame length $N > 256\text{ KiB}$ | Central / Agent / Admin | Đóng socket ngay, ghi log bảo mật |
-| `ERR_MALFORMED_JSON` | Payload không parse được JSON hợp lệ | Phía nhận | Bỏ qua payload, ném JsonException, không crash |
-| `ERR_STREAM_TRUNCATED` | Đứt kết nối giữa chừng khi đọc frame | `FrameCodec` | Bắt EndOfStreamException, hủy stream, kết nối lại |
+| `ERR_FRAME_TOO_LARGE` | Frame length $N > 256\text{ KiB}$ (262,144 bytes) | Central / Agent / Admin | Đóng socket ngay, ném `InvalidDataException`, ghi log bảo mật |
+| `ERR_FRAME_ZERO_LENGTH` | Frame length $N == 0$ bytes | Central / Agent / Admin | Đóng socket ngay, ném `InvalidDataException` |
+| `ERR_MALFORMED_JSON` | Payload không parse được JSON hợp lệ | Phía nhận / Validator | Bỏ qua payload, ném JsonException hoặc từ chối envelope, không crash |
+| `ERR_STREAM_TRUNCATED` | Đứt kết nối giữa chừng khi đọc header hoặc payload | `FrameCodec` | Bắt EndOfStreamException, hủy stream, kết nối lại |
+| `ERR_INVALID_PAYLOAD` | Thiếu trường bắt buộc trong envelope, thừa trường ở outer envelope, hoặc sai định dạng UUID/timestamp | `EnvelopeValidator` | Từ chối bản tin, trả response báo lỗi |
+| `ERR_INVALID_VERSION` | Envelope `version != 1` | `EnvelopeValidator` | Từ chối bản tin, trả response báo lỗi |
+| `ERR_UNKNOWN_MESSAGE_TYPE` | `messageType` không nằm trong danh mục catalog chuẩn | `EnvelopeValidator` | Từ chối bản tin, trả response báo lỗi |
 | `ERR_UNAUTHENTICATED` | Chưa xác thực hoặc Token hết hạn | Admin / Agent | Yêu cầu đăng nhập lại / chặn gửi telemetry |
 | `ERR_UNAUTHORIZED` | Quyền không đủ (Viewer thực hiện Resolve) | Central Server | Từ chối lệnh, trả lỗi 403 Forbidden |
 | `ERR_CONCURRENCY_VIOLATION` | Sai expectedRowVersion (Xung đột OCC) | Admin Client UI | Báo Conflict 409, reload dữ liệu mới nhất từ Central |
