@@ -1,0 +1,502 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{labguard_pdf}
+
+\begin{document}
+
+% ==============================================================================
+% TRANG BIA CHUAN DO AN UIT (TEXT-ONLY, GON GANG, HOC THUAT)
+% ==============================================================================
+\begin{titlepage}
+  \centering
+  \vspace*{-10mm}
+  {\bfseries\large ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH\par}
+  {\bfseries\large TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN\par}
+  {\bfseries\large KHOA MẠNG MÁY TÍNH VÀ TRUYỀN THÔNG\par}
+  \vspace{15mm}
+  {\color{lgDeepBlue}\hrule height 2pt}
+  \vspace{12mm}
+  {\bfseries\large NT106 — LẬP TRÌNH MẠNG CĂN BẢN\par}
+  \vspace{12mm}
+  {\bfseries\huge\color{lgDeepBlue} CẨM NANG LABGUARD\par}
+  \vspace{5mm}
+  {\bfseries\Huge\color{lgDeepBlue} HƯỚNG DẪN THÀNH VIÊN D\par}
+  \vspace{8mm}
+  {\bfseries\Large GATEWAY / COLLECTOR \& ĐỘ TIN CẬY MẠNG\par}
+  \vspace{4mm}
+  {\large Trạm trung chuyển dữ liệu, công cụ giả lập kiểm thử tải và kỹ thuật phân tích gói tin\par}
+  \vspace{12mm}
+  {\color{lgTeal}\hrule height 1pt}
+  \vspace{25mm}
+  {\large\textbf{BIÊN SOẠN: VÕ TRỌNG PHÚC}\par}
+  \vspace{6mm}
+  {\large\textbf{NHÓM THỰC HIỆN: 4 THÀNH VIÊN}\par}
+  \vfill
+  {\bfseries\color{lgSlate} TP. HỒ CHÍ MINH — 2026\par}
+\end{titlepage}
+
+% ==============================================================================
+% TRANG 2: KHỞI ĐỘNG NHANH CHO THÀNH VIÊN D (5 MỤC KHÔNG BIỆT NGỮ)
+% ==============================================================================
+\thispagestyle{empty}
+\vspace*{-8mm}
+{\centering\Large\bfseries\color{lgDeepBlue} KHỞI ĐỘNG NHANH DÀNH CHO THÀNH VIÊN D\par}
+\vspace{1mm}
+{\centering\footnotesize\color{lgGray} (Đọc xong trang này trong 2 phút là bạn biết chính xác mình cần làm gì hôm nay)\par}
+\vspace{4mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightTeal, colframe=lgTeal, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
+{\bfseries\color{lgTeal} 1. BẠN LÀ AI?}\par
+\vspace{0.5mm}
+Bạn phụ trách lớp trung chuyển giúp hệ thống phục vụ nhiều Agent: \textbf{Gateway} và \textbf{Collector}.
+\end{tcolorbox}
+\vspace{1.5mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightBlue, colframe=lgDeepBlue, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
+{\bfseries\color{lgDeepBlue} 2. BẠN LÀM GÌ?}\par
+\vspace{0.5mm}
+\begin{itemize}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
+  \item Hiểu giao thức Protocol do Thành viên A thiết kế.
+  \item Dựng môi trường Stub/Mock (FakeAgent và FakeCentral) để thử nghiệm độc lập.
+  \item Nắm vững cơ chế hàng đợi có giới hạn để điều tiết lưu lượng gói tin.
+  \item Xây dựng từng bước trạm trung chuyển dữ liệu Gateway và Collector.
+  \item Kiểm tra kịch bản chuyển đổi dự phòng (Failover) khi máy chủ gặp sự cố.
+\end{itemize}
+\end{tcolorbox}
+\vspace{1.5mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightRed, colframe=lgCrimson, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
+{\bfseries\color{lgCrimson} 3. BẠN KHÔNG CẦN LO PHẦN NÀO?}\par
+\vspace{0.5mm}
+\begin{itemize}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
+  \item Bạn \textbf{không cần} lo đo phần cứng máy trạm (việc của \textbf{Thành viên A}).
+  \item Bạn \textbf{không cần} lo cấu trúc bảng CSDL SQL Server hay viết luật nghiệp vụ (việc của \textbf{Thành viên B}).
+  \item Bạn \textbf{không cần} lo vẽ giao diện đồ họa WinForms (việc của \textbf{Thành viên C}).
+  \item \textit{Lưu ý:} Simulator và Wireshark là \textbf{công cụ hỗ trợ kiểm thử sau này}, không phải nghiệp vụ cốt lõi bạn cần lo ngay từ đầu.
+\end{itemize}
+\end{tcolorbox}
+\vspace{1.5mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightGreen, colframe=lgForestGreen, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
+{\bfseries\color{lgForestGreen} 4. HÔM NAY BẮT ĐẦU Ở ĐÂU?}\par
+\vspace{0.5mm}
+Đọc tài liệu để hiểu tại sao cần trạm Gateway khi phòng máy có nhiều máy tính, sau đó tìm hiểu cấu trúc đóng khung 4 byte độ dài của Protocol.
+\end{tcolorbox}
+\vspace{1.5mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightSlate, colframe=lgSlate, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
+{\bfseries\color{lgSlate} 5. FILES BẠN CẦN MỞ TRƯỚC:}\par
+\vspace{0.5mm}
+\begin{enumerate}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
+  \item \texttt{START\_HERE.md}: Kiến trúc tổng quát và vai trò các trạm mạng.
+  \item \texttt{src/LabGuard.Protocol/FrameCodec.cs}: Cách cắt và ghép 4 byte độ dài khi trung chuyển dữ liệu.
+  \item \texttt{src/LabGuard.Protocol/WireEnvelope.cs}: Cấu trúc thông điệp chuẩn để kiểm tra tính toàn vẹn.
+  \item \texttt{src/LabGuard.Protocol/MessageTypes.cs}: Danh mục tên các loại thông điệp cần kiểm thử.
+\end{enumerate}
+\end{tcolorbox}
+
+\newpage
+
+% ==============================================================================
+% MUC LUC
+% ==============================================================================
+\pagenumbering{roman}
+\setcounter{page}{3}
+
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{MỤC LỤC}
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ==============================================================================
+% PHAN 1: TONG QUAN VAI TRO THANH VIEN D
+% ==============================================================================
+\section[Tổng quan vai trò Thành viên D]{Tổng quan vai trò của Thành viên D: Mở rộng quy mô \& Độ tin cậy}
+
+\begin{summarybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Bạn phụ trách lớp trung chuyển giúp hệ thống phục vụ nhiều Agent: \textbf{Gateway} và \textbf{Collector}.
+  \item Đóng vai trò lớp đệm mở rộng quy mô (Scale Layer): gom luồng, điều tiết lưu lượng và bảo đảm độ tin cậy.
+  \item Nắm vững cơ chế hàng đợi có giới hạn để tiếp nhận gói tin mà không làm tràn bộ nhớ hay nghẽn máy chủ.
+  \item Simulator và Wireshark là các công cụ hỗ trợ kiểm thử sau này để thẩm định năng lực chịu tải và độ ổn định.
+\end{itemize}
+\end{summarybox}
+
+\subsection{Bài toán thực tế: Khi phòng máy có hàng trăm máy tính}
+Khi hệ thống LabGuard được nhân rộng cho cả một dãy phòng máy của trường đại học với hơn 500 đến 1,000 máy tính hoạt động cùng lúc:
+\begin{itemize}
+  \item \textbf{Nguy cơ bão kết nối (Connection Storm):} Nếu hàng trăm máy cùng gửi số liệu trực tiếp vào máy chủ Central trên cổng 5000, máy chủ sẽ bị quá tải kết nối và nghẽn mạng.
+  \item \textbf{Mạng giữa các phòng học (WAN / NAT):} Các máy trong từng phòng thường nằm sau router riêng, việc đặt một trạm thu gom (\textbf{Gateway}) tại mỗi phòng sẽ giúp tiết kiệm tối đa băng thông đường truyền.
+\end{itemize}
+
+\begin{conceptbox}
+\textbf{Trọng trách cốt lõi của Thành viên D:}
+\begin{enumerate}
+  \item \textbf{Trạm thu gom Gateway (Collector):} Gom các bản tin số liệu từ các máy trong phòng, đưa vào hàng đợi an toàn và chuyển tiếp về máy chủ trung tâm.
+  \item \textbf{Môi trường giả lập độc lập (FakeAgent / FakeCentral):} Giúp nhóm kiểm thử sớm mà không phải đợi nhau viết xong code.
+  \item \textbf{Bộ giả lập phòng máy (Simulator):} Tạo 30--50 máy ảo gửi nhịp tim định kỳ 5s và tích hợp phím bấm bơm sự cố để trình diễn.
+  \item \textbf{Phân tích gói tin qua Wireshark:} Soi dòng byte nhị phân để chứng minh hệ thống đóng khung 4 byte Big-Endian chuẩn xác.
+\end{enumerate}
+\end{conceptbox}
+
+Hình này chỉ cần nhìn theo các khối chức năng từ trên xuống dưới theo thứ tự triển khai.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=0.9cm, auto,
+    block/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners, text width=13.5cm, minimum height=0.9cm, align=left, font=\footnotesize},
+    arrow/.style={thick, ->, >=stealth, color=lgDeepBlue}]
+    \node[block] (g1) {\textbf{Chặng 1: Môi trường Stub độc lập (Wire Contract Fixtures)}\\Nắm vững 16 fixture chuẩn và xây dựng FakeAgent / FakeCentral stub.};
+    \node[block, below=of g1] (g2) {\textbf{Chặng 2: Hàng đợi thu gom có giới hạn (Bounded Queue)}\\Áp dụng Bounded Channel chống tràn bộ nhớ và điều tiết luồng dữ liệu.};
+    \node[block, below=of g2] (g3) {\textbf{Chặng 3: Chuyển tiếp hai chiều (Duplex Relay) \& Xử lý chịu lỗi}\\Duy trì bảng định tuyến kết nối phiên và tự phục hồi khi mất kết nối WAN.};
+    \node[block, below=of g3] (g4) {\textbf{Chặng 4: Công cụ hỗ trợ — Bộ giả lập phòng máy (Simulator)}\\Tạo 30--50 máy ảo song song, tích hợp menu phím bơm lỗi CPU và mạng.};
+    \node[block, below=of g4] (g5) {\textbf{Chặng 5: Công cụ hỗ trợ — Đo kiểm gói tin qua Wireshark}\\Lọc cổng 5000, kiểm chứng cấu trúc nhị phân 4 byte Big-Endian và JSON.};
+    \node[block, below=of g5] (g6) {\textbf{Chặng 6: Kịch bản diễn tập thuyết trình 5 phút}\\Phối hợp nhóm thực hiện kịch bản chứng minh tải và phản ứng sự cố.};
+    \draw[arrow] (g1) -- (g2);
+    \draw[arrow] (g2) -- (g3);
+    \draw[arrow] (g3) -- (g4);
+    \draw[arrow] (g4) -- (g5);
+    \draw[arrow] (g5) -- (g6);
+  \end{tikzpicture}
+  \caption{Lộ trình 6 giai đoạn kỹ thuật mở rộng của Thành viên D}
+\end{figure}
+
+Ý chính: Thành viên D đảm nhiệm tầng mở rộng (Gateway + Collector), bảo đảm hệ thống vận hành bền bỉ và chuyển tiếp thông suốt dưới tải cao.
+
+\begin{takeawaybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Gateway là trạm trung gian kết nối giữa máy phòng học và máy chủ trung tâm.
+  \item Simulator và Wireshark là công cụ hỗ trợ để thẩm định độ ổn định và kiểm chứng hệ thống dưới tải lớn.
+\end{itemize}
+\end{takeawaybox}
+
+% ==============================================================================
+% PHAN 2: LO TRINH THUC HIEN 6 GIAI DOAN CUA THANH VIEN D
+% ==============================================================================
+\section{Sáu chặng kỹ thuật của Thành viên D}
+
+\begin{summarybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Chặng 1: Xây dựng FakeAgent và FakeCentral để kiểm thử độc lập.
+  \item Chặng 2--3: Lập trình hàng đợi Bounded Channel và chuyển tiếp hai chiều.
+  \item Chặng 4--5: Viết bộ giả lập 50 máy ảo và bắt gói tin qua Wireshark.
+  \item Chặng 6: Diễn tập kịch bản demo 5 phút trước hội đồng chấm thi.
+\end{itemize}
+\end{summarybox}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 1: VIỆC TIẾP THEO CỦA BẠN: Môi trường Stub độc lập (FakeAgent / FakeCentral)}
+\vspace{2mm}
+
+\subsubsection{Tại sao cần môi trường Stub?}
+Khi làm việc nhóm 4 người, nếu bạn phải chờ bạn A viết xong Agent hoặc bạn B viết xong Central mới được thử code của mình thì tiến độ sẽ bị tắc nghẽn hoàn toàn. Các thành phần giả lập (\textbf{Stubs}) giúp bạn tự do thử nghiệm độc lập:
+\begin{itemize}
+  \item \textbf{FakeAgent:} Một chương trình nhỏ giả vờ là máy sinh viên, tự động kết nối và gửi các gói tin mẫu chuẩn.
+  \item \textbf{FakeCentral:} Một server nhỏ mở cổng 5000, lắng nghe kết nối và phản hồi các gói tin mẫu.
+\end{itemize}
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+FakeAgent đọc trực tiếp 16 fixture JSON chuẩn trong \texttt{tests/LabGuard.Protocol.Tests/Fixtures/} rồi gửi qua mạng. Nhờ vậy, dữ liệu kiểm thử luôn khớp 100\% với hợp đồng giao thức của nhóm.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Gửi và nhận chính xác 16 fixture mẫu mà không bị lỗi giải mã.
+  \item Toàn bộ khung tin trao đổi đều có 4 byte Big-Endian đúng quy định.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 2: VIỆC TIẾP THEO: Hàng đợi thu gom an toàn (Bounded Channel)}
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Nếu Gateway nhận được gói tin nào từ máy sinh viên cũng lập tức bắn thẳng về Central thì đường truyền sẽ ngập tràn các gói tin nhỏ rời rạc. Ngược lại, nếu Gateway lưu tạm vào một hàng đợi không giới hạn trong bộ nhớ thì khi mạng WAN bị chậm hoặc đứt quãng, hàng triệu byte dữ liệu dồn về sẽ làm cạn kiệt RAM và gây sập chương trình.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Hàng đợi có giới hạn để bộ nhớ không tăng vô hạn. Khi hàng đợi đầy, producer phải chờ để hệ thống tự giảm tốc độ tiếp nhận. Cơ chế bảo vệ này được gọi là \textbf{điều tiết áp lực ngược (Backpressure)}.
+
+Trong bản thiết kế của Gateway, hàng đợi thu gom được cấu hình dung lượng 100 phần tử (\texttt{BoundedChannelOptions(100)}) với chính sách chờ an toàn (\texttt{BoundedChannelFullMode.Wait}):
+\begin{itemize}
+  \item Duy nhất một luồng nền lấy từng gói tin ra để gửi tuần tự về Central Server.
+  \item Nếu hàng đợi đạt ngưỡng 100 phần tử, tác vụ đẩy tin tạm dừng bất đồng bộ cho tới khi hàng đợi có chỗ trống, ngăn ngừa hoàn toàn nguy cơ tràn bộ nhớ RAM.
+\end{itemize}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Hạn mức 100 phần tử bảo đảm bộ đệm Gateway luôn ổn định, kiểm soát an toàn mức chiếm dụng RAM.
+  \item Chính sách \texttt{FullMode.Wait} kích hoạt áp lực ngược, bảo vệ hệ thống không bị quá tải.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Hàng đợi thu gom Bounded Channel và Backpressure}]
+// Pseudocode minh hoa: Hang doi thu gom du lieu Bounded Channel
+public class TelemetryCollector
+{
+    private readonly Channel<byte[]> _queue = Channel.CreateBounded<byte[]>(
+        new BoundedChannelOptions(100) { FullMode = BoundedChannelFullMode.Wait });
+
+    public async ValueTask EnqueueAsync(byte[] frame, CancellationToken ct)
+        => await _queue.Writer.WriteAsync(frame, ct);
+
+    public async Task ForwardAsync(Stream stream, CancellationToken ct)
+    {
+        await foreach (var frame in _queue.Reader.ReadAllAsync(ct))
+            await FrameCodec.WriteFrameAsync(stream, frame, ct);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Hàng đợi giữ tối đa 100 phần tử, producer tự động tạm dừng đồng bộ nhịp độ khi đầy.
+  \item Bộ nhớ RAM luôn giữ ổn định, không xảy ra tràn bộ nhớ đệm.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 3: VIỆC TIẾP THEO: Chuyển tiếp hai chiều (Duplex Relay) \& Tự phục hồi (Failover)}
+\vspace{2mm}
+
+\subsubsection{Tại sao cần chuyển tiếp hai chiều?}
+Dữ liệu trong phòng máy không chỉ đi một chiều từ máy trạm lên máy chủ. Khi máy chủ Central muốn phản hồi gói tin xác nhận (\texttt{HEARTBEAT\_ACK}) hoặc gửi lệnh điều khiển (như khóa màn hình, khởi động lại), làm sao gửi đúng đến chiếc máy đích nếu mọi máy trạm đều kết nối tập trung qua Gateway?
+
+Gateway phải đóng vai trò người phát thư: ghi nhớ máy trạm nào đang gắn với kết nối mạng nào để chuyển tiếp đúng địa chỉ. Kỹ thuật chuyển tiếp hai chiều này gọi là \textbf{Duplex Relay}.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Gateway lưu một cuốn sổ danh bạ các kết nối mạng đang hoạt động. Do nhiều luồng cùng đọc và ghi danh bạ này đồng thời, ta sử dụng bảng tra cứu an toàn đa luồng (\texttt{ConcurrentDictionary<string, TcpClient> \_agentSockets}).
+Khi nhận bản tin điều khiển từ Central gửi về, Gateway mở phong bì, đọc mã máy \texttt{deviceId}, tra cứu kết nối socket tương ứng trong danh bạ và chuyển tiếp ngay tới đúng máy trạm đó.
+
+\subsubsection{Kịch bản tự phục hồi khi đứt mạng (Failover)}
+Nếu đường truyền mạng giữa Gateway và Central bị lỏng dây hoặc chập chờn:
+\begin{enumerate}
+  \item Gateway không hoảng loạn làm sập kết nối với các máy trạm trong phòng học. Gateway tiếp tục gom số liệu vào hàng đợi an toàn.
+  \item Gateway tự động kích hoạt cơ chế \textbf{tự phục hồi (Failover)} bằng cách lùi dần thời gian chờ kết nối lại (\textbf{Exponential Backoff}): lần đầu chờ 1 giây, lần hai 2 giây, rồi 4 giây, 8 giây... để tránh làm nghẽn đường truyền.
+  \item Ngay khi mạng thông suốt trở lại, Gateway chuyển tiếp bù toàn bộ các gói tin đang chờ trong hàng đợi về Central một cách trơn tru.
+\end{enumerate}
+
+% ------------------------------------------------------------------------------
+\subsection{Công cụ hỗ trợ: Bộ giả lập phòng máy (Simulator)}
+{\footnotesize\color{lgGray}\textit{Chặng 4 — Mã tác vụ nội bộ: LG-D-004}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Trong buổi thi kết thúc môn, bạn không thể mang 50 máy tính thật lên bàn thi. Bộ giả lập \texttt{LabGuard.Simulator} giúp bạn tạo ra 30--50 máy ảo ngay trên chiếc laptop của mình để chứng minh hệ thống hoạt động mượt mà dưới tải thực tế.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Simulator khởi chạy 30--50 tác vụ \texttt{Task.Run} song song. Mỗi tác vụ đóng vai một máy sinh viên gửi nhịp tim mỗi 5 giây. Menu bàn phím cho phép bạn chủ động tạo sự cố:
+\begin{itemize}
+  \item Phím [1]: Bơm tải CPU $95\%$ cho máy ảo 05 $\rightarrow$ Central lập tức báo động đỏ.
+  \item Phím [2]: Hạ CPU máy ảo 05 về $20\%$ $\rightarrow$ Central tự động đóng sự cố.
+  \item Phím [3]: Rút mạng máy ảo 12 $\rightarrow$ Sau hơn 20 giây ($> 20\text{s}$), Central báo \texttt{OFFLINE}.
+  \item Phím [4]: Cắm lại mạng cho máy ảo 12 $\rightarrow$ Kết nối lại bình thường.
+\end{itemize}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Mỗi máy ảo chạy độc lập trong vòng lặp \texttt{PeriodicTimer(5s)}.
+  \item Biến cờ \texttt{IsNetworkCut} giúp mô phỏng tình huống rút dây mạng nhanh chóng.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Vòng lặp mô phỏng VirtualAgent}]
+// Pseudocode minh hoa: May ao VirtualAgent gui nhip tim va so lieu
+while (await timer.WaitForNextTickAsync(ct))
+{
+    if (IsNetworkCut) continue; // Gia lap rut day mang
+    await SendHeartbeatAsync(stream, ct);
+    await SendMetricBatchAsync(stream, SimulatedCpu, ct);
+}
+\end{lstlisting}
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Tạo 30--50 máy ảo đồng thời mà không làm đơ laptop.
+  \item Menu phím bấm bơm lỗi phản hồi tức thời trên màn hình Admin.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Công cụ hỗ trợ: Bắt và phân tích gói tin bằng Wireshark}
+{\footnotesize\color{lgGray}\textit{Chặng 5 — Mã tác vụ nội bộ: LG-D-005}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Wireshark hỗ trợ kiểm chứng dữ liệu thực tế trên đường truyền, giúp bạn quan sát trực tiếp luồng byte nhị phân:
+\begin{enumerate}
+  \item Mở Wireshark, chọn card mạng \texttt{Adapter for loopback} (nếu chạy nội bộ).
+  \item Gõ bộ lọc hiển thị: \texttt{tcp.port == 5000}.
+  \item Bấm vào một gói tin và chỉ cho thầy cô thấy:
+    \begin{itemize}
+      \item Bắt tay 3 bước TCP (\texttt{[SYN]}, \texttt{[SYN, ACK]}, \texttt{[ACK]}).
+      \item 4 byte Big-Endian ở đầu khung tin (ví dụ: \texttt{00 00 00 9C} là 156 bytes).
+      \item Dữ liệu JSON của \texttt{WireEnvelope} với đúng 6 trường quy chuẩn.
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Bảng soi từng byte khung tin trên Wireshark}
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    \hline
+    \rowcolor{lgDeepBlue}
+    \color{white}\textbf{Vị trí Byte} & \color{white}\textbf{Giá trị Hex / Ký tự} & \color{white}\textbf{Giải thích kỹ thuật} \\
+    \hline
+    \texttt{0x0000--0x0003} & \texttt{00 00 00 9C} & 4 byte độ dài Big-Endian $= 156$ byte payload theo sau. \\
+    \hline
+    \texttt{0x0004--0x0011} & \texttt{\{"version":1,} & Phiên bản giao thức \texttt{version = 1}. \\
+    \hline
+    \texttt{0x0012--0x002B} & \texttt{"messageType":"HEARTBEAT",} & Tên thông điệp chuẩn trong \texttt{MessageTypes.cs}. \\
+    \hline
+    \texttt{0x002C--0x0058} & \texttt{"requestId":"d2a7...-90ef",} & Mã UUID v4 duy nhất 36 ký tự. \\
+    \hline
+    \texttt{0x0059--0x0078} & \texttt{"deviceId":"AGENT-LAB01-05",} & Tên thiết bị gửi bản tin. \\
+    \hline
+    \texttt{0x0079--0x00A8} & \texttt{"sentAtUtc":"2026-03-29...",} & Dấu thời gian UTC chuẩn có đuôi \texttt{Z}. \\
+    \hline
+    \texttt{0x00A9--0x009F} & \texttt{"payload":\{...\}\}} & Nội dung nghiệp vụ chi tiết của thông điệp. \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 6: VIỆC TIẾP THEO: Diễn tập kịch bản bảo vệ 5 phút ấn tượng}
+{\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-D-006}}\par
+\vspace{2mm}
+
+\begin{table}[H]
+  \centering
+  \caption{Kịch bản trình diễn nghiệm thu 5 phút thuyết phục trước hội đồng thi}
+  \small
+  \begin{tabularx}{\textwidth}{|l|l|X|X|}
+    \hline
+    \rowcolor{lgDeepBlue}
+    \color{white}\textbf{Thời gian} & \color{white}\textbf{Người thực hiện} & \color{white}\textbf{Hành động trên màn hình} & \color{white}\textbf{Ý nghĩa kỹ thuật} \\
+    \hline
+    Phút 0--1 & Bạn B \& Bạn C & Khởi động Central Server trên cổng 5000 và mở Admin Dashboard. & Máy chủ đã mở cổng TCP sẵn sàng tiếp nhận. \\
+    \hline
+    Phút 1--2 & Bạn D & Chạy \texttt{LabGuard.Simulator} kích hoạt 30 máy trạm ảo. & Màn hình Dashboard lập tức sáng 30 dòng xanh lá rực rỡ. \\
+    \hline
+    Phút 2--3 & Bạn D & Bấm phím [1] bơm CPU $95\%$ lên máy ảo 05. & Sau 3 chu kỳ đo liên tiếp, Dashboard báo động đỏ \texttt{HIGH\_CPU}. \\
+    \hline
+    Phút 3--4 & Bạn D & Bấm phím [3] ngắt mạng máy ảo 12. & Sau hơn 20 giây ($> 20\text{s}$), hệ thống báo máy \texttt{OFFLINE}. \\
+    \hline
+    Phút 4--5 & Bạn D & Mở Wireshark soi gói tin với bộ lọc \texttt{tcp.port == 5000}. & Chỉ rõ tiêu đề 4 byte Big-Endian và phong bì 6 trường chuẩn. \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\begin{takeawaybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Dùng Bounded Channel để bảo vệ bộ nhớ RAM không bị tràn khi mạng chậm.
+  \item Nắm vững thao tác mở Wireshark lọc cổng 5000 để kiểm chứng dữ liệu thực tế trên đường truyền.
+\end{itemize}
+\end{takeawaybox}
+
+% ==============================================================================
+% PHAN 3: NAM BAY LOI LAP TRINH GATEWAY VA KIEM THU MANG
+% ==============================================================================
+\section{Năm bẫy lỗi lập trình Gateway \& Kiểm thử mạng}
+
+\begin{pitfallbox}
+\textbf{Bẫy 1: Tưởng lầm một lệnh Write trên TCP luôn tạo ra một gói tin mạng}
+\newline Giao thức TCP là một dòng byte liên tục, không có ranh giới tin nhắn cố định. Nếu Gateway đọc từ Agent rồi ghi thẳng sang Central mà không dùng \texttt{FrameCodec}, hai gói tin nhỏ liên tiếp có thể bị dính chùm hoặc bị cắt vụn.
+\newline\textbf{Cách làm đúng:} Luôn giải mã nguyên vẹn từng khung tin qua \texttt{FrameCodec.ReadFrameAsync()} trước khi chuyển tiếp.
+\end{pitfallbox}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Chuyển tiếp mảng byte thô sẽ làm vỡ gói tin ở đầu nhận.
+  \item Đọc trọn vẹn 1 khung tin nhị phân rồi mới chuyển tiếp sang luồng khác.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={So sánh Bẫy 1: Chuyển tiếp luồng thô vs Chuyển tiếp theo khung tin}]
+// [SAI] Chuyen tiep byte tho gay vo khung tin o dich:
+int read = await agentStream.ReadAsync(buffer, ct);
+await centralStream.WriteAsync(buffer.AsMemory(0, read), ct);
+
+// [DUNG] Doc tron ven 1 khung tin nhip phan roi moi chuyen tiep:
+byte[]? frame = await FrameCodec.ReadFrameAsync(agentStream, ct);
+if (frame != null) await FrameCodec.WriteFrameAsync(centralStream, frame, ct);
+\end{lstlisting}
+
+\begin{pitfallbox}
+\textbf{Bẫy 2: Nghẽn đầu hàng (Head-of-Line Blocking) do dùng hàng đợi không giới hạn}
+\newline Nếu sử dụng \texttt{Queue<byte[]>} không giới hạn dung lượng, khi mạng chậm gói tin sẽ dồn ứ vô tận trong RAM dẫn đến tràn bộ nhớ (\textit{OutOfMemoryException}).
+\newline\textbf{Cách làm đúng:} Luôn sử dụng \texttt{Channel.CreateBounded} với giới hạn dung lượng an toàn để tránh tăng RAM vô hạn.
+\end{pitfallbox}
+
+\begin{pitfallbox}
+\textbf{Bẫy 3: Tranh chấp truy cập bảng định tuyến phiên}
+\newline Khi 50 máy con kết nối và ngắt kết nối đồng thời, việc tra cứu socket đích sẽ gây lỗi đa luồng nếu dùng \texttt{Dictionary} thông thường.
+\newline\textbf{Cách làm đúng:} Luôn dùng \texttt{ConcurrentDictionary<string, TcpClient>}.
+\end{pitfallbox}
+
+\begin{pitfallbox}
+\textbf{Bẫy 4: Tạo quá nhiều Thread độc lập trong bộ giả lập Simulator}
+\newline Nếu tạo 50 máy ảo bằng cách gõ 50 lần \texttt{new Thread()}, máy tính sẽ bị ngốn hàng chục MB bộ nhớ và làm CPU giật lag do chuyển ngữ cảnh liên tục.
+\newline\textbf{Cách làm đúng:} Tận dụng \texttt{Task.Run} kết hợp \texttt{async/await} và \texttt{PeriodicTimer}.
+\end{pitfallbox}
+
+\begin{pitfallbox}
+\textbf{Bẫy 5: Quên giải phóng kết nối khi máy trạm ngắt đột ngột}
+\newline Khi máy trạm bị tắt nguồn hoặc rút cáp, nếu vòng lặp không bắt lỗi đóng luồng thì socket sẽ bị treo vĩnh viễn, làm rò rỉ tài nguyên mạng của hệ thống.
+\newline\textbf{Cách làm đúng:} Luôn đặt luồng socket trong khối lệnh \texttt{using}.
+\end{pitfallbox}
+
+% ==============================================================================
+% PHAN 4: BO CAU HOI VAN DAP DANG CHO THANH VIEN D (20 CAU)
+% ==============================================================================
+\section{Bộ câu hỏi vấn đáp dành riêng cho Thành viên D (20 câu)}
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+  \item \textbf{Tại sao phải dùng Wireshark để soi gói tin thay vì chỉ đọc log trên console?} \\
+    \textit{Trả lời:} Wireshark hỗ trợ kiểm chứng dữ liệu thực tế trên đường truyền ở tầng truyền vận (TCP/IP), chứng minh hệ thống tuân thủ chặt chẽ tiêu chuẩn đóng khung 4 byte Big-Endian và mô hình kết nối tin cậy.
+  \item \textbf{Bộ lọc nào trên Wireshark cho phép cô lập chính xác dữ liệu của LabGuard?} \\
+    \textit{Trả lời:} Dùng biểu thức lọc hiển thị \texttt{tcp.port == 5000} để thu thập toàn bộ các gói tin TCP trao đổi giữa Agent, Gateway và Central Server.
+  \item \textbf{Tại sao đồ án cần xây dựng các bản Stub (FakeAgent, FakeCentral)?} \\
+    \textit{Trả lời:} Nhằm phá vỡ sự phụ thuộc chéo về tiến độ giữa các thành viên, cho phép kiểm thử độc lập chức năng chuyển tiếp của Gateway ngay từ những ngày đầu.
+  \item \textbf{Bộ giả lập (Simulator) có vai trò gì trong buổi nghiệm thu đồ án?} \\
+    \textit{Trả lời:} Giúp tái hiện môi trường thực tế với 20--50 máy trạm hoạt động đồng thời, đóng vai trò công cụ hỗ trợ kiểm chứng năng lực chịu tải và thuật toán xử lý sự cố đa luồng của máy chủ.
+  \item \textbf{Tại sao nhịp tim gửi 5 giây một lần mà lại chờ hơn 20 giây mới báo Offline?} \\
+    \textit{Trả lời:} Nhằm tránh báo động giả do trễ mạng hoặc suy giảm kết nối nhất thời. Máy chủ quy định ngưỡng quá hạn gấp 4 lần chu kỳ gửi ($4 \times 5\text{s} = 20\text{s}$).
+  \item \textbf{Làm thế nào để Gateway tránh việc làm nghẽn mạng WAN?} \\
+    \textit{Trả lời:} Bằng kỹ thuật gom cụm (Batching) nhiều bản tin đo đạc nhỏ từ các Agent trong phòng máy vào hàng đợi Bounded Channel trước khi chuyển tiếp thành từng khối lớn về Central Server.
+  \item \textbf{Tại sao hàng đợi thu gom của Gateway phải là hàng đợi có giới hạn (Bounded)?} \\
+    \textit{Trả lời:} Để ngăn ngừa nguy cơ cạn kiệt bộ nhớ RAM khi đường truyền mạng WAN bị gián đoạn hoặc quá tải. Hàng đợi giới hạn 100 phần tử kích hoạt cơ chế điều tiết áp lực ngược (Backpressure) với chính sách \texttt{FullMode.Wait}, buộc bên gửi tạm dừng bất đồng bộ để hệ thống tự điều hòa nhịp độ an toàn.
+  \item \textbf{Cơ chế Exponential Backoff trong quá trình kết nối lại hoạt động ra sao?} \\
+    \textit{Trả lời:} Sau mỗi lần kết nối lại thất bại, thời gian chờ tăng gấp đôi (1s, 2s, 4s, 8s... trần 30s), tránh gây ra hiện tượng bão kết nối làm tê liệt máy chủ.
+  \item \textbf{Làm thế nào để Simulator tạo ra 50 máy ảo mà không làm treo ứng dụng?} \\
+    \textit{Trả lời:} Dùng \texttt{Task.Run} tận dụng ThreadPool và cơ chế I/O Completion Ports (IOCP) của hệ điều hành, cho phép tạo 50--100 máy ảo chạy trên chỉ vài luồng hệ thống mà không tốn RAM.
+  \item \textbf{Tiêu đề 4 byte Big-Endian hiển thị ra sao trong cửa sổ Byte Viewer của Wireshark?} \\
+    \textit{Trả lời:} Hiển thị dưới dạng 4 byte hex liên tiếp ở đầu payload TCP, ví dụ: \texttt{00 00 00 A4} nghĩa là khung tin dài 164 byte.
+  \item \textbf{Tại sao phải chờ hơn 20 giây thì Central Server mới báo máy trạm bị ngắt mạng?} \\
+    \textit{Trả lời:} Vì chu kỳ nhịp tim là 5 giây. Máy chủ cho phép trễ tối đa 4 chu kỳ liên tiếp (tổng cộng $> 20$ giây) để tránh báo động giả khi mạng phòng máy bị nghẽn tức thời.
+  \item \textbf{Kỹ thuật Bơm lỗi (Fault Injection) mang lại lợi ích gì cho đồ án?} \\
+    \textit{Trả lời:} Cho phép chủ động kiểm chứng độ tin cậy và khả năng tự phục hồi của toàn bộ hệ thống ngay tại bàn thi mà không cần can thiệp vào thiết bị phần cứng thật.
+  \item \textbf{Làm thế nào để đo độ trễ mạng (RTT) của gói tin nhịp tim?} \\
+    \textit{Trả lời:} Tính khoảng thời gian từ khi Client gửi bản tin \texttt{HEARTBEAT} đến khi nhận được bản tin \texttt{HEARTBEAT\_ACK} tương ứng từ Central Server.
+  \item \textbf{Giới hạn khung tin 256 KiB có ảnh hưởng gì tới tầng Gateway không?} \\
+    \textit{Trả lời:} Không ảnh hưởng vì Gateway kiểm tra và duy trì nguyên vẹn kích thước khung tin của giao thức chuẩn \texttt{FrameCodec.MaxPayloadSize}.
+  \item \textbf{Tại sao khi thử tải lại không chạy trên 50 máy tính thật?} \\
+    \textit{Trả lời:} Vì sinh viên không thể có 50 máy tính thật để thử nghiệm hàng ngày. Bộ giả lập chứng minh năng lực thiết kế phần mềm có thể đáp ứng quy mô lớn ngay trên môi trường phát triển.
+  \item \textbf{Hiện tượng SYN Flood là gì và ảnh hưởng gì tới máy chủ?} \\
+    \textit{Trả lời:} Kẻ tấn công gửi dồn dập các gói tin \texttt{SYN} giả mạo mà không gửi lại gói \texttt{ACK} thứ ba, làm cạn kiệt hàng đợi kết nối đang chờ (\textit{Backlog Queue}) của máy chủ.
+  \item \textbf{Cơ chế Backlog trong lệnh Listen(int backlog) có ý nghĩa gì?} \\
+    \textit{Trả lời:} Là độ dài tối đa của hàng đợi chứa các kết nối đã hoàn thành bắt tay TCP 3 bước nhưng ứng dụng chưa kịp gọi hàm \texttt{Accept}.
+  \item \textbf{Làm sao để đảm bảo các máy trạm ảo trong Simulator không gửi trùng mã RequestId?} \\
+    \textit{Trả lời:} Mỗi thông điệp đều sinh mã \texttt{Guid.NewGuid().ToString("D")} độc lập, bảo đảm tính duy nhất tuyệt đối trên toàn hệ thống.
+  \item \textbf{Khi tắt đột ngột chương trình Simulator, chuyện gì xảy ra trên máy chủ?} \\
+    \textit{Trả lời:} Hệ điều hành Windows sẽ tự động gửi gói tin cờ \texttt{RST} hoặc \texttt{FIN} tới máy chủ, máy chủ lập tức giải phóng toàn bộ tài nguyên socket của các máy ảo đó.
+  \item \textbf{Thành công lớn nhất trong vai trò của Thành viên D là gì?} \\
+    \textit{Trả lời:} Là làm chủ được năng lực mở rộng hệ thống theo chiều ngang, tư duy kiến trúc phân tầng mạng và khả năng dùng công cụ chuẩn quốc tế (Wireshark) để bảo vệ giải pháp trước hội đồng thi.
+\end{enumerate}
+
+\begin{center}
+  \vspace{10mm}
+  {\color{lgDeepBlue}\hrule height 1pt}
+  \vspace{4mm}
+  {\bfseries\color{lgSlate} — HẾT CẨM NANG HƯỚNG DẪN THÀNH VIÊN D —\par}
+\end{center}
+
+\end{document}

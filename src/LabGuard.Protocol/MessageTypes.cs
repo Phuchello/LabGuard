@@ -1,7 +1,7 @@
 namespace LabGuard.Protocol;
 
 /// <summary>
-/// Canonical 69-Message Catalog defined in 03_PROTOCOL_SPEC.md.
+/// Canonical 69-Message Catalog defined in docs/spec/PROTOCOL_SPEC.md.
 /// Categorized into P0-MVP REQUIRED (34), P0 OPTIONAL (25), and P1 CONDITIONAL (10).
 /// </summary>
 public static class MessageTypes

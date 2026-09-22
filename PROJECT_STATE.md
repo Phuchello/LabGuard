@@ -2,26 +2,33 @@
 
 **Dự án:** LABGUARD — Hệ thống giám sát phòng máy tính tập trung thời gian thực  
 **Môn học:** NT106 — Lập trình mạng căn bản (Khoa MMT&TT, UIT)  
-**Thời điểm cập nhật:** 15/09/2026  
-**Chế độ làm việc:** Team Takeover Mode (Nhóm sinh viên trực tiếp lập trình, AI hỗ trợ Mentor/Review/Debug)  
+**Thời điểm cập nhật:** 22/09/2026  
+**Chế độ làm việc:** Team Takeover Mode (Nhóm 4 sinh viên A, B, C, D trực tiếp lập trình, AI hỗ trợ Mentor/Review/Debug)  
+**Tài liệu nhập môn cho nhóm:** [START_HERE.md](START_HERE.md) & [FILE_MAP.md](FILE_MAP.md) (Tài liệu kỹ thuật nội bộ lưu trữ tại `docs/internal/`)  
 
 ---
 
 ## 1. TỔNG QUAN TÌNH TRẠNG SẢN PHẨM (CURRENT PRODUCT STATE)
 
-- **Milestone 1–3:** Đã hoàn thành (Completed).
-  - Kết nối TCP Socket với Frame Length-Prefix (UInt32 Big-Endian) + UTF-8 JSON.
-  - Bắt tay `HELLO`, xác thực `AUTH`, duy trì nhịp tim `HEARTBEAT` (5s), phát hiện `DEVICE_OFFLINE` (liveness timeout > 20s).
-  - Đọc chỉ số phần cứng Windows thực tế (CPU qua `GetSystemTimes`, RAM qua `GlobalMemoryStatusEx`, Uptime qua `TickCount64`).
-  - Lưu trữ CSDL SQL Server (`dbo.MetricSamples`), chống trùng lặp (`dbo.ProcessedBatches`).
-  - Tự động kết nối lại theo số mũ (Exponential Backoff 1s..30s ±10% jitter) và hàng đợi lưu đệm 50 gói tin (`ReplayBuffer`) có cờ `isReplay`.
-  - Rule Engine phát hiện bất thường theo chuỗi mẫu vi phạm: `HIGH_CPU` (>=90%, phục hồi <=75%), `HIGH_MEMORY` (>=85%, phục hồi <=70%), `SERVICE_DOWN` (thất bại 2 lần), `DEVICE_OFFLINE` (>20s).
+> [!IMPORTANT]
+> **Hiện trạng thực tế của mã nguồn:**  
+> - **ĐÃ HOÀN THÀNH & NGHIỆM THU:** Duy nhất hai nhiệm vụ **LG-A-001** (Giao ước Wire Contract & 16 Fixtures) và **LG-A-002** (`FrameCodec.cs` & xử lý phân mảnh TCP) trong thư viện dùng chung `src/LabGuard.Protocol/`. Toàn bộ 107 bài kiểm thử tự động giao thức đã PASS.
+> - **CÁC PHÂN HỆ CÒN LẠI LÀ KHUNG SƯỜN TỐI THIỂU (SKELETON):** Toàn bộ mã nguồn tạm thời trước đây đã được dọn sạch. Hiện tại các thư mục `src/LabGuard.Agent/`, `src/LabGuard.Central/`, `src/LabGuard.Admin/`, `src/LabGuard.Simulator/` chỉ chứa khung chương trình tối thiểu (`Program.cs`, `DashboardForm.cs`) để đảm bảo solution biên dịch thành công.
+> - **CÁC THÀNH VIÊN SẼ TỰ TAY LẬP TRÌNH TỪNG TÍNH NĂNG:** Sinh viên sẽ trực tiếp tạo mới và lập trình các file tính năng theo đúng nhiệm vụ được phân công trong bảng theo dõi `LabGuard_Task_Tracker.xlsx`.
 
-- **Milestone 4:** Đã có mã nguồn thực thi; bản vá cuối cùng do nhóm sinh viên tự làm đang chờ hoàn thiện (Implementation exists; final team-owned patch pending).
-  - Vòng đời sự cố State Machine: `OPEN` -> `ACKNOWLEDGED` -> `IN_PROGRESS` -> `RESOLVED`.
-  - Kiểm soát tranh chấp lạc quan (OCC) sử dụng `RowVersion` 8-byte hex.
-  - Chống trùng lặp lệnh bằng `RequestDigest` SHA-256 (`(UserId, CommandId)`).
-  - Giao diện Admin WinForms với các nút hành động `ACK`, `Assign`, `Start`, `Resolve`, huy hiệu trạng thái màu và cơ chế khóa nút tự động.
+- **Chi tiết hiện trạng từng phân hệ:**
+  - `src/LabGuard.Protocol/`: **HOÀN THÀNH 100%**. Gồm `FrameCodec.cs`, `WireEnvelope.cs`, `EnvelopeValidator.cs`, `MessageTypes.cs`, `ErrorCodes.cs`, các DTOs và `ProtocolSerializer.cs`. Đã đóng băng giao ước.
+  - `src/LabGuard.Agent/`: **KHUNG SƯỜN CHỜ TRIỂN KHAI**. Chưa có logic kết nối mạng, chưa có thu thập metrics, chưa có ReplayBuffer. Sinh viên A sẽ bắt đầu từ A-003 (`AgentSocketClient.cs`).
+  - `src/LabGuard.Central/`: **KHUNG SƯỜN CHỜ TRIỂN KHAI**. Chưa có TCP listener, chưa có bắt tay xác thực, chưa có liveness monitor, chưa có rule engine hay database repository. Sinh viên B sẽ bắt đầu từ B-001 (`CentralServer.cs`).
+  - `src/LabGuard.Admin/`: **KHUNG SƯỜN GIAO DIỆN CHỜ TRIỂN KHAI**. Đã có form rỗng `DashboardForm.cs`. Chưa có kết nối mạng `AdminClient.cs`, chưa có bảng DataGridView và các nút điều khiển. Sinh viên C sẽ bắt đầu từ C-001 và C-002.
+  - `src/LabGuard.Gateway/` & `src/LabGuard.Collector/`: **CHƯA TỒN TẠI TRONG SRC**. Là phân hệ mở rộng dự kiến cho Thành viên D sau khi hệ thống cốt lõi của A, B, C ổn định. D hiện thực hành socket trong `tools/`.
+  - `database/`: **KHUNG CHỜ (PLACEHOLDER)**. `schema.sql` và `seed.sql` hiện là khung chờ; Sinh viên B sẽ tự tay hoàn thiện trong B-005.
+
+- **Hiện trạng nhiệm vụ chính thức của các thành viên (Authoritative Team Status):**
+  - **Sinh viên A (Agent & Protocol):** Đã xong **A-001** và **A-002**. Từ **A-003 trở đi là CHƯA LÀM** (Bắt đầu với A-003: `AgentSocketClient.cs` với `BoundedChannelOptions(256)` và `FullMode.Wait`).
+  - **Sinh viên B (Central & CSDL):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với B-001: `CentralServer.cs` mở cổng TCP 5000).
+  - **Sinh viên C (Admin UI):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với C-001 thiết kế WinForms và C-002 tạo `AdminClient.cs`).
+  - **Sinh viên D (Gateway & Collector):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với D-001 đọc hiểu giao thức và D-002 viết TCP Echo trong `tools/`).
 
 ---
 
@@ -32,8 +39,7 @@
   - Chuẩn hóa lỗi JSON hỏng: JSON sai cú pháp trả về mã lỗi canonical `ERR_MALFORMED_JSON` trên toàn bộ pipeline.
   - Ràng buộc mốc thời gian UTC: `sentAtUtc` bắt buộc chứa ký hiệu chỉ định UTC rõ ràng (`Z` hoặc `+00:00`), từ chối chuỗi không múi giờ.
   - Đóng khung TCP: UInt32 Big-Endian 4-byte header biểu diễn duy nhất payload byte count; max payload 262,144 bytes; xử lý luồng byte TCP (phân mảnh & dính gói); `FrameCodec.ReadEnvelopeAsync` xác thực nghiêm ngặt và ném `InvalidDataException` khi vi phạm.
-  - Đúng 16 fixtures chuẩn canonical (theo chỉ tiêu WBS_TASKS.csv): `HEARTBEAT`, `HEARTBEAT_ACK`, `METRIC_BATCH`, `BATCH_ACK`, `SERVICE_STATUS`, `HELLO_AGENT`, `HELLO_ACK`, `AUTH_AGENT`, `AUTH_RESULT`, `AGENT_GOODBYE`, `GOODBYE_ACK`, `LOGIN`, `LOGIN_RESULT`, `INCIDENT_ACK`, `COMMAND_RESULT`, `ERROR` (minified, không BOM, <= 262,144 bytes, deserialize vào DTO tương ứng).
-  - Phân định rõ ràng: 16 canonical fixtures đóng băng giao ước cốt lõi vs. kiểm thử tương thích 69 bản tin toàn catalog.
+  - Đúng 16 fixtures chuẩn canonical: `HEARTBEAT`, `HEARTBEAT_ACK`, `METRIC_BATCH`, `BATCH_ACK`, `SERVICE_STATUS`, `HELLO_AGENT`, `HELLO_ACK`, `AUTH_AGENT`, `AUTH_RESULT`, `AGENT_GOODBYE`, `GOODBYE_ACK`, `LOGIN`, `LOGIN_RESULT`, `INCIDENT_ACK`, `COMMAND_RESULT`, `ERROR` (minified, không BOM, <= 262,144 bytes, deserialize vào DTO tương ứng).
 
 - **Task LG-A-002 (FrameCodec & partial-read / message-framing verification):** Đã hoàn thành (DONE).
   - Hiện thực và chuẩn hóa `FrameCodec.cs`:
@@ -43,43 +49,86 @@
     - Kiểm tra giới hạn nghiêm ngặt: Từ chối frame 0 byte (`InvalidDataException`) và từ chối frame vượt quá 262,144 bytes TRƯỚC KHI cấp phát bộ nhớ đệm payload (`InvalidDataException`), chống tấn công cạn kiệt RAM (DoS/OOM).
     - Đóng kết nối an toàn: Trả về `null` khi gặp Graceful EOF tại ranh giới frame; ném `EndOfStreamException` khi gặp EOF giữa header hoặc giữa payload.
     - Tách frame độc lập: Phân tách hoàn hảo khi nhiều frame dính liền trong một luồng stream (Packet Coalescing).
-  - Bộ kiểm thử tự động toàn diện `FrameCodecTests.cs` (100% pass) kiểm chứng đầy đủ 9 kịch bản quy định trong WBS và kịch bản phụ trợ `ReadExactlyBytesAsync`.
-  - Chương trình kiểm chứng độc lập `scratch/test_frame_codec/Program.cs` và log thực thi `scratch/test_frame_codec/test_frame_codec_run.log` (10/10 scenarios passed).
+  - Bộ kiểm thử tự động toàn diện `FrameCodecTests.cs` (100% pass) kiểm chứng đầy đủ các kịch bản quy định trong WBS và kịch bản phụ trợ `ReadExactlyBytesAsync`.
+  - Chương trình kiểm chứng độc lập `tools/validation/test_frame_codec/Program.cs` (10/10 scenarios passed).
   - Đồng bộ Task Tracker `LabGuard_Task_Tracker.xlsx`: LG-A-002 / TEST-A02 chuyển sang `Xong` / `PASS`.
 
 ---
 
 ## 2. KẾT QUẢ KIỂM THỬ HIỆN TẠI (AUTOMATED TEST COUNT)
 
-**Tổng số kiểm thử tự động:** **165 / 165 tests PASSED (100%)**
+**Tổng số kiểm thử tự động hiện tại:** **107 / 107 tests PASSED (100%)**
 - `LabGuard.Protocol.Tests`: **107 / 107 passed** (Kiểm thử FrameCodec, ReadExactlyBytesAsync, chunking 1-byte header/payload, coalescing 3 frames, boundary 262,144 bytes, WireEnvelope, raw JSON validation, 8 yêu cầu wire contract, 16 canonical fixtures minified/no-BOM/DTO deserialization, strict casing, duplicate keys, non-object payloads, strict uppercase 'Z'/'+00:00' UTC designator, ReadEnvelopeAsync strictness).
-- `LabGuard.Agent.Tests`: **5 / 5 passed** (Kiểm thử `ReplayBuffer` FIFO, drop-oldest, cờ `isReplay`).
-- `LabGuard.Central.Tests`: **53 / 53 passed** (Kiểm thử RuleEngine streak, ClientConnection, DatabaseRepository, OCC Conflict 409, Idempotency, luồng sự cố TCP và từ chối trường lạ qua kết nối TCP thực tế).
-
-*Minh chứng giao diện & báo cáo:*
-- Ảnh chụp màn hình Dashboard Milestone 4: [docs/screenshots/dashboard_milestone4.png](docs/screenshots/dashboard_milestone4.png)
-- Báo cáo chi tiết các mốc trước: `docs/history/product-milestones/`
+- `LabGuard.Agent.Tests`: **0 tests** (Chờ Thành viên A triển khai Agent từ A-003 trở đi).
+- `LabGuard.Central.Tests`: **0 tests** (Chờ Thành viên B triển khai Central Server từ B-001 trở đi).
 
 ---
 
 ## 2.1. CHECKPOINT AN TOÀN & HÀNH ĐỘNG TIẾP THEO (CHECKPOINT & NEXT ACTION)
 
-- **Last Safe Checkpoint:** `LG-A-002 CLOSED` (165/165 automated tests pass, zero regressions, zero warnings).
-- **Exact Next Action:** Triển khai tiếp nhiệm vụ **`LG-A-003` — Agent TCP connection và writer queue** theo tiến trình Master WBS (`WBS_TASKS.csv`). Không nhảy cóc trực tiếp sang RBAC.
+- **Last Safe Checkpoint:** `LG-A-002 CLOSED` (107/107 automated tests pass, zero regressions, zero warnings).
+- **Exact Next Action:** Triển khai tiếp nhiệm vụ **`LG-A-003` — Agent TCP connection và writer queue** (`AgentSocketClient.cs`, `BoundedChannelOptions(256)`, `FullMode.Wait`).
 
 ---
 
-## 3. CÁC HẠNG MỤC CẦN HOÀN THIỆN (KNOWN PENDING WORK)
+## 2.2. TỔ CHỨC DỰ ÁN CHO NHÓM 4 THÀNH VIÊN (CANONICAL TEAM PLAN)
 
-Nhóm sinh viên sẽ tiếp quản và hoàn thiện các hạng mục sau:
-1. **Server-side RBAC Enforcement:** Kiểm tra ma trận phân quyền trong `ClientConnection.cs`:
-   - `Viewer`: Chỉ đọc/xem danh sách, không được thay đổi sự cố.
-   - `Operator`: Được phép `INCIDENT_ACK`, `INCIDENT_START`, `INCIDENT_RESOLVE` (không được `INCIDENT_ASSIGN`).
-   - `Admin`: Đầy đủ quyền xử lý bao gồm cả `INCIDENT_ASSIGN`.
-2. **Lưu vết `AssignedToUserId`:** Lưu thông tin kỹ thuật viên tiếp nhận sự cố vào bảng `dbo.Incidents` và ghi nhật ký vào bảng `dbo.IncidentHistory`.
-3. **Chuẩn hóa mã lỗi `ERR_CONCURRENCY_VIOLATION`:** Trả về đúng mã lỗi canonical quy định trong giao thức khi có xung đột `RowVersion`.
-4. **Cô lập CSDL kiểm thử (`LabGuardTestDb`):** Hiện tại bộ test tích hợp `LabGuard.Central.Tests` vẫn đang dùng chung CSDL `LabGuardDb`. Cần cấu hình và tách riêng sang CSDL kiểm thử `LabGuardTestDb`.
-5. **Hiển thị Người xử lý trên Admin Dashboard:** Bổ sung cột hoặc nhãn hiển thị kỹ thuật viên được phân công trên bảng sự cố WinForms.
+Toàn bộ dự án được tổ chức theo kế hoạch chuẩn hóa 34 nhiệm vụ (phù hợp với `LabGuard_Task_Tracker.xlsx`, `TODO.md`, `START_HERE.md` và tài liệu hướng dẫn các thành viên):
+
+- **Thành viên A (Máy trạm Agent & Giao thức):** 9 nhiệm vụ (`A-001` đến `A-009`)
+  - A-001 [XONG]: 16 bản tin JSON mẫu chuẩn.
+  - A-002 [XONG]: Đóng khung gói tin TCP 4 byte độ dài (`FrameCodec.cs`).
+  - A-003 [ĐANG LÀM]: Kết nối TCP và hàng đợi gửi tuần tự (`AgentSocketClient.cs`, capacity 256, FullMode.Wait).
+  - A-004 [CHƯA LÀM]: Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`).
+  - A-005 [CHƯA LÀM]: Tự động kết nối lại khi rớt mạng (`AgentSocketClient.cs` với Exponential Backoff + Jitter).
+  - A-006 [CHƯA LÀM]: Bộ nhớ giữ dữ liệu ngoại tuyến (`ReplayBuffer.cs`, tối đa 50 batches, `METRIC_BATCH` duy nhất, FIFO Drop-Oldest, `isReplay = true`).
+  - A-007 [CHƯA LÀM]: Giám sát cổng dịch vụ mạng 80 và 8080 (`ServiceMonitor.cs`).
+  - A-008 [CHƯA LÀM]: Xử lý ngắt kết nối đột ngột và đóng socket an toàn.
+  - A-009 [CHƯA LÀM]: Thử nghiệm kiểm tra dịch vụ mạng trên máy ảo Ubuntu / môi trường thực tế.
+
+- **Thành viên B (Máy chủ Central & CSDL):** 9 nhiệm vụ (`B-001` đến `B-009`)
+  - B-001 [BẮT ĐẦU LÀM]: Mở cổng Socket TCP 5000 đón nhận kết nối (`CentralServer.cs`).
+  - B-002 [CHƯA LÀM]: Bắt tay và xác thực máy con qua `HELLO` và `AUTH` (`ClientConnection.cs`).
+  - B-003 [CHƯA LÀM]: Tiếp nhận nhịp tim và theo dõi trạng thái sống (`LivenessMonitor.cs`, deadline 20s).
+  - B-004 [CHƯA LÀM]: Phân quyền tài khoản máy chủ RBAC (`ClientConnection.cs` / `AuthService.cs`).
+  - B-005 [CHƯA LÀM]: Lập trình CSDL & lưu số liệu máy vào SQL Server (`DatabaseRepository.cs`, `schema.sql`).
+  - B-006 [CHƯA LÀM]: Bộ quy tắc phát hiện sự cố (`RuleEngine.cs` với Hysteresis, CPU >= 90%, RAM >= 85%).
+  - B-007 [CHƯA LÀM]: Vòng đời sự cố và chống sửa đè OCC bằng `RowVersion` (`DatabaseRepository.cs`).
+  - B-008 [CHƯA LÀM]: Tách riêng CSDL kiểm thử `LabGuardTestDb` khỏi `LabGuardDb`.
+  - B-009 [CHƯA LÀM]: Ghi nhận UserId kỹ thuật viên xử lý vào bảng sự cố (`dbo.Incidents`, `dbo.IncidentHistory`).
+
+- **Thành viên C (Giao diện quản trị Admin WinForms):** 10 nhiệm vụ (`C-001` đến `C-008`, `C-010`, `C-011`; nhiệm vụ `C-009` được thu hồi/dự phòng)
+  - C-001 [BẮT ĐẦU LÀM]: Thiết kế màn hình chính WinForms (`DashboardForm.cs`).
+  - C-002 [BẮT ĐẦU LÀM]: Kết nối ngầm tới máy chủ Central (`AdminClient.cs`).
+  - C-003 [CHƯA LÀM]: Bảng danh sách thiết bị DataGridView (`DashboardForm.cs`).
+  - C-004 [CHƯA LÀM]: Bảng danh sách sự cố DataGridView (`DashboardForm.cs`).
+  - C-005 [CHƯA LÀM]: Nút bấm tiếp nhận sự cố ACK (`DashboardForm.cs`).
+  - C-006 [CHƯA LÀM]: Nút bấm bắt đầu sửa Start (`DashboardForm.cs`).
+  - C-007 [CHƯA LÀM]: Nút bấm hoàn tất sửa Resolve (`DashboardForm.cs`).
+  - C-008 [CHƯA LÀM]: Thêm cột và nút phân công người sửa Assign (`DashboardForm.cs`).
+  - C-010 [CHƯA LÀM]: Khóa nút bấm theo phân quyền khi đăng nhập Viewer (`DashboardForm.cs`).
+  - C-011 [CHƯA LÀM]: Hiển thị thông báo lỗi thân thiện khi máy chủ từ chối thao tác (`DashboardForm.cs`).
+
+- **Thành viên D (Tầng mở rộng Gateway & Collector):** 6 nhiệm vụ (`D-001` đến `D-006`)
+  - D-001 [BẮT ĐẦU LÀM]: Chạy bộ kiểm thử giao thức (`dotnet test`), đọc hiểu `FrameCodec.cs`, xem xét 16 tệp mẫu JSON trong fixtures, nắm vững phong bì 6 trường và đóng khung TCP 4 byte.
+  - D-002 [BẮT ĐẦU LÀM]: Viết chương trình Console TCP Echo trong thư mục `tools/` để làm quen socket.
+  - D-003 [CHƯA LÀM]: Thử nghiệm chuyển tiếp gói tin TCP Relay (`tools/`, `BoundedChannelOptions(100)`, `FullMode.Wait`).
+  - D-004 [CHƯA LÀM / DỰ KIẾN]: Tạo dự án `LabGuard.Gateway` (bộ cân bằng tải L4 TCP).
+  - D-005 [CHƯA LÀM / DỰ KIẾN]: Tạo dự án `LabGuard.Collector` (trạm gom dữ liệu phân tán).
+  - D-006 [CHƯA LÀM / DỰ KIẾN]: Viết logic sinh tải 20–50 máy trạm cho `LabGuard.Simulator`.
+
+---
+
+## 3. CÁC QUY TẮC KỸ THUẬT QUAN TRỌNG ĐÃ THỐNG NHẤT (APPROVED ARCHITECTURAL RULES)
+
+1. **Giao ước Wire Protocol:** Cố định đúng 6 trường outer envelope, phân biệt hoa thường nghiêm ngặt, payload bắt buộc là JSON Object.
+2. **Đóng khung TCP (Framing):** 4-byte UInt32 Big-Endian length prefix, kích thước frame tối đa 262,144 bytes (256 KiB).
+3. **Hàng đợi gửi Agent (A-003):** `BoundedChannelOptions(256)`, `BoundedChannelFullMode.Wait`, đảm bảo Single Writer trên socket.
+4. **Bộ đệm ReplayBuffer (A-006):** Giới hạn tối đa **50 batches** (tương đương 250 giây dữ liệu), chỉ lưu trữ `METRIC_BATCH` ngoại tuyến, FIFO Drop-Oldest khi đầy, gắn cờ `isReplay = true`, **không** lưu `HEARTBEAT`, **không** lưu `SERVICE_STATUS`.
+5. **Cơ chế Liveness (B-003):** Đánh giá nhịp tim dựa trên đồng hồ đơn điệu Stopwatch máy chủ; ngưỡng phát hiện mất kết nối là 20 giây (quá 3 chu kỳ heartbeat 15s + 5s ân hạn).
+6. **Thuật toán RuleEngine (B-006):** Chống dao động Hysteresis; kích hoạt cảnh báo quá tải khi vi phạm liên tiếp 3 mẫu (streak 3), phục hồi khi đạt liên tiếp 3 mẫu an toàn.
+7. **Kiểm soát tương tranh OCC (B-007 & C-011):** Sử dụng cột `RowVersion` 8-byte token; khi phát hiện xung đột trả về mã lỗi canonical `ERR_CONCURRENCY_VIOLATION` (HTTP 409 Conflict).
+8. **An toàn luồng giao diện WinForms (C-001..C-007):** Bắt buộc chuyển luồng qua `BeginInvoke` khi cập nhật control từ luồng mạng ngầm.
 
 ---
 
@@ -87,6 +136,6 @@ Nhóm sinh viên sẽ tiếp quản và hoàn thiện các hạng mục sau:
 
 | STT | Vấn đề / Rủi ro | Tình trạng hiện tại | Hướng giải quyết của nhóm |
 | :---: | :--- | :--- | :--- |
-| 1 | `LabGuardTestDb` chưa được cô lập hoàn toàn | Bộ test `LabGuard.Central.Tests` vẫn kết nối trực tiếp vào `LabGuardDb`. | Sinh viên B cấu hình connection string riêng cho test harness. |
-| 2 | Đọc chỉ số phần cứng qua Win32 API | Chỉ hoạt động trên môi trường Windows. | Đúng phạm vi phòng máy UIT; bổ sung Linux `/proc` nếu mở rộng P1. |
-| 3 | Điều kiện đóng sự cố (`Resolve`) | Server từ chối đóng nếu điều kiện vật lý còn `ACTIVE` hoặc ghi chú giải quyết bị trống. | Ràng buộc nghiệp vụ đúng thiết kế; Sinh viên C hiển thị thông báo lỗi rõ ràng trên UI. |
+| 1 | `LabGuardTestDb` chưa được cô lập | Bộ test tích hợp tương lai cần môi trường CSDL riêng để không ảnh hưởng dữ liệu chính. | Sinh viên B cấu hình connection string riêng cho test harness trong task B-008. |
+| 2 | Đọc chỉ số phần cứng qua Win32 API | Hiện chỉ áp dụng cho môi trường Windows. | Phù hợp hoàn toàn với phạm vi phòng máy UIT. |
+| 3 | Điều kiện giải quyết sự cố (`Resolve`) | Server từ chối đóng nếu điều kiện vật lý còn vi phạm hoặc ghi chú giải quyết bị trống. | Ràng buộc nghiệp vụ đúng thiết kế; Sinh viên C hiển thị thông báo thân thiện trên WinForms. |

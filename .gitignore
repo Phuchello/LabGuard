@@ -41,7 +41,11 @@ venv/
 *.fls
 *.fdb_latexmk
 
-# --- Scratch & Temporary Logs ---
-scratch/*.log
+# --- Scratch, QA & Temporary Archives ---
+scratch/
+docs/pdf/qa_images/
+*.zip
+*.log
 *.tmp
 *.bak
+
