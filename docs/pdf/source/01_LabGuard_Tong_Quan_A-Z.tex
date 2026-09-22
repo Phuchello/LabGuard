@@ -535,7 +535,7 @@ Tại Central Server, phương thức \texttt{ReadExactlyBytesAsync} đọc đú
 \subsection{Xác thực và kích hoạt cảnh báo sự cố}
 \begin{enumerate}
   \item \texttt{EnvelopeValidator} xác nhận thông điệp hợp lệ.
-  \item Số liệu CPU $94.0\%$ của \texttt{LAB01-PC02} được lưu vào bảng \texttt{Metrics} trong SQL Server.
+  \item Số liệu CPU $94.0\%$ của \texttt{LAB01-PC02} được lưu vào bảng \texttt{MetricSamples} trong SQL Server (sau khi B-005 hiện thực CSDL).
   \item \texttt{RuleEngine} kiểm tra: nếu \texttt{LAB01-PC02} duy trì CPU $\ge 90\%$ trong 3 chu kỳ đo liên tiếp (3 lần gửi 5s), Central kích hoạt sự cố \texttt{HIGH\_CPU}, gửi thông báo \texttt{INCIDENT\_OPEN} sang Admin. Màn hình Dashboard lập tức tô đỏ dòng máy \texttt{LAB01-PC02}!
 \end{enumerate}
 
@@ -696,7 +696,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
     \hline
     \texttt{INCIDENT\_ACK} & Admin $\rightarrow$ Central & 5000 & Quản trị viên tiếp nhận sự cố (kèm khóa OCC). \\
     \hline
-    \texttt{COMMAND\_RESULT} & Agent $\rightarrow$ Central & 5000 & Báo cáo kết quả thực thi lệnh điều khiển. \\
+    \texttt{COMMAND\_RESULT} & Central $\rightarrow$ Admin & 5000 & Máy chủ phản hồi kết quả lệnh quản trị (thành công hoặc xung đột). \\
     \hline
     \texttt{ERROR} & Hai chiều & 5000 & Thông báo lỗi giao thức chuẩn hóa. \\
     \hline
@@ -764,7 +764,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item File khởi đầu nhanh duy nhất của dự án là \texttt{START\_HERE.md}.
   \item Mã nguồn được tổ chức trong thư mục \texttt{src/} và kiểm thử trong \texttt{tests/}.
-  \item CSDL SQL Server gồm 4 nhóm bảng: Devices, Metrics, Incidents, AuditLogs.
+  \item CSDL hiện chưa được hiện thực; B-005 sẽ chốt đầy đủ schema. Các quyết định đã đóng băng yêu cầu tối thiểu \texttt{MetricSamples}, \texttt{ProcessedBatches} và cột \texttt{RowVersion} cho sự cố.
 \end{itemize}
 \end{summarybox}
 
@@ -794,12 +794,12 @@ LabGuard/
     `-- LabGuard.Protocol.Tests/ # [DA HOAN THANH - Protocol tests PASS]
 \end{lstlisting}
 
-\subsection{Bốn nhóm bảng dự kiến trong CSDL SQL Server}
+\subsection{Các bảng/chức năng CSDL đã được chốt ở mức kiến trúc}
 \begin{itemize}
-  \item \textbf{Devices:} Quản lý danh mục các máy tính phòng thi (\texttt{DeviceId}, IP, trạng thái \texttt{Status}).
-  \item \textbf{Metrics:} Lưu trữ các mẫu đo CPU, RAM theo thời gian thực để vẽ biểu đồ lịch sử.
-  \item \textbf{Incidents:} Quản lý sự cố với cột phiên bản \texttt{RowVersion} để thi hành khóa lạc quan OCC.
-  \item \textbf{AuditLogs:} Lưu vết mọi hành động của quản trị viên (đăng nhập, đổi trạng thái sự cố).
+  \item \textbf{MetricSamples:} Lưu mẫu CPU, RAM và \texttt{UptimeSeconds}; schema chi tiết do B-005 hiện thực.
+  \item \textbf{ProcessedBatches:} Ghi khóa \texttt{(DeviceId, BootId, BatchId)} để nhận biết \texttt{METRIC\_BATCH} gửi lại và chỉ \texttt{BATCH\_ACK} sau khi commit thành công.
+  \item \textbf{Incidents:} Dùng \texttt{RowVersion} do SQL Server tự sinh để phát hiện thao tác ghi đè giữa nhiều Admin.
+  \item Các bảng nghiệp vụ còn lại (thiết bị, tài khoản, audit...) sẽ được chốt đầy đủ khi Thành viên B thực hiện B-005; tài liệu này không tự ấn định số bảng cuối cùng.
 \end{itemize}
 
 \begin{takeawaybox}
@@ -1195,7 +1195,7 @@ Hình này chỉ cần nhìn vào hai luồng thao tác: Admin 1 bấm trước 
   \item \textbf{Giới hạn kích thước khung tin của LabGuard là bao nhiêu? Tại sao?} \\
     \textit{Trả lời:} Giới hạn là 262,144 byte (256 KiB), hoàn toàn dư dả cho các bản tin giám sát và giúp ngăn chặn kẻ xấu gửi gói tin khổng lồ làm tràn bộ nhớ RAM máy chủ.
   \item \textbf{Cấu trúc WireEnvelope gồm có những trường nào?} \\
-    \textit{Trả lời:} Đúng 6 trường cố định: \texttt{version} (int = 1), \texttt{messageType} (string), \texttt{requestId} (GUID string), \texttt{deviceId} (string), \texttt{sentAtUtc} (ISO 8601 string có 'Z'), và \texttt{payload} (generic T).
+    \textit{Trả lời:} Đúng 6 trường cố định: \texttt{version} (int = 1), \texttt{messageType} (string), \texttt{requestId} (GUID string), \texttt{deviceId} (string), \texttt{sentAtUtc} (ISO 8601 với offset UTC bằng 0: \texttt{Z} hoặc \texttt{+00:00}), và \texttt{payload} (generic T).
   \item \textbf{Chu kỳ gửi Heartbeat là bao lâu và thời gian xác định mất kết nối là bao nhiêu?} \\
     \textit{Trả lời:} Chu kỳ gửi \texttt{HEARTBEAT} là 5 giây một lần. Thời gian xác định mất kết nối (Liveness Timeout) là khi máy trạm im lặng hơn 20 giây ($> 20\text{s}$), tương đương bỏ lỡ 4 chu kỳ nhịp tim liên tiếp.
   \item \textbf{Tại sao không dùng DateTime.UtcNow để tính thời gian mất kết nối mà nên dùng Stopwatch?} \\
@@ -1203,8 +1203,9 @@ Hình này chỉ cần nhìn vào hai luồng thao tác: Admin 1 bấm trước 
   \item \textbf{Cơ chế Khóa lạc quan (OCC) hoạt động như thế nào trong LabGuard?} \\
     \textit{Trả lời:} Bảng \texttt{Incidents} có cột \texttt{RowVersion}. Khi cập nhật trạng thái sự cố, câu lệnh SQL kiểm tra:
 \begin{lstlisting}[language=sql]
-UPDATE Incidents SET WorkflowState = @NewState, RowVersion = @NewVer
-WHERE Id = @Id AND RowVersion = @ExpectedVer;
+UPDATE Incidents SET WorkflowState = @NewState
+OUTPUT inserted.RowVersion
+WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
 \end{lstlisting}
     Nếu số dòng cập nhật được bằng 1 thì thành công (\texttt{200 OK}). Nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi \texttt{409 Conflict} để giao diện tải lại dữ liệu mới nhất.
   \item \textbf{Hiện tại mã nguồn của dự án đã làm được những gì?} \\
@@ -1232,7 +1233,7 @@ WHERE Id = @Id AND RowVersion = @ExpectedVer;
   \item \textbf{Thuật toán Exponential Backoff được cài đặt thế nào?} \\
     \textit{Trả lời:} Khi mất kết nối, Agent chờ lần lượt 1s, 2s, 4s, 8s... tối đa 30 giây để tránh làm ngập máy chủ khi có sự cố diện rộng.
   \item \textbf{Cơ sở dữ liệu của LabGuard hiện tại đã hiện thực chưa và dự kiến gồm những gì?} \\
-    \textit{Trả lời:} CSDL chưa được hiện thực. Số bảng cuối cùng sẽ được chốt tại nhiệm vụ thiết kế schema của Bạn B. Các thực thể dự kiến gồm Devices, Metrics, Incidents và AuditLogs.
+    \textit{Trả lời:} CSDL chưa được hiện thực. Số bảng cuối cùng sẽ được chốt tại nhiệm vụ thiết kế schema của Bạn B. Kiến trúc hiện đã chốt các yêu cầu cốt lõi như \texttt{MetricSamples}, \texttt{ProcessedBatches} và \texttt{Incidents.RowVersion}; số bảng đầy đủ sẽ được chốt khi thực hiện B-005.
   \item \textbf{Làm thế nào kiểm tra xem một cổng mạng đã mở hay chưa bằng PowerShell?} \\
     \textit{Trả lời:} Sử dụng lệnh \texttt{Test-NetConnection -ComputerName 127.0.0.1 -Port 5000}.
   \item \textbf{Tại sao Agent không kết nối trực tiếp vào CSDL SQL Server?} \\
