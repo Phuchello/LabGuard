@@ -1,54 +1,68 @@
-# LABGUARD — VIỆC CẦN LÀM (TEAM TODO BOARD)
+# LABGUARD — BẢNG THEO DÕI CÔNG VIỆC NHÓM (TODO)
 
-Bảng phân chia công việc thực tế cho 3 thành viên nhóm trong giai đoạn tự chủ lập trình (Team Takeover).
-
-## 0. Đã hoàn thành gần nhất (Recently Completed)
-- [x] **LG-A-001 — Wire Contract & Protocol Fixtures & Final Freeze Patch:**
-  - [x] Đóng băng và tài liệu hóa chuẩn khung truyền: 6 trường envelope cố định, 4-byte Big-Endian length prefix, max payload 262,144 bytes, bảng mã lỗi và ma trận kiểm tra trong `CONTRACT_MATRIX.md`.
-  - [x] Triển khai `Encode`, `Decode`, `ReadEnvelopeAsync` trong `FrameCodec.cs` (xác thực nghiêm ngặt qua `EnvelopeValidator.ValidateAndParse`, ném `InvalidDataException` khi vi phạm).
-  - [x] Triển khai xác thực nghiêm ngặt phong bì raw JSON `ValidateRawJson` và `ValidateAndParse` trong `EnvelopeValidator.cs` (kiểm tra phân biệt hoa thường, cấm trường trùng lặp, payload phải là JSON object, version != 1 trả về `ERR_INVALID_VERSION` duy nhất, bắt buộc ký hiệu UTC `Z` hoặc `+00:00`).
-  - [x] Áp dụng `ValidateAndParse` trước khi phân phối / deserialize trên toàn bộ socket pipeline của Central (`ClientConnection.cs`), Agent (`AgentSocketClient.cs`), và Admin (`AdminClient.cs`).
-  - [x] Chuẩn hóa mã lỗi canonical: `ERR_MALFORMED_JSON` cho JSON sai cú pháp, `ERR_INVALID_VERSION` cho phiên bản khác 1.
-  - [x] Tạo đầy đủ đúng 16 fixtures chuẩn canonical (WBS_TASKS.csv): `heartbeat.json`, `heartbeat_ack.json`, `metric_batch.json`, `batch_ack.json`, `service_status.json`, `hello_agent.json`, `hello_ack.json`, `auth_agent.json`, `auth_result.json`, `agent_goodbye.json`, `goodbye_ack.json`, `login.json`, `login_result.json`, `incident_ack.json`, `command_result.json`, `error.json` và cập nhật `ProtocolFixtures.cs`.
-  - [x] Xây dựng bộ kiểm thử tự động toàn diện `WireContractAndFixturesTests.cs` (99/99 tests pass) và kiểm thử từ chối trường lạ qua kết nối TCP thực tế (53/53 tests pass).
-- [x] **LG-A-002 — FrameCodec & partial-read / message-framing verification:**
-  - [x] Hiện thực `FrameCodec.cs` với `ReadExactlyBytesAsync(Stream, byte[], offset, count, ct)` tích lũy byte qua vòng lặp, xử lý phân mảnh TCP (partial reads).
-  - [x] Tiền tố độ dài 4-byte UInt32 Big-Endian, `MaxPayloadSize = 262_144` bytes (256 KiB) và alias `MaxFrameSize = 262_144`.
-  - [x] Kiểm tra giới hạn: từ chối frame 0 byte (`InvalidDataException`) và frame > 262,144 bytes TRƯỚC KHI cấp phát bộ nhớ đệm payload (`InvalidDataException`).
-  - [x] Xử lý ngắt dòng: Graceful EOF tại ranh giới frame trả về `null`; EOF giữa chừng (mid-header hoặc mid-payload) ném `EndOfStreamException`.
-  - [x] Phân tách độc lập khi nhiều frame dính liền (coalesced frames).
-  - [x] Bộ kiểm thử tự động `FrameCodecTests.cs` (107/107 passed) và kịch bản độc lập `scratch/test_frame_codec/Program.cs` (10/10 passed).
-  - [x] Cập nhật bảng theo dõi `LabGuard_Task_Tracker.xlsx`: LG-A-002 / TEST-A02 chuyển sang `Xong` / `PASS`.
-- **Last Safe Checkpoint:** `LG-A-002 CLOSED` (165/165 tests pass trên toàn bộ Solution, 0 warnings).
-- **Exact Next Action:** A — Agent / Protocol: Triển khai tiếp nhiệm vụ **`LG-A-003` — Agent TCP connection và writer queue** theo tiến trình Master WBS (`WBS_TASKS.csv`). Không nhảy cóc trực tiếp sang RBAC.
+> **Bảng theo dõi tiến độ công việc dành cho 4 thành viên nhóm (A, B, C, D).**  
+> Chi tiết từng việc, file cần mở, trạng thái và cách thử được cập nhật tại file Excel **[`LabGuard_Task_Tracker.xlsx`](LabGuard_Task_Tracker.xlsx)** và tài liệu **[`START_HERE.md`](START_HERE.md)**.  
+>
+> *Lưu ý quan trọng:* Hiện tại chỉ có hai nhiệm vụ A-001 và A-002 là đã được chính thức nghiệm thu Xong. Toàn bộ các nhiệm vụ còn lại đều là **CHƯA LÀM**, các thành viên sẽ tự tay tạo mới và lập trình các file tính năng theo phân công.
 
 ---
 
-## A — Agent / Simulator / Mạng thực tế
-- [ ] Thử nghiệm ngắt/nối mạng thực tế: Chạy Agent, ngắt Central trong 15-30 giây rồi bật lại; kiểm tra Agent tự động backoff và gửi bù đủ các gói tin từ `ReplayBuffer`.
-- [ ] Cấu hình `ServiceMonitor.cs` để probe cổng dịch vụ trên máy ảo Ubuntu (port 80 hoặc 22); kiểm tra kích hoạt sự cố `SERVICE_DOWN` khi dừng dịch vụ trên máy ảo.
-- [ ] Chạy công cụ giả lập `LabGuard.Simulator` với 10-20 agents gửi telemetry đồng thời vào Central Server để kiểm tra độ ổn định.
+## 1. NHIỆM VỤ ĐÃ NGHIỆM THU CHÍNH THỨC (OFFICIALLY CLOSED)
+- [x] **Đóng khung gói tin TCP 4 byte độ dài (A-002):** Tiền tố độ dài 4-byte UInt32 Big-Endian (`FrameCodec.cs`), xử lý phân mảnh TCP (partial reads), ném lỗi khi frame <= 0 hoặc > 262,144 bytes. Bộ kiểm thử tự động giao thức đạt 100% PASS (Protocol tests PASS).
+- [x] **16 bản tin JSON mẫu chuẩn (A-001):** Khung phong bì 6 trường cố định (`EnvelopeValidator.cs`), 16 file mẫu JSON canonical trong `tests/LabGuard.Protocol.Tests/Fixtures/` kiểm thử đạt 100% PASS.
 
-## B — Central / Database / RBAC
-- [ ] Bổ sung kiểm tra quyền truy cập (Server-side RBAC) trong `ClientConnection.cs` theo chuẩn ma trận:
-  - `Viewer`: Chỉ đọc/xem danh sách, không có quyền thao tác sự cố.
-  - `Operator`: Được phép `INCIDENT_ACK`, `INCIDENT_START`, `INCIDENT_RESOLVE` (KHÔNG được `INCIDENT_ASSIGN`).
-  - `Admin`: Toàn quyền thao tác bao gồm cả `INCIDENT_ASSIGN`.
-- [ ] Lưu vết người xử lý sự cố (`AssignedToUserId`): Cập nhật vào bảng `dbo.Incidents` và ghi nhật ký vào bảng `dbo.IncidentHistory` trong `DatabaseRepository.cs`.
-- [ ] Chuẩn hóa mã lỗi OCC canonical: Trả về mã lỗi `ERR_CONCURRENCY_VIOLATION` khi phát hiện xung đột `RowVersion`.
-- [ ] Cô lập CSDL kiểm thử tự động (`LabGuardTestDb`): Tách cấu hình connection string để `LabGuard.Central.Tests` không chạy trực tiếp trên CSDL thật `LabGuardDb`.
+---
 
-## C — Admin WinForms / UI & UX
-- [ ] Thêm cột "Người xử lý" (`Assigned To`) trên DataGridView danh sách sự cố trong `DashboardForm.cs`.
-- [ ] Xây dựng hộp thoại gán việc trực quan khi bấm nút `Assign`, cho phép nhập hoặc chọn tài khoản kỹ thuật viên.
-- [ ] Cải thiện trải nghiệm thao tác sự cố (UI Polish & UX): Hiển thị `MessageBox` thân thiện khi có lỗi (xung đột dữ liệu 409, lỗi quyền 403, hoặc đóng sự cố khi máy còn vi phạm).
+## 2. NHIỆM VỤ CỦA TỪNG THÀNH VIÊN
 
-## Việc cả nhóm
-- [ ] Chạy thử kịch bản phối hợp hoàn chỉnh (End-to-End Demo): Bật SQL -> Central -> Agent -> Admin -> Kích hoạt sự cố -> Kỹ thuật viên xử lý -> Đóng sự cố.
-- [ ] Chạy toàn bộ bộ kiểm thử tự động (`dotnet test LabGuard.sln`) đảm bảo 100% pass trước khi nghiệm thu.
-- [ ] Cập nhật nhật ký công việc vào file `LabGuard_Task_Tracker.xlsx`.
+### Sinh viên A — Máy trạm Agent & Giao thức
+- [x] **A-001:** 16 bản tin JSON mẫu chuẩn *(Đã nghiệm thu Xong)*.
+- [x] **A-002:** Đóng khung gói tin TCP tiền tố 4 byte *(Đã nghiệm thu Xong)*.
+- [ ] **A-003 [ĐANG LÀM]:** Cho dữ liệu gửi đi xếp hàng tuần tự (`AgentSocketClient.cs`, BoundedChannel 256, FullMode.Wait) để nhịp tim và số liệu không bị trộn byte khi gửi đồng thời *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **A-004 [CHƯA LÀM]:** Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **A-005 [CHƯA LÀM]:** Tự động kết nối lại khi rớt mạng với Exponential Backoff + Jitter (`AgentSocketClient.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **A-006 [CHƯA LÀM]:** Bộ nhớ giữ dữ liệu chưa gửi được (`ReplayBuffer.cs`, tối đa 50 batches, `METRIC_BATCH` duy nhất, FIFO Drop-Oldest, `isReplay = true`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **A-007 [CHƯA LÀM]:** Giám sát dịch vụ mạng cổng 80 và 8080 (`ServiceMonitor.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **A-008 [CHƯA LÀM]:** Bổ sung kịch bản ngắt kết nối đột ngột để kiểm tra đóng socket an toàn *(Kịch bản kiểm thử)*.
+- [ ] **A-009 [CHƯA LÀM]:** Thử nghiệm kiểm tra dịch vụ mạng trên máy ảo Ubuntu thật *(Kịch bản kiểm thử)*.
 
-## Sau này / nếu còn thời gian
-- [ ] Bổ sung đọc chỉ số CPU/RAM trên hệ điều hành Linux (đọc qua `/proc/stat` và `/proc/meminfo`).
-- [ ] Thêm biểu đồ đường theo dõi chỉ số trên giao diện Admin.
-- [ ] Đóng gói file chạy portable cho Agent trên máy trạm.
+### Sinh viên B — Máy chủ Central & CSDL
+> *Toàn bộ công việc của B là CHƯA LÀM. B bắt đầu từ B-001.*
+- [ ] **B-001 [BẮT ĐẦU LÀM]:** Mở cổng Socket TCP 5000 đón nhận kết nối (`CentralServer.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **B-002 [CHƯA LÀM]:** Bắt tay và xác thực Agent (`ClientConnection.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **B-003 [CHƯA LÀM]:** Nhận nhịp tim và theo dõi máy tắt sau 20s (`LivenessMonitor.cs`, `MonotonicLivenessRegistry.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **B-004 [CHƯA LÀM]:** Phân quyền tài khoản máy chủ RBAC: chỉ Admin mới được gán người sửa (`ClientConnection.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **B-005 [CHƯA LÀM]:** Lưu số liệu máy vào CSDL SQL Server bảng `dbo.MetricSamples` (`DatabaseRepository.cs`, `schema.sql`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **B-006 [CHƯA LÀM]:** Bộ quy tắc phát hiện sự cố CPU/RAM/Service với Hysteresis (`RuleEngine.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **B-007 [CHƯA LÀM]:** Vòng đời sự cố và chống sửa đè OCC bằng `RowVersion` (`DatabaseRepository.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **B-008 [CHƯA LÀM]:** Tách riêng CSDL kiểm thử `LabGuardTestDb` *(Cấu hình kiểm thử)*.
+- [ ] **B-009 [CHƯA LÀM]:** Ghi nhận UserId của kỹ thuật viên xử lý vào bảng sự cố `dbo.Incidents` *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+
+### Sinh viên C — Giao diện quản trị Admin WinForms
+> *Toàn bộ công việc của C là CHƯA LÀM. C gồm đúng 10 nhiệm vụ (C-001 đến C-008, C-010, C-011; nhiệm vụ C-009 được thu hồi/dự phòng). C bắt đầu từ C-001 và C-002.*
+- [ ] **C-001 [BẮT ĐẦU LÀM]:** Màn hình chính WinForms hiển thị bảng dữ liệu (`DashboardForm.cs`) *(C tự tay thiết kế trên form rỗng hiện có)*.
+- [ ] **C-002 [BẮT ĐẦU LÀM]:** Kết nối ngầm tới máy chủ Central (`AdminClient.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [ ] **C-003 [CHƯA LÀM]:** Bảng danh sách thiết bị DataGridView (`DashboardForm.cs`) *(Hoàn thiện trên form)*.
+- [ ] **C-004 [CHƯA LÀM]:** Bảng danh sách sự cố DataGridView (`DashboardForm.cs`) *(Hoàn thiện trên form)*.
+- [ ] **C-005 [CHƯA LÀM]:** Nút tiếp nhận sự cố ACK (`DashboardForm.cs`) *(Hoàn thiện trên form)*.
+- [ ] **C-006 [CHƯA LÀM]:** Nút bắt đầu sửa Start (`DashboardForm.cs`) *(Hoàn thiện trên form)*.
+- [ ] **C-007 [CHƯA LÀM]:** Nút hoàn tất sửa Resolve (`DashboardForm.cs`) *(Hoàn thiện trên form)*.
+- [ ] **C-008 [CHƯA LÀM]:** Thêm cột người xử lý và hộp thoại popup chọn kỹ thuật viên khi bấm `Assign` *(Hoàn thiện trên form)*.
+- [ ] **C-010 [CHƯA LÀM]:** Khóa nút bấm theo phân quyền khi đăng nhập Viewer (`DashboardForm.cs`) *(Hoàn thiện trên form)*.
+- [ ] **C-011 [CHƯA LÀM]:** Hiển thị hộp thoại báo lỗi thân thiện khi máy chủ từ chối thao tác (`DashboardForm.cs`) *(Hoàn thiện trên form)*.
+
+### Sinh viên D — Phần mở rộng sau này (Gateway & Collector)
+> *Toàn bộ công việc của D là CHƯA LÀM. D bắt đầu làm quen socket TCP trong tools/.*
+- [ ] **D-001 [BẮT ĐẦU LÀM]:** Chạy bộ kiểm thử giao thức (`dotnet test`), đọc hiểu `FrameCodec.cs`, xem xét 16 tệp mẫu JSON trong fixtures, nắm vững phong bì 6 trường và đóng khung TCP 4 byte.
+- [ ] **D-002 [BẮT ĐẦU LÀM]:** Tự viết một chương trình Console nhỏ (TCP Echo) trong thư mục riêng `tools/` để làm quen với Socket TCP trong C#.
+- [ ] **D-003 [CHƯA LÀM]:** Thử nghiệm nhận và chuyển tiếp gói tin TCP Relay (`tools/`, BoundedChannel 100, FullMode.Wait).
+- [ ] **D-004 [CHƯA LÀM / DỰ KIẾN]:** Tạo dự án `LabGuard.Gateway` (bộ cân bằng tải L4 TCP) sau khi các tính năng cốt lõi của A, B, C ổn định.
+- [ ] **D-005 [CHƯA LÀM / DỰ KIẾN]:** Tạo dự án `LabGuard.Collector` (trạm gom dữ liệu phân tán) sau khi các tính năng cốt lõi của A, B, C ổn định.
+- [ ] **D-006 [CHƯA LÀM / DỰ KIẾN]:** Viết logic sinh tải 20–50 máy trạm cho `LabGuard.Simulator`.
+
+---
+
+## 3. VIỆC CẢ NHÓM
+- [ ] Chạy thử kịch bản phối hợp hoàn chỉnh: Bật SQL -> Central -> Agent -> Admin -> Kích hoạt quá tải CPU -> Kỹ thuật viên xử lý -> Hoàn tất sửa sự cố.
+- [ ] Chạy toàn bộ bài kiểm thử tự động (`dotnet test`) đảm bảo 100% pass trước mỗi lần nộp bài.
+- [ ] Cập nhật kết quả vào file theo dõi `LabGuard_Task_Tracker.xlsx`.

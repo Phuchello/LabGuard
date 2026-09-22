@@ -25,7 +25,7 @@ public class EnvelopeValidationResult
 }
 
 /// <summary>
-/// Centralized strict validator for LabGuard Wire Envelopes according to 03_PROTOCOL_SPEC.md.
+/// Centralized strict validator for LabGuard Wire Envelopes according to docs/spec/PROTOCOL_SPEC.md.
 /// </summary>
 public static class EnvelopeValidator
 {

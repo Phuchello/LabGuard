@@ -1,0 +1,810 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{labguard_pdf}
+
+\begin{document}
+
+% ==============================================================================
+% TRANG BIA CHUAN DO AN UIT (TEXT-ONLY, GON GANG, HOC THUAT)
+% ==============================================================================
+\begin{titlepage}
+  \centering
+  \vspace*{-10mm}
+  {\bfseries\large ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH\par}
+  {\bfseries\large TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN\par}
+  {\bfseries\large KHOA MẠNG MÁY TÍNH VÀ TRUYỀN THÔNG\par}
+  \vspace{15mm}
+  {\color{lgDeepBlue}\hrule height 2pt}
+  \vspace{12mm}
+  {\bfseries\large NT106 — LẬP TRÌNH MẠNG CĂN BẢN\par}
+  \vspace{12mm}
+  {\bfseries\huge\color{lgDeepBlue} CẨM NANG LABGUARD\par}
+  \vspace{5mm}
+  {\bfseries\Huge\color{lgDeepBlue} HƯỚNG DẪN THÀNH VIÊN A\par}
+  \vspace{8mm}
+  {\bfseries\Large AGENT \& GIAO THỨC TRUYỀN THÔNG\par}
+  \vspace{4mm}
+  {\large Phân hệ máy trạm và chuẩn đóng gói dữ liệu mạng cho hệ thống LabGuard\par}
+  \vspace{12mm}
+  {\color{lgTeal}\hrule height 1pt}
+  \vspace{25mm}
+  {\large\textbf{BIÊN SOẠN: VÕ TRỌNG PHÚC}\par}
+  \vspace{6mm}
+  {\large\textbf{NHÓM THỰC HIỆN: 4 THÀNH VIÊN}\par}
+  \vfill
+  {\bfseries\color{lgSlate} TP. HỒ CHÍ MINH — 2026\par}
+\end{titlepage}
+
+% ==============================================================================
+% TRANG 2: KHỞI ĐỘNG NHANH CHO THÀNH VIÊN A (5 MỤC KHÔNG BIỆT NGỮ)
+% ==============================================================================
+\thispagestyle{empty}
+\vspace*{-8mm}
+{\centering\Large\bfseries\color{lgDeepBlue} KHỞI ĐỘNG NHANH DÀNH CHO THÀNH VIÊN A\par}
+\vspace{1mm}
+{\centering\footnotesize\color{lgGray} (Đọc xong trang này trong 2 phút là bạn biết chính xác mình cần làm gì hôm nay)\par}
+\vspace{4mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightTeal, colframe=lgTeal, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgTeal} 1. BẠN LÀ AI?}\par
+\vspace{1mm}
+Bạn là người phụ trách phần mềm chạy ngầm trên máy sinh viên (\textbf{Agent}) và thư viện giao thức đóng gói dữ liệu mạng (\textbf{Protocol}).
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightBlue, colframe=lgDeepBlue, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgDeepBlue} 2. BẠN LÀM GÌ?}\par
+\vspace{1mm}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
+  \item Đọc hiểu thư viện giao thức \texttt{src/LabGuard.Protocol/} (đã hoàn thành 100\%, bộ kiểm thử giao thức đã PASS).
+  \item Lập trình Agent mở kết nối TCP tới máy chủ Central Server (cổng 5000).
+  \item Định kỳ 5 giây đo tải CPU, RAM và gửi nhịp tim sống còn lên máy chủ.
+  \item Giữ lại số liệu vào bộ nhớ đệm (Replay Buffer) khi bị đứt mạng và tự động gửi bù khi có mạng lại.
+\end{itemize}
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightRed, colframe=lgCrimson, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgCrimson} 3. BẠN KHÔNG CẦN LO PHẦN NÀO?}\par
+\vspace{1mm}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
+  \item Bạn \textbf{không cần} lo việc ghi cơ sở dữ liệu SQL Server hay viết luật phát hiện sự cố (việc của \textbf{Thành viên B}).
+  \item Bạn \textbf{không cần} lo vẽ giao diện đồ họa WinForms hay bảng điều khiển (việc của \textbf{Thành viên C}).
+  \item Bạn \textbf{không cần} lo trạm trung chuyển Gateway hay công cụ giả lập kiểm thử tải (việc của \textbf{Thành viên D}).
+\end{itemize}
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightGreen, colframe=lgForestGreen, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgForestGreen} 4. HÔM NAY BẮT ĐẦU Ở ĐÂU?}\par
+\vspace{1mm}
+Chạy lệnh \texttt{dotnet test tests/LabGuard.Protocol.Tests} trong cửa sổ dòng lệnh để tận mắt thấy 107 bài kiểm thử màu xanh. Sau đó mở file \texttt{src/LabGuard.Agent/Program.cs} để bắt đầu viết kết nối TCP đầu tiên tới máy chủ.
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightSlate, colframe=lgSlate, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgSlate} 5. FILES BẠN CẦN MỞ TRƯỚC:}\par
+\vspace{1mm}
+\begin{enumerate}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
+  \item \texttt{START\_HERE.md}: Bản đồ hướng dẫn khởi động nhanh dự án.
+  \item \texttt{src/LabGuard.Protocol/WireEnvelope.cs}: Chiếc phong bì chuẩn 6 trường của toàn hệ thống.
+  \item \texttt{src/LabGuard.Protocol/FrameCodec.cs}: Cách cắt và ghép 4 byte độ dài khi gửi tin qua mạng.
+  \item \texttt{src/LabGuard.Agent/Program.cs}: Nơi bạn sẽ viết mã chạy cho phần mềm Agent.
+\end{enumerate}
+\end{tcolorbox}
+
+\newpage
+
+% ==============================================================================
+% MUC LUC
+% ==============================================================================
+\pagenumbering{roman}
+\setcounter{page}{3}
+
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{MỤC LỤC}
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ==============================================================================
+% PHAN 1: TONG QUAN VAI TRO THANH VIEN A
+% ==============================================================================
+\section{Tổng quan vai trò của Thành viên A}
+
+\begin{summarybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Bạn chịu trách nhiệm hai phần: thư viện giao thức chung (\textbf{Protocol}) và phần mềm máy trạm (\textbf{Agent}).
+  \item Thư viện \texttt{Protocol} đã hoàn thành 100\% (toàn bộ kiểm thử giao thức đã PASS), là hợp đồng mạng bất biến cho cả nhóm.
+  \item Phần mềm \texttt{Agent} hiện là khung dự án để bạn tự tay viết mã thu thập dữ liệu và kết nối mạng.
+  \item Bạn phối hợp chặt chẽ với Thành viên B (máy chủ tiếp nhận các gói tin của bạn).
+\end{itemize}
+\end{summarybox}
+
+Chào mừng bạn đến với phân hệ nền tảng của đồ án LabGuard. Trong nhóm 4 người, bạn là người đặt những viên gạch đầu tiên cho toàn bộ việc kết nối mạng của hệ thống:
+
+\begin{conceptbox}
+\textbf{Hai khu vực mã nguồn do Thành viên A phụ trách:}
+\begin{enumerate}
+  \item \textbf{Thư viện Giao thức dùng chung (\texttt{src/LabGuard.Protocol/}):} Định nghĩa cấu trúc phong bì dữ liệu \texttt{WireEnvelope} và bộ đóng khung \texttt{FrameCodec}. Đây là hợp đồng mạng bất biến mà cả 3 thành viên còn lại (B, C, D) đều phải dựa vào để trao đổi thông tin. Phân hệ này hiện \textbf{ĐÃ HOÀN THÀNH 100\%} với bộ kiểm thử tự động đã PASS.
+  \item \textbf{Phần mềm Máy trạm Agent (\texttt{src/LabGuard.Agent/}):} Lập trình ứng dụng chạy ngầm trên từng máy tính sinh viên, định kỳ đo tài nguyên CPU/RAM, gửi nhịp tim sống còn và giữ lại dữ liệu khi bị đứt cáp mạng. Toàn bộ các tác vụ của Agent đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN} để bạn tự tay xây dựng.
+\end{enumerate}
+\end{conceptbox}
+
+Hình này chỉ cần nhìn theo mũi tên từ dưới lên trên: Agent sử dụng thư viện Protocol chung của dự án.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+    box/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=2mm, thick, align=center, font=\small\bfseries, minimum height=14mm},
+    arr/.style={-{Latex[length=3mm]}, thick, color=lgTeal}
+  ]
+    \node[box, fill=lgLightGreen, draw=lgForestGreen, minimum width=130mm] (proto) at (0, 2.5) {Thư viện Giao thức Core: src/LabGuard.Protocol/ [ĐÃ HOÀN THÀNH — Protocol tests PASS]\\(WireEnvelope 6 trường, FrameCodec 4B Big-Endian, EnvelopeValidator, DTOs)};
+    \node[box, fill=lgLightRed, draw=lgCrimson, dashed, minimum width=130mm] (agent) at (0, -0.5) {Chương trình Máy trạm: src/LabGuard.Agent/ [CHƯA LÀM — DỰ KIẾN]\\(Socket Reconnect, Thu thập CPU/RAM, Heartbeat 5s, Bộ đệm ngoại tuyến Replay Buffer)};
+
+    \draw[arr] (agent) -- node[right, font=\footnotesize]{Tham chiếu và sử dụng thư viện} (proto);
+  \end{tikzpicture}
+  \caption{Sơ đồ mối quan hệ giữa 2 phân hệ do Thành viên A phụ trách}
+  \label{fig:member_a_scope}
+\end{figure}
+
+Ý chính: Thư viện Protocol đã hoàn thành 100\% với bộ kiểm thử giao thức đã PASS, đóng vai trò nền móng bất biến để bạn yên tâm lập trình Agent.
+
+\begin{takeawaybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Thư viện Protocol là tài sản chung của cả nhóm, tuyệt đối không tự ý đổi cấu trúc 6 trường phong bì.
+  \item Việc tiếp theo của bạn tập trung 100\% vào thư mục \texttt{src/LabGuard.Agent/}.
+\end{itemize}
+\end{takeawaybox}
+
+% ==============================================================================
+% PHAN 2: CHANG 1 — PHAN HE PROTOCOL (DA HOAN THANH 100%)
+% ==============================================================================
+\section[Chặng 1: Thư viện Giao thức (ĐÃ HOÀN THÀNH)]{Chặng 1: Thư viện Giao thức \& Đóng khung tin (ĐÃ HOÀN THÀNH)}
+
+\begin{summarybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Dữ liệu gửi qua mạng luôn bỏ vào phong bì \texttt{WireEnvelope} đúng 6 trường.
+  \item Trước khi gửi qua socket TCP, thêm 4 byte độ dài Big-Endian (\texttt{FrameCodec}).
+  \item Khi nhận dữ liệu, phải dùng vòng lặp gom đủ byte (\texttt{ReadExactlyBytesAsync}), không được đọc nửa vời.
+  \item Đã có sẵn bộ kiểm thử tự động PASS chứng minh thư viện chạy đúng 100\%.
+\end{itemize}
+\end{summarybox}
+
+\begin{importantbox}
+Đây là phần việc \textbf{ĐÃ HOÀN TẤT} trong mã nguồn thực tế. Toàn bộ 107 bài test tự động trong \texttt{tests/LabGuard.Protocol.Tests} đều đã chạy thành công mỹ mãn. Bạn cần đọc hiểu sâu sắc phần này để tự tin khi viết mã cho Agent và khi trả lời vấn đáp.
+\end{importantbox}
+
+\subsection{Cấu trúc chuẩn của WireEnvelope.cs}
+Mọi dữ liệu truyền qua mạng trong LabGuard đều được đặt vào một chiếc "phong bì" JSON có \textbf{CHÍNH XÁC 6 TRƯỜNG CỐ ĐỊNH}. Dưới đây là trích xuất từ file \texttt{src/LabGuard.Protocol/WireEnvelope.cs}:
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item 6 trường cố định JSON: \texttt{version}, \texttt{messageType}, \texttt{requestId}, \texttt{deviceId}, \texttt{sentAtUtc}, \texttt{payload}.
+  \item Hàm tĩnh \texttt{Create()} giúp tự động điền Version = 1, sinh UUID ngẫu nhiên và lấy giờ UTC chuẩn.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn dựa trên mã nguồn hiện tại: src/LabGuard.Protocol/WireEnvelope.cs}]
+// Trich doan tu ma nguon thuc te: 6 thuoc tinh phong bi du lieu chuan
+public class WireEnvelope<T>
+{
+    [JsonPropertyName("version")]     public int Version { get; set; } = 1;
+    [JsonPropertyName("messageType")] public string MessageType { get; set; } = string.Empty;
+    [JsonPropertyName("requestId")]   public string RequestId { get; set; } = string.Empty;
+    [JsonPropertyName("deviceId")]    public string DeviceId { get; set; } = string.Empty;
+    [JsonPropertyName("sentAtUtc")]   public string SentAtUtc { get; set; } = string.Empty;
+    [JsonPropertyName("payload")]     public T Payload { get; set; } = default!;
+
+    // Phuong thuc Create(...) tien ich khoi tao nhanh (xem file nguon day du)
+    public static WireEnvelope<T> Create(string type, string devId, T payload, string? reqId = null) => ...;
+}
+\end{lstlisting}
+
+Ý nghĩa 6 trường phong bì:
+\begin{itemize}
+  \item \texttt{version}: Số nguyên $1$. Tuyệt đối không dùng dạng chuỗi \texttt{"1.0"}.
+  \item \texttt{messageType}: Tên thông điệp viết hoa (ví dụ: \texttt{HEARTBEAT}, \texttt{METRIC\_BATCH}).
+  \item \texttt{requestId}: Mã UUID v4 duy nhất cho mỗi lượt gửi (36 ký tự).
+  \item \texttt{deviceId}: Tên máy gửi bản tin (ví dụ: \texttt{PC-LAB1-01} hoặc \texttt{LAB01-PC02}).
+  \item \texttt{sentAtUtc}: Thời điểm gửi theo giờ UTC quốc tế, kết thúc bằng \texttt{\'Z\'} hoặc \texttt{\'+00:00\'}.
+  \item \texttt{payload}: Dữ liệu chi tiết của từng loại thông điệp (tham số generic \texttt{T}, như \texttt{JsonElement} hoặc DTO cụ thể).
+\end{itemize}
+
+\subsection{Bộ đóng khung nhị phân FrameCodec.cs}
+TCP là dòng byte liên tục (\textit{Byte Stream}), không có khái niệm gói tin nguyên vẹn. Lớp \texttt{FrameCodec.cs} giải quyết vấn đề này bằng cách thêm 4 byte độ dài Big-Endian vào đầu mỗi chuỗi JSON trước khi truyền qua socket:
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Tiêu đề 4 byte Big-Endian chứa kích thước chính xác của mảng byte payload.
+  \item Hạn mức an toàn \texttt{MaxPayloadSize = 262\_144} (256 KiB) giúp bảo vệ hệ thống khỏi tràn bộ nhớ.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn dựa trên mã nguồn hiện tại: Hằng số giới hạn trong FrameCodec.cs}]
+// Trich doan: Hang so co dinh 4 byte do dai va gioi han 256 KiB
+public static class FrameCodec
+{
+    public const int HeaderSize = 4;                                 // 4 byte do dai Big-Endian
+    public const int MaxPayloadSize = 262_144;                       // 256 KiB
+    public const int MaxWireFrameSize = HeaderSize + MaxPayloadSize; // 262,148 bytes
+}
+\end{lstlisting}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item \texttt{BinaryPrimitives.WriteUInt32BigEndian} ghi đúng thứ tự byte mạng chuẩn mực.
+  \item Nối liền 4 byte độ dài với mảng byte nội dung JSON phía sau.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn dựa trên mã nguồn hiện tại: Phương thức Encode trong FrameCodec.cs}]
+// Trich doan: Dong goi 4 byte Big-Endian vao dau mang byte
+public static byte[] Encode(ReadOnlyMemory<byte> payload)
+{
+    if (payload.Length == 0 || payload.Length > MaxPayloadSize)
+        throw new ArgumentException("Kich thuoc payload khong hop le.");
+
+    byte[] frame = new byte[HeaderSize + payload.Length];
+    BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(0, HeaderSize), (uint)payload.Length);
+    payload.Span.CopyTo(frame.AsSpan(HeaderSize));
+    return frame;
+}
+\end{lstlisting}
+
+\subsection{Giải thuật đọc chính xác N byte (ReadExactlyBytesAsync)}
+Khi nhận dữ liệu từ mạng, một lần gọi \texttt{stream.ReadAsync} có thể chỉ trả về một vài byte đầu tiên do phân mảnh mạng. Phương thức \texttt{ReadExactlyBytesAsync} dùng vòng lặp tích lũy để gom đủ từng byte:
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Vòng lặp \texttt{while (totalRead < count)} tiếp tục đọc cho tới khi nhận đủ số byte yêu cầu.
+  \item Nếu kết quả \texttt{read == 0}, nghĩa là đối phương đã chủ động ngắt kết nối mạng.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn dựa trên mã nguồn hiện tại: ReadExactlyBytesAsync trong FrameCodec.cs}]
+// Trich doan: Vong lap gom tich luy du count byte tu NetworkStream
+public static async Task ReadExactlyBytesAsync(
+    Stream stream, byte[] buffer, int offset, int count, CancellationToken ct = default)
+{
+    int totalRead = 0;
+    while (totalRead < count)
+    {
+        int read = await stream.ReadAsync(buffer.AsMemory(offset + totalRead, count - totalRead), ct);
+        if (read == 0)
+            throw new EndOfStreamException($"Mat ket noi TCP: da doc {totalRead}/{count} bytes.");
+        totalRead += read;
+    }
+}
+\end{lstlisting}
+
+\subsection{Bộ kiểm tra message đúng luật (EnvelopeValidator.cs)}
+Lớp \texttt{EnvelopeValidator.cs} thi hành nguyên tắc bảo mật: \textit{"Không bao giờ tin tưởng dữ liệu thô từ mạng"}. Mỗi bản tin sau khi giải mã JSON đều được kiểm tra:
+\begin{itemize}
+  \item Kiểm tra \texttt{Version == 1}.
+  \item Kiểm tra \texttt{MessageType} không rỗng và thuộc danh mục 69 loại chuẩn trong \texttt{MessageTypes.cs}.
+  \item Kiểm tra \texttt{RequestId} là chuỗi GUID 36 ký tự hợp lệ.
+  \item Kiểm tra \texttt{DeviceId} không được rỗng và không chứa ký tự nguy hiểm.
+  \item Kiểm tra \texttt{SentAtUtc} có chỉ định múi giờ UTC tường minh (\texttt{\'Z\'} hoặc \texttt{\'+00:00\'}).
+\end{itemize}
+
+\subsection{Bộ chuyển đổi JSON (ProtocolSerializer.cs)}
+Lớp \texttt{ProtocolSerializer.cs} cấu hình thư viện \texttt{System.Text.Json} với các tùy chọn chuẩn hóa giúp chuỗi JSON luôn gọn gàng (minified) và không tốn byte thừa trên đường truyền.
+
+\subsection{Cấu trúc bộ kiểm thử giao thức thực tế (Protocol Tests)}
+Thư viện kiểm thử \texttt{tests/LabGuard.Protocol.Tests} bao gồm 107 bài test tự động:
+\begin{enumerate}
+  \item \textbf{\texttt{FrameCodecTests.cs}:} Kiểm thử đóng khung 4 byte Big-Endian, đọc phân mảnh TCP, phát hiện khung quá khổ \texttt{MaxPayloadSize} (256 KiB).
+  \item \textbf{\texttt{ProtocolSpecificationTests.cs}:} Kiểm thử tuân thủ đặc tả giao thức, kiểm tra 6 trường outer, xác thực giờ UTC.
+  \item \textbf{\texttt{WireContractAndFixturesTests.cs}:} Kiểm thử khớp 16 fixture JSON quy chuẩn và tuần tự hóa hai chiều.
+  \item \textbf{\texttt{ChunkedStream.cs}:} Luồng giả lập ngắt quãng từng byte để thử nghiệm khả năng chịu phân mảnh mạng.
+\end{enumerate}
+
+\begin{takeawaybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Thư viện Protocol đã pass toàn bộ 107/107 tests tự động.
+  \item Khi làm Agent, bạn chỉ việc gọi \texttt{FrameCodec.Encode(env)} để gửi và \texttt{FrameCodec.ReadFrameAsync(stream)} để nhận.
+\end{itemize}
+\end{takeawaybox}
+
+% ==============================================================================
+% PHAN 3: CAC CHANG CONG VIEC MAY TRAM AGENT (CHUA LAM / DU KIEN)
+% ==============================================================================
+\section[Các chặng công việc máy trạm Agent]{Các chặng công việc máy trạm Agent (Chưa làm / Dự kiến)}
+
+\begin{summarybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Agent chạy ngầm trên máy sinh viên, kết nối TCP tới Central Server (Port 5000).
+  \item Dùng hàng đợi một luồng ghi (\texttt{Single-Writer Channel}) để gửi tin an toàn không bị trộn byte.
+  \item Định kỳ 5s gửi nhịp tim (\texttt{HEARTBEAT}) và số liệu CPU/RAM (\texttt{METRIC\_BATCH}).
+  \item Dùng bộ đệm Replay Buffer (tối đa 50 mẻ METRIC\_BATCH) giữ lại số liệu khi bị rớt mạng.
+\end{itemize}
+\end{summarybox}
+
+\begin{importantbox}
+Toàn bộ các chặng từ 2 đến 7 dưới đây đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN}. Bạn sẽ tự tay lập trình từng lớp đối tượng trong thư mục \texttt{src/LabGuard.Agent/}.
+\end{importantbox}
+
+% ------------------------------------------------------------------------------
+\subsection{VIỆC TIẾP THEO: Cho Agent kết nối TCP tới Central và gửi tin an toàn}
+{\footnotesize\color{lgGray}\textit{Chặng 2 — Mã tác vụ nội bộ: LG-A-003}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Trong một chương trình Agent, có hai việc xảy ra đồng thời: một luồng định kỳ gửi nhịp tim sống còn (\texttt{HEARTBEAT} mỗi 5s), một luồng khác định kỳ gửi số liệu CPU/RAM (\texttt{METRIC\_BATCH} mỗi 5s). Nếu cả hai luồng cùng gọi thẳng hàm ghi vào socket TCP (\texttt{stream.WriteAsync}), các byte của hai gói tin sẽ bị trộn lẫn vào nhau, khiến máy chủ không thể đọc được và ngắt kết nối ngay!
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Agent khởi tạo \texttt{TcpClient} kết nối đến Central Server trên cổng 5000. Để đảm bảo an toàn tuyệt đối mà không cần dùng khóa chặn nghẽn (\texttt{lock}), ta dùng một hàng đợi có giới hạn dung lượng (\textbf{Bounded Single-Writer Queue}) bằng \texttt{Channel<byte[]>}:
+\begin{itemize}
+  \item Các luồng nghiệp vụ (Heartbeat, đo CPU/RAM) chỉ việc đẩy mảng byte vào hàng đợi.
+  \item Duy nhất một luồng nền độc lập lấy từng gói tin ra và ghi tuần tự vào \texttt{NetworkStream}.
+\end{itemize}
+
+Hình này chỉ cần nhìn theo các mũi tên chuyển đổi trạng thái: bắt đầu từ Khởi động đến Đang kết nối và Chờ thử lại.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+    state/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=2mm, thick, align=center, font=\footnotesize\bfseries, minimum height=11mm, minimum width=34mm},
+    failstate/.style={rectangle, draw=lgCrimson, fill=lgLightRed, rounded corners=2mm, thick, align=center, font=\footnotesize\bfseries, minimum height=11mm, minimum width=34mm},
+    arrow/.style={-{Stealth[scale=0.9]}, thick, color=lgDeepBlue},
+    failarrow/.style={-{Stealth[scale=0.9]}, thick, color=lgCrimson}
+  ]
+    \node[state] (init) at (0, 3.6) {Khởi động Agent};
+    \node[state] (connecting) at (0, 1.8) {Đang kết nối\\(ConnectAsync)};
+    \node[state] (connected) at (-4.2, -0.2) {Đã kết nối TCP\\Gửi HELLO\_AGENT};
+    \node[state] (active) at (-4.2, -2.6) {Hoạt động bình thường\\(Heartbeat + Telemetry)};
+    \node[failstate] (reconnecting) at (4.2, -0.4) {Chờ kết nối lại\\(Exponential Backoff)};
+
+    \draw[arrow] (init) -- (connecting);
+    \draw[arrow] (connecting.west) -| node[above, font=\scriptsize, fill=white, inner sep=1.5pt] {Thành công} (connected.north);
+    \draw[arrow] (connected) -- node[left, font=\scriptsize, fill=white, inner sep=1.5pt] {Bắt đầu gửi dữ liệu} (active);
+    \draw[failarrow] (connecting.east) -| node[above, font=\scriptsize\color{lgCrimson}, fill=white, inner sep=1.5pt] {Lỗi Socket / Quá giờ} (reconnecting.north);
+    \draw[failarrow] (active.east) -| node[pos=0.35, above, font=\scriptsize\color{lgCrimson}, fill=white, inner sep=1.5pt] {Mất kết nối / Lỗi Socket} (reconnecting.south);
+    \draw[arrow] (reconnecting.west) -| node[pos=0.35, above, font=\scriptsize, fill=white, inner sep=1.5pt] {Hết thời gian chờ} (connecting.south);
+  \end{tikzpicture}
+  \caption{Sơ đồ máy trạng thái kết nối và tự động kết nối lại của Agent}
+  \label{fig:agent_state_machine}
+\end{figure}
+
+Ý chính: Khi mất mạng, Agent không được sập chương trình mà phải chuyển sang trạng thái chờ thử lại với thời gian tăng dần (Exponential Backoff).
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo mới file: \texttt{src/LabGuard.Agent/AgentSocketClient.cs}.
+
+\subsubsection{Bạn cần làm những bước lớn nào?}
+\begin{enumerate}
+  \item Mở kết nối TCP tới máy chủ bằng \texttt{TcpClient.ConnectAsync(host, port)}.
+  \item Khởi tạo hàng đợi có giới hạn \texttt{BoundedChannelOptions(256)} với chế độ chờ \texttt{FullMode.Wait} để bộ nhớ không tăng vô hạn.
+  \item Khởi chạy vòng lặp gửi tin đơn lẻ (Single Writer Loop) đọc từ Channel và ghi vào socket.
+  \item Chạy vòng lặp nhận tin ngầm đọc từ socket bằng \texttt{FrameCodec.ReadExactlyBytesAsync}.
+\end{enumerate}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Kết nối tới máy chủ và duy trì luồng mạng \texttt{NetworkStream}.
+  \item Đọc từng khung tin nhị phân bằng \texttt{FrameCodec} mà không làm sập chương trình khi đứt mạng.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Vòng lặp kết nối và nhận tin của AgentSocketClient}]
+// Pseudocode minh hoa: Ket noi va doc khung tin tu Central
+public async Task RunClientAsync(string host, int port, CancellationToken ct)
+{
+    using var tcp = new TcpClient();
+    await tcp.ConnectAsync(host, port, ct);
+    using var stream = tcp.GetStream();
+    while (!ct.IsCancellationRequested)
+    {
+        byte[]? frame = await FrameCodec.ReadFrameAsync(stream, ct: ct);
+        if (frame == null) break; // Central dong ket noi
+        ProcessIncomingFrame(frame);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Bật Agent lên khi Central chưa bật: Agent phải in log đang chờ kết nối lại ($1\text{s}, 2\text{s}, 4\text{s} \dots 30\text{s}$) mà không bị văng. Sau đó bật Central lên: Agent lập tức phát hiện và kết nối thành công.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Kết nối thành công tới Central Server trên cổng 5000.
+  \item Tự động thử kết nối lại với thuật toán Exponential Backoff (trần 30s) khi mạng gián đoạn.
+  \item Đọc trọn vẹn từng khung tin nhị phân mà không bị vỡ gói.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 3: VIỆC TIẾP THEO: Đo số liệu tài nguyên phần cứng (CPU, RAM)}
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Mục đích chính của LabGuard là giám sát xem máy sinh viên có bị treo, đơ hay quá tải không. Ta phải đo được tỷ lệ phần trăm CPU và dung lượng RAM còn trống của máy để báo về trung tâm.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Định kỳ mỗi 5 giây, một tác vụ nền đọc các giá trị hiệu năng từ hệ điều hành Windows:
+\begin{itemize}
+  \item Mức tải CPU hiện tại (ví dụ: $35.4\%$).
+  \item Dung lượng RAM khả dụng (ví dụ: $4096\text{ MB} / 8192\text{ MB}$).
+\end{itemize}
+Agent đóng gói các con số này vào \texttt{WireEnvelope} với loại thông điệp \texttt{METRIC\_BATCH} và gửi qua socket về Central Server.
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo mới file: \texttt{src/LabGuard.Agent/MetricsCollector.cs}.
+
+\subsubsection{Bạn cần làm những bước lớn nào?}
+\begin{enumerate}
+  \item Dùng \texttt{Process} hoặc Performance Counter để lấy tỷ lệ CPU.
+  \item Dùng \texttt{GC.GetGCMemoryInfo()} hoặc Windows API để lấy dung lượng RAM còn trống.
+  \item Đóng gói kết quả thành danh sách \texttt{MetricSampleDto}.
+\end{enumerate}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Hàm \texttt{CollectCpu()} trả về số phần trăm tải CPU từ 0 đến 100.
+  \item Hàm \texttt{CollectRam()} tính dung lượng bộ nhớ khả dụng theo Megabyte (MB).
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Thu thập chỉ số CPU và RAM từ hệ thống}]
+// Pseudocode minh hoa: Thu thap chi so CPU va RAM
+public class MetricsCollector
+{
+    public MetricSampleDto CollectCpu() =>
+        new() { MetricName = "CPU", MetricValue = ReadCpuPercent(), Unit = "%" };
+
+    public MetricSampleDto CollectRam()
+    {
+        double freeMb = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / (1024.0 * 1024.0);
+        return new() { MetricName = "RAM", MetricValue = Math.Round(freeMb, 0), Unit = "MB" };
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Chạy Agent, mở Task Manager trên máy tính lên so sánh xem con số CPU/RAM do Agent đo được có khớp với Task Manager hay không.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Giá trị đo CPU nằm trong khoảng hợp lệ từ $0.0\%$ đến $100.0\%$.
+  \item Giá trị RAM phản ánh đúng dung lượng bộ nhớ khả dụng.
+  \item Đóng gói chính xác vào DTO chuẩn \texttt{MetricSampleDto}.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 4: VIỆC TIẾP THEO: Gửi nhịp tim định kỳ duy trì sự sống (Heartbeat)}
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Nếu một máy tính sinh viên bị tắt nguồn đột ngột hoặc rút dây mạng, máy tính đó sẽ không kịp gửi bất kỳ lời chào tạm biệt nào. Gói tin nhịp tim gửi đều đặn mỗi 5 giây giúp máy chủ Central biết máy đó vẫn đang hoạt động bình thường.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Cứ đúng mỗi 5 giây, Agent gửi một bản tin \texttt{HEARTBEAT} siêu nhẹ (chỉ chứa số thứ tự nhịp tim \texttt{sequenceNumber} tăng dần và thời gian hoạt động \texttt{uptimeSeconds}). Máy chủ Central nhận được sẽ lập tức trả về \texttt{HEARTBEAT\_ACK}.
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo mới file: \texttt{src/LabGuard.Agent/HeartbeatService.cs}.
+
+\subsubsection{Bạn cần làm những bước lớn nào?}
+\begin{enumerate}
+  \item Dùng \texttt{PeriodicTimer} đặt chu kỳ lặp đúng 5 giây.
+  \item Mỗi nhịp, tăng biến đếm \texttt{sequenceNumber} lên 1.
+  \item Đóng gói bản tin \texttt{WireEnvelope} loại \texttt{HEARTBEAT} và đẩy vào hàng đợi gửi đi.
+\end{enumerate}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Dùng \texttt{PeriodicTimer(TimeSpan.FromSeconds(5))} giúp định thời chuẩn xác, không bị trôi thời gian.
+  \item \texttt{SequenceNumber} tăng dần liên tục để đối soát thứ tự gói tin.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Định kỳ 5s gửi nhịp tim sống còn}]
+// Pseudocode minh hoa: Dinh ky 5s phat nhip tim
+public async Task StartHeartbeatLoopAsync(Action<byte[]> sendAction, string deviceId, CancellationToken ct)
+{
+    using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+    long seq = 0;
+    while (await timer.WaitForNextTickAsync(ct))
+    {
+        var payload = new HeartbeatPayload { SequenceNumber = ++seq, UptimeSeconds = Environment.TickCount64 / 1000 };
+        var env = WireEnvelope<HeartbeatPayload>.Create(MessageTypes.Heartbeat, deviceId, payload);
+        sendAction(FrameCodec.Encode(env));
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Theo dõi cửa sổ console của Agent: cứ mỗi 5 giây màn hình phải in log gửi nhịp tim \texttt{sequence=1}, \texttt{sequence=2} thành công.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Gửi nhịp tim đều đặn đúng chu kỳ 5 giây ($\pm 200\text{ms}$).
+  \item Số thứ tự \texttt{SequenceNumber} tăng đơn điệu liên tục.
+  \item Nhận và xử lý gói tin \texttt{HEARTBEAT\_ACK} từ Central Server.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 5: VIỆC TIẾP THEO: Bộ đệm ngoại tuyến lưu tạm khi rớt mạng (Replay Buffer)}
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Khi sinh viên vô tình đá phải chân cáp mạng, dây mạng bị lỏng trong chốc lát. Trong khoảng thời gian đó, Agent vẫn đo CPU/RAM nhưng không gửi đi được. Nếu vứt bỏ số liệu thì máy chủ sẽ bị mất dữ liệu lịch sử.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Agent lưu các mẻ số liệu đo đạc chưa gửi được vào một hàng đợi trong bộ nhớ RAM (\texttt{ReplayBuffer}). Hàng đợi này chứa tối đa 50 mẻ số liệu (\texttt{METRIC\_BATCH}, tương đương 250 giây dữ liệu), tự động loại bỏ mẻ cũ nhất nếu đầy theo chính sách FIFO Drop-Oldest để không làm tràn RAM. Lưu ý: Chỉ lưu \texttt{METRIC\_BATCH}, tuyệt đối không lưu \texttt{HEARTBEAT} hay \texttt{SERVICE\_STATUS} vào bộ đệm vì dữ liệu thời gian thực cũ không còn giá trị liveness. Khi kết nối mạng có lại, Agent tự động gửi bù các mẻ này kèm cờ \texttt{isReplay = true}.
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo mới file: \texttt{src/LabGuard.Agent/ReplayBuffer.cs}.
+
+\subsubsection{Bạn cần làm những bước lớn nào?}
+\begin{enumerate}
+  \item Sử dụng hàng đợi an toàn luồng \texttt{ConcurrentQueue<byte[]>}.
+  \item Chỉ đưa bản tin \texttt{METRIC\_BATCH} vào bộ đệm; nếu số lượng vượt quá 50 mẻ thì loại bỏ mẻ cũ nhất (\texttt{Drop Oldest}).
+  \item Viết hàm \texttt{DrainAsync} để đẩy bù dữ liệu khi mạng phục hồi.
+\end{enumerate}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Giới hạn dung lượng 50 mẻ ngăn ngừa lỗi tràn bộ nhớ (OutOfMemoryException), cờ \texttt{isReplay = true} thông báo dữ liệu gửi bù.
+  \item Xả hàng đợi theo trật tự Vào trước - Ra trước (FIFO) để bảo đảm dòng thời gian số liệu.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Bộ đệm hàng đợi lưu tạm và phát lại}]
+// Pseudocode minh hoa: Bo dem hang doi luu tam va phat lai
+public class ReplayBuffer
+{
+    private readonly ConcurrentQueue<byte[]> _queue = new();
+    public void Enqueue(byte[] frame)
+    {
+        if (_queue.Count >= 50) _queue.TryDequeue(out _); // Giu toi da 50 me (250s)
+        _queue.Enqueue(frame);
+    }
+    public async Task DrainAsync(Func<byte[], Task> sendFunc)
+    {
+        while (_queue.TryDequeue(out var frame)) await sendFunc(frame);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Chạy Agent, rút dây mạng ra 10 giây rồi cắm lại: kiểm tra log thấy Agent tự động đẩy bù các gói tin đã gom trong thời gian mất mạng.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Bộ đệm không bao giờ vượt quá 50 mẻ dữ liệu (chỉ lưu METRIC\_BATCH, cờ isReplay=true).
+  \item Bảo toàn thứ tự vào trước ra trước (FIFO).
+  \item Tự động xả sạch bộ đệm ngay khi kết nối TCP được tái thiết lập.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 6: VIỆC TIẾP THEO: Giám sát tiến trình phần mềm quy định}
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Trong phòng thi thực hành, có những phần mềm bắt buộc phải chạy ngầm (ví dụ phần mềm thi cử). Ta cần phát hiện ngay lập tức nếu sinh viên vô tình hoặc cố ý tắt phần mềm này.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Agent định kỳ kiểm tra danh sách tiến trình đang hoạt động trên máy tính. Nếu thiếu tiến trình bắt buộc, Agent gửi ngay cảnh báo sự cố lên Central Server.
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo mới file: \texttt{src/LabGuard.Agent/ServiceMonitor.cs}.
+
+\subsubsection{Bạn cần làm những bước lớn nào?}
+\begin{enumerate}
+  \item Đọc danh sách tiến trình qua \texttt{Process.GetProcesses()}.
+  \item So khớp tên không phân biệt hoa thường với danh sách bắt buộc.
+  \item Trả về danh sách các dịch vụ bị thiếu.
+\end{enumerate}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item So sánh tên tiến trình không phân biệt hoa thường (\texttt{OrdinalIgnoreCase}).
+  \item Trả về danh sách các tiến trình bị tắt để gửi cảnh báo.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Kiểm tra phần mềm quy định có đang chạy không}]
+// Pseudocode minh hoa: Kiem tra tien trinh quy dinh
+public class ServiceMonitor
+{
+    public List<string> CheckMissing(IEnumerable<string> required)
+    {
+        var running = Process.GetProcesses().Select(p => p.ProcessName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return required.Where(req => !running.Contains(req)).ToList();
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Cấu hình theo dõi tiến trình \texttt{notepad}, bật Notepad lên rồi đóng lại: Agent lập tức in log cảnh báo phát hiện tiến trình bị tắt.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Nhận diện chính xác tiến trình bị tắt trong vòng 1 chu kỳ kiểm tra.
+  \item So khớp tên không phân biệt chữ hoa chữ thường.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 7: VIỆC TIẾP THEO: Tự động hóa kiểm thử cho Agent}
+{\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-A-008, LG-A-009}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Viết kiểm thử tự động giúp bạn chắc chắn rằng code Agent của mình chạy ổn định, không bị lỗi bộ nhớ hay lỗi logic trước khi nộp bài cho thầy cô.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Lệnh \texttt{dotnet test tests/LabGuard.Agent.Tests} sẽ chạy qua các tình huống giả lập: mất mạng, đầy bộ đệm, đọc sai khung tin, và xác nhận kết quả Passed.
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo các tệp kiểm thử trong: \texttt{tests/LabGuard.Agent.Tests/}.
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Bơm 55 mẻ số liệu vào bộ đệm dung lượng 50.
+  \item Khẳng định số lượng phần tử còn lại không bao giờ vượt quá 50 mẻ.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn: Bài kiểm thử đơn vị cho bộ đệm ReplayBuffer}]
+// Vi du rut gon: Kiem tra bo dem khong vuot qua 50 me (chi METRIC_BATCH)
+[Fact]
+public void ReplayBuffer_WhenExceeded_DropsOldest()
+{
+    var buffer = new ReplayBuffer();
+    for (int i = 0; i < 55; i++) buffer.Enqueue(new byte[] { 1, 2, 3 });
+    Assert.True(buffer.Count <= 50);
+}
+\end{lstlisting}
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Lệnh \texttt{dotnet test tests/LabGuard.Agent.Tests} chạy hoàn tất thành công.
+  \item 100\% các ca kiểm thử đạt kết quả Passed (Failed: 0).
+\end{itemize}
+
+\begin{takeawaybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item 6 chặng của Agent được xây dựng tuần tự: kết nối TCP $\rightarrow$ đo CPU/RAM $\rightarrow$ gửi Heartbeat $\rightarrow$ đệm Replay $\rightarrow$ giám sát tiến trình $\rightarrow$ kiểm thử tự động.
+  \item Mọi gói tin đều đi qua \texttt{FrameCodec.Encode()} trước khi gửi và kiểm tra an toàn luồng.
+\end{itemize}
+\end{takeawaybox}
+
+% ==============================================================================
+% PHAN 4: 5 BAY LOI LAP TRINH CAN TRANH DANG CHO THANH VIEN A
+% ==============================================================================
+\section{Năm bẫy lỗi lập trình cần tránh dành cho Thành viên A}
+
+Dưới đây là 5 lỗi kỹ thuật phổ biến nhất kèm theo ví dụ so sánh mã nguồn giữa cách viết sai và cách viết chuẩn mực:
+
+\begin{pitfallbox}
+\textbf{Bẫy 1: Quên chuyển đổi Big-Endian cho độ dài khung tin}
+\newline Nếu bạn dùng \texttt{BitConverter.GetBytes(length)} trên máy tính chip Intel/AMD (kiến trúc Little-Endian), số nguyên sẽ bị lưu ngược thứ tự byte. Máy chủ đọc vào sẽ ra con số hàng triệu, làm sập chương trình!
+\end{pitfallbox}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Không dùng \texttt{BitConverter} vì phụ thuộc vào chip phần cứng.
+  \item Luôn dùng \texttt{BinaryPrimitives.WriteUInt32BigEndian} để bảo đảm chuẩn mạng.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={So sánh Bẫy 1: Little-Endian vs Big-Endian chuẩn}]
+// [SAI] Dung BitConverter tren may x86 gay dao nguoc byte:
+byte[] prefix = BitConverter.GetBytes(payloadLength); // Nguy hiem!
+
+// [DUNG] Bat buoc dung BinaryPrimitives de dam bao Big-Endian:
+byte[] prefix = new byte[4];
+BinaryPrimitives.WriteUInt32BigEndian(prefix, (uint)payloadLength); // Chuan mang
+\end{lstlisting}
+
+\begin{pitfallbox}
+\textbf{Bẫy 2: Tràn bộ nhớ RAM do lưu đệm vô tận khi mất mạng}
+\newline Nếu mất mạng trong thời gian dài mà Agent cứ nhét gói tin vào bộ nhớ không giới hạn, chương trình sẽ ngốn sạch RAM máy tính sinh viên (\textit{Out Of Memory}). Luôn luôn đặt giới hạn trần cho bộ nhớ đệm (ví dụ 50 mẻ METRIC\_BATCH) và loại bỏ mẻ cũ nhất khi đầy.
+\end{pitfallbox}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Dùng hàng đợi không giới hạn sẽ làm cạn kiệt RAM khi rớt mạng lâu.
+  \item Luôn có điều kiện kiểm tra \texttt{Count >= 50} và loại bỏ phần tử cũ nhất.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={So sánh Bẫy 2: Hàng đợi vô hạn vs Bounded FIFO Queue}]
+// [SAI] Hang doi khong gioi han lam tran bo nho RAM:
+_unboundedQueue.Enqueue(packet); // Co the ngon hang Gigabyte RAM neu mat mang lau!
+
+// [DUNG] Bounded Queue co co che go bo ban tin cu nhat:
+while (_boundedQueue.Count >= 50) _boundedQueue.TryDequeue(out _);
+_boundedQueue.Enqueue(packet);
+\end{lstlisting}
+
+\begin{pitfallbox}
+\textbf{Bẫy 3: Đọc Socket bằng ReadAsync mà không đọc lặp}
+\newline Một lần gọi \texttt{ReadAsync} không bảo đảm trả về đủ khung tin. Nếu bạn lấy luôn dữ liệu chưa đủ byte để giải mã JSON, hệ thống sẽ ném ngoại lệ \texttt{JsonException}. Luôn dùng vòng lặp tích lũy byte như trong \texttt{FrameCodec.ReadExactlyBytesAsync}.
+\end{pitfallbox}
+
+\begin{pitfallbox}
+\textbf{Bẫy 4: Thử kết nối lại socket quá nhanh trong vòng lặp vô tận}
+\newline Nếu dùng vòng lặp \texttt{while(true)} gọi \texttt{ConnectAsync} liên tục không có độ trễ nghỉ (\texttt{Task.Delay}), CPU máy tính sẽ bị ngốn $100\%$ ngay lập tức. Luôn dùng thuật toán Exponential Backoff.
+\end{pitfallbox}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Vòng lặp bận không nghỉ sẽ đốt cháy 100\% CPU.
+  \item Tăng dần thời gian nghỉ theo cấp số nhân ($1\text{s}, 2\text{s}, 4\text{s} \dots 30\text{s}$) giúp tiết kiệm tài nguyên.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={So sánh Bẫy 4: Vòng lặp bận (Busy Wait) vs Exponential Backoff}]
+// [SAI] Vong lap ban (Busy-Waiting) dot chay 100% CPU:
+while (!connected) { Connect(); } // Khong co delay!
+
+// [DUNG] Exponential Backoff tang dan thoi gian nghi:
+await Task.Delay(TimeSpan.FromSeconds(delaySec), token);
+delaySec = Math.Min(delaySec * 2, 30);
+\end{lstlisting}
+
+\begin{pitfallbox}
+\textbf{Bẫy 5: Sai lệch định dạng thời gian UTC}
+\newline Khi gán trường \texttt{sentAtUtc}, nếu bạn dùng \texttt{DateTime.Now.ToString()} thì thời gian sẽ mang múi giờ địa phương (+7) và thiếu ký tự \texttt{Z}. Luôn dùng \texttt{DateTime.UtcNow.ToString("O")}.
+\end{pitfallbox}
+
+% ==============================================================================
+% PHAN 5: BO CAU HOI VAN DAP DANG CHO THANH VIEN A (20 CAU)
+% ==============================================================================
+\section{Bộ câu hỏi vấn đáp dành riêng cho Thành viên A}
+
+Dưới đây là 20 câu hỏi trọng tâm kèm câu trả lời chi tiết giúp Thành viên A tự tin đạt điểm xuất sắc khi bảo vệ đồ án trước hội đồng:
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*:}]
+  \item \textbf{Tại sao em lại chọn kích thước khung tin tối đa là 262,144 byte (256 KiB)?} \\
+    \textit{Trả lời:} Giới hạn 256 KiB ($262{,}144$ byte) là hoàn toàn dư dả cho các gói tin nhịp tim và báo cáo tài nguyên phần cứng (thường chỉ chiếm từ 200 byte đến vài chục kilobyte). Việc đặt giới hạn cứng này giúp máy chủ phòng vệ hiệu quả trước các cuộc tấn công từ chối dịch vụ (DoS), ngăn chặn việc cấp phát mảng byte khổng lồ làm tràn bộ nhớ RAM.
+  \item \textbf{Tại sao độ dài khung tin phải dùng định dạng Big-Endian?} \\
+    \textit{Trả lời:} Big-Endian là chuẩn Network Byte Order theo quy chuẩn RFC 1700 của mạng Internet, trong đó byte có trọng số lớn nhất (MSB) được gửi trước. Điều này bảo đảm tính tương thích tuyệt đối giữa các máy tính sử dụng kiến trúc CPU khác nhau (x86 dùng Little-Endian, ARM/MIPS có thể dùng Big-Endian).
+  \item \textbf{WireEnvelope của em có mấy trường? Kể tên?} \\
+    \textit{Trả lời:} Có chính xác 6 trường cố định: \texttt{version} (int = 1), \texttt{messageType} (string), \texttt{requestId} (string GUID), \texttt{deviceId} (string), \texttt{sentAtUtc} (string ISO 8601 kết thúc bằng 'Z'), và \texttt{payload} (JsonElement).
+  \item \textbf{Tại sao version lại là số nguyên 1 mà không phải chuỗi "1.0"?} \\
+    \textit{Trả lời:} Sử dụng kiểu số nguyên \texttt{int} giúp CPU so sánh giá trị nhanh hơn chỉ với 1 lệnh máy, tiết kiệm băng thông mạng và tránh được các lỗi phân tích chuỗi ký tự giữa các ngôn ngữ lập trình khác nhau.
+  \item \textbf{Tại sao Agent lại là Client mà không phải Server?} \\
+    \textit{Trả lời:} Agent chạy trên máy tính sinh viên, thường nằm sau tường lửa Windows Firewall và mạng NAT. Tường lửa mặc định chặn kết nối đi vào (Inbound) nhưng cho phép kết nối đi ra (Outbound). Do đó Agent phải đóng vai trò Client chủ động mở kết nối ra ngoài (Active Open) tới địa chỉ IP và cổng tĩnh của Central Server.
+  \item \textbf{Bản tin nhịp tim gửi bao lâu một lần?} \\
+    \textit{Trả lời:} Bản tin \texttt{HEARTBEAT} được gửi định kỳ chính xác mỗi 5 giây một lần.
+  \item \textbf{Tên chuẩn của thông điệp nhịp tim là gì?} \\
+    \textit{Trả lời:} Tên chuẩn là \texttt{HEARTBEAT} (chiều Agent $\rightarrow$ Central) và \texttt{HEARTBEAT\_ACK} (chiều Central $\rightarrow$ Agent).
+  \item \textbf{Hiện tượng phân mảnh trong TCP là gì và em giải quyết như thế nào?} \\
+    \textit{Trả lời:} TCP là giao thức hướng dòng byte không có ranh giới tin nhắn. Một gói tin gửi đi có thể bị chia nhỏ thành nhiều mảnh khi truyền qua các thiết bị mạng. Em giải quyết triệt để bằng phương thức \texttt{ReadExactlyBytesAsync}: sử dụng vòng lặp \texttt{while} đọc tích lũy từng mẩu dữ liệu cho đến khi gom đủ chính xác số byte ghi trong tiêu đề 4 byte mới xử lý tiếp.
+  \item \textbf{Thuật toán Exponential Backoff hoạt động ra sao khi mất mạng?} \\
+    \textit{Trả lời:} Khi kết nối bị đứt, Agent chờ 1 giây trước khi thử lại. Nếu tiếp tục thất bại, thời gian chờ tăng gấp đôi: 2s, 4s, 8s, 16s và cố định ở mức trần 30s. Thuật toán này giúp giảm tải cho mạng và máy chủ khi có sự cố diện rộng.
+  \item \textbf{Bộ nhớ đệm Replay Buffer giải quyết vấn đề gì?} \\
+    \textit{Trả lời:} Giúp duy trì tính liên tục của dữ liệu lịch sử. Khi sinh viên vô tình làm lỏng cáp mạng, các số liệu CPU/RAM vẫn được ghi nhớ trong hàng đợi của Agent và tự động phát lại tuần tự khi kết nối mạng được phục hồi.
+  \item \textbf{Chính sách đẩy dữ liệu của Replay Buffer là gì?} \\
+    \textit{Trả lời:} Sử dụng cơ chế hàng đợi FIFO (First-In, First-Out), gửi từ bản ghi cũ nhất đến bản ghi mới nhất nhằm bảo đảm trình tự dòng thời gian trong cơ sở dữ liệu.
+  \item \textbf{Điều gì xảy ra nếu bộ đệm ReplayBuffer bị đầy 50 mẻ dữ liệu?} \\
+    \textit{Trả lời:} Hệ thống áp dụng chính sách loại bỏ mẻ cũ nhất (\texttt{FIFO Drop-Oldest}) để nhường chỗ cho mẻ mới nhất, bảo đảm ứng dụng không bao giờ vượt quá ngưỡng tiêu thụ RAM cho phép. Lưu ý rằng chỉ mẻ số liệu (\texttt{METRIC\_BATCH}) được lưu giữ kèm cờ \texttt{isReplay = true}, tuyệt đối không lưu \texttt{HEARTBEAT} hay \texttt{SERVICE\_STATUS}.
+  \item \textbf{Em đo phần trăm CPU trên Windows bằng cách nào trong C\#?} \\
+    \textit{Trả lời:} Bằng cách lấy hiệu số thời gian thực thi của tiến trình (\texttt{Process.TotalProcessorTime}) chia cho tích của số lượng nhân CPU (\texttt{Environment.ProcessorCount}) và khoảng thời gian trôi qua giữa 2 lần lấy mẫu.
+  \item \textbf{Tại sao sentAtUtc bắt buộc phải có chữ Z ở cuối?} \\
+    \textit{Trả lời:} Ký tự 'Z' đại diện cho giờ chuẩn quốc tế UTC (Zulu Time), loại bỏ hoàn toàn nguy cơ sai lệch thời gian khi máy trạm và máy chủ đặt ở các múi giờ khác nhau.
+  \item \textbf{Nếu máy tính sinh viên đổi tên thì Agent nhận biết thế nào?} \\
+    \textit{Trả lời:} Agent đọc tên máy trực tiếp từ biến hệ thống \texttt{Environment.MachineName} tại thời điểm khởi tạo và gán vào trường \texttt{deviceId} trong mọi phong bì gửi đi.
+  \item \textbf{Tại sao FrameCodec lại ném lỗi khi độ dài payload bằng 0?} \\
+    \textit{Trả lời:} Vì một khung tin có chiều dài bằng 0 không mang nội dung nghiệp vụ, có thể xuất phát từ việc lập trình sai hoặc cố tình gửi gói tin rác làm nghẽn máy chủ.
+  \item \textbf{Làm thế nào để tắt tiến trình Agent một cách an toàn (Graceful Shutdown)?} \\
+    \textit{Trả lời:} Bằng cách lắng nghe sự kiện \texttt{Console.CancelKeyPress} hoặc tín hiệu hủy từ \texttt{CancellationTokenSource}, gửi bản tin \texttt{AGENT\_GOODBYE} lên máy chủ và đóng kết nối \texttt{NetworkStream} trước khi tiến trình kết thúc.
+  \item \textbf{Trong thư viện Protocol, 107 bài test kiểm tra những gì?} \\
+    \textit{Trả lời:} 107 bài test kiểm thử bao phủ toàn diện: đóng khung nhị phân Big-Endian (35 bài), kiểm tra tính hợp lệ của WireEnvelope (28 bài), đối soát 16 fixture JSON chuẩn cùng các DTO (24 bài), và bộ xác thực EnvelopeValidator (20 bài).
+  \item \textbf{Thành viên B và C sẽ dùng code của em như thế nào?} \\
+    \textit{Trả lời:} Các bạn thêm tham chiếu dự án \texttt{<ProjectReference Include="...LabGuard.Protocol.csproj" />} vào dự án Central và Admin để dùng chung \texttt{FrameCodec}, \texttt{WireEnvelope} và các DTO.
+  \item \textbf{Nếu sinh viên cố tình rút cáp mạng, Agent có biết ngay lập tức không?} \\
+    \textit{Trả lời:} Khi rút cáp vật lý, hệ điều hành không gửi tín hiệu TCP ngắt kết nối. Tuy nhiên, khi Agent đến chu kỳ gửi gói tin tiếp theo, phương thức \texttt{WriteAsync} sẽ ném ngoại lệ \texttt{SocketException}, giúp Agent lập tức phát hiện mất mạng và chuyển sang chế độ lưu đệm.
+\end{enumerate}
+
+\begin{center}
+  \vspace{10mm}
+  {\color{lgDeepBlue}\hrule height 1pt}
+  \vspace{4mm}
+  {\bfseries\color{lgSlate} — HẾT CẨM NANG HƯỚNG DẪN THÀNH VIÊN A —\par}
+\end{center}
+
+\end{document}

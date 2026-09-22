@@ -1,0 +1,551 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{labguard_pdf}
+
+\begin{document}
+
+% ==============================================================================
+% TRANG BIA CHUAN DO AN UIT (TEXT-ONLY, GON GANG, HOC THUAT)
+% ==============================================================================
+\begin{titlepage}
+  \centering
+  \vspace*{-10mm}
+  {\bfseries\large ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH\par}
+  {\bfseries\large TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN\par}
+  {\bfseries\large KHOA MẠNG MÁY TÍNH VÀ TRUYỀN THÔNG\par}
+  \vspace{15mm}
+  {\color{lgDeepBlue}\hrule height 2pt}
+  \vspace{12mm}
+  {\bfseries\large NT106 — LẬP TRÌNH MẠNG CĂN BẢN\par}
+  \vspace{12mm}
+  {\bfseries\huge\color{lgDeepBlue} CẨM NANG LABGUARD\par}
+  \vspace{5mm}
+  {\bfseries\Huge\color{lgDeepBlue} HƯỚNG DẪN THÀNH VIÊN C\par}
+  \vspace{8mm}
+  {\bfseries\Large ADMIN CLIENT \& GIAO DIỆN WINFORMS\par}
+  \vspace{4mm}
+  {\large Màn hình giám sát phòng máy trực quan, an toàn đa luồng và điều khiển thời gian thực\par}
+  \vspace{12mm}
+  {\color{lgTeal}\hrule height 1pt}
+  \vspace{25mm}
+  {\large\textbf{BIÊN SOẠN: VÕ TRỌNG PHÚC}\par}
+  \vspace{6mm}
+  {\large\textbf{NHÓM THỰC HIỆN: 4 THÀNH VIÊN}\par}
+  \vfill
+  {\bfseries\color{lgSlate} TP. HỒ CHÍ MINH — 2026\par}
+\end{titlepage}
+
+% ==============================================================================
+% TRANG 2: KHỞI ĐỘNG NHANH CHO THÀNH VIÊN C (5 MỤC KHÔNG BIỆT NGỮ)
+% ==============================================================================
+\thispagestyle{empty}
+\vspace*{-8mm}
+{\centering\Large\bfseries\color{lgDeepBlue} KHỞI ĐỘNG NHANH DÀNH CHO THÀNH VIÊN C\par}
+\vspace{1mm}
+{\centering\footnotesize\color{lgGray} (Đọc xong trang này trong 2 phút là bạn biết chính xác mình cần làm gì hôm nay)\par}
+\vspace{4mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightTeal, colframe=lgTeal, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgTeal} 1. BẠN LÀ AI?}\par
+\vspace{1mm}
+Bạn là người tạo ra "bộ mặt" trực quan của hệ thống: ứng dụng màn hình quản trị đồ họa (\textbf{Admin Client} trên Windows Forms) dành cho người coi thi và quản trị viên phòng máy.
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightBlue, colframe=lgDeepBlue, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgDeepBlue} 2. BẠN LÀM GÌ?}\par
+\vspace{1mm}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
+  \item Thiết kế giao diện đăng nhập và bảng điều khiển tổng quan phòng máy trực quan, dễ dùng.
+  \item Mở kết nối TCP tới máy chủ Central Server (cổng 5000) để nhận số liệu thời gian thực.
+  \item Hiển thị danh sách máy tính, tô màu cảnh báo xanh/vàng/đỏ khi có máy gặp sự cố.
+  \item Cung cấp các nút bấm để xử lý sự cố (tiếp nhận, giải quyết) và điều khiển máy trạm.
+\end{itemize}
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightRed, colframe=lgCrimson, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgCrimson} 3. BẠN KHÔNG CẦN LO PHẦN NÀO?}\par
+\vspace{1mm}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
+  \item Bạn \textbf{không cần} lo việc lấy số liệu phần cứng từ hệ điều hành máy sinh viên (việc của \textbf{Thành viên A}).
+  \item Bạn \textbf{không cần} lo viết câu lệnh SQL lưu trữ dữ liệu hay tự tính toán nhịp tim sống chết (việc của \textbf{Thành viên B}).
+  \item Bạn \textbf{không cần} lo phần Gateway/Collector và công cụ thử tải của D.
+\end{itemize}
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightGreen, colframe=lgForestGreen, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgForestGreen} 4. HÔM NAY BẮT ĐẦU Ở ĐÂU?}\par
+\vspace{1mm}
+Mở dự án \texttt{src/LabGuard.Admin/} trong Visual Studio, chạy thử file giao diện mẫu \texttt{DashboardForm.cs} và thêm các ô nhập tài khoản mật khẩu.
+\end{tcolorbox}
+\vspace{2mm}
+
+\begin{tcolorbox}[enhanced, colback=lgLightSlate, colframe=lgSlate, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
+{\large\bfseries\color{lgSlate} 5. FILES BẠN CẦN MỞ TRƯỚC:}\par
+\vspace{1mm}
+\begin{enumerate}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
+  \item \texttt{START\_HERE.md}: Hướng dẫn chạy nhanh cả hệ thống.
+  \item \texttt{src/LabGuard.Admin/DashboardForm.cs}: Màn hình quản trị chính nơi hiển thị bảng số liệu.
+  \item \texttt{src/LabGuard.Admin/Program.cs}: Nơi khởi động ứng dụng giao diện.
+  \item \texttt{src/LabGuard.Protocol/MessageTypes.cs}: Danh mục các loại thông điệp giữa Admin và Central.
+\end{enumerate}
+\end{tcolorbox}
+
+\newpage
+
+% ==============================================================================
+% MUC LUC
+% ==============================================================================
+\pagenumbering{roman}
+\setcounter{page}{3}
+
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{MỤC LỤC}
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ==============================================================================
+% PHAN 1: TONG QUAN VAI TRO THANH VIEN C
+% ==============================================================================
+\section{Tổng quan vai trò của Thành viên C}
+
+\begin{summarybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Bạn phụ trách "bộ mặt" trực quan của đồ án: ứng dụng quản trị WinForms (\texttt{LabGuard.Admin}).
+  \item Kết nối TCP tới cổng 5000 của Central để nhận số liệu và gửi lệnh điều khiển.
+  \item Xử lý an toàn đa luồng (\texttt{BeginInvoke}) để không bao giờ làm đơ chuột hay văng ứng dụng.
+  \item Hiển thị cảnh báo thông minh khi có hai người cùng thao tác trên một sự cố (OCC).
+\end{itemize}
+\end{summarybox}
+
+Trong toàn bộ đồ án LabGuard, bạn là người chịu trách nhiệm về "bộ mặt" của sản phẩm. Khi giảng viên chấm thi, điều đầu tiên thầy cô nhìn thấy và trực tiếp trải nghiệm chính là ứng dụng giao diện WinForms do bạn thiết kế:
+
+\begin{conceptbox}
+\textbf{Trọng trách cốt lõi của Thành viên C:}
+\begin{enumerate}
+  \item \textbf{Thiết kế giao diện WinForms (\texttt{src/LabGuard.Admin/}):} Xây dựng bảng điều khiển \texttt{DashboardForm.cs} trực quan, hiển thị sơ đồ phòng máy và danh sách sự cố.
+  \item \textbf{Lập trình kết nối mạng TCP Client:} Kết nối ứng dụng WinForms tới cổng 5000 của Central Server để nhận các thông báo sự kiện theo thời gian thực.
+  \item \textbf{Xử lý an toàn đa luồng (Cross-Thread UI):} Chuyển các gói tin nhận từ luồng mạng ngầm về luồng giao diện chính một cách an toàn bằng \texttt{BeginInvoke}.
+  \item \textbf{Giải quyết xung đột OCC:} Hiển thị cảnh báo thông minh khi có hai quản trị viên cùng thao tác trên một sự cố.
+\end{enumerate}
+\end{conceptbox}
+
+Hình này chỉ cần nhìn vào hai hộp bên trên và chiếc cầu nối bên dưới: luồng giao diện và luồng mạng trao đổi an toàn qua lệnh \texttt{BeginInvoke}.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+    box/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=2mm, thick, align=center, font=\footnotesize\bfseries, minimum height=12mm},
+    arr/.style={-{Latex[length=2.5mm]}, thick, color=lgSlate}
+  ]
+    \node[box, fill=lgLightTeal, draw=lgTeal, minimum width=45mm] (ui) at (0, 2) {UI Thread (Giao diện chính)\\Vòng lặp thông điệp Windows\\(DashboardForm.cs)};
+    \node[box, fill=lgLightBlue, draw=lgDeepBlue, minimum width=45mm] (network) at (6, 2) {Background Network Worker\\Luồng nhận tin TCP Cổng 5000\\(AdminNetworkService.cs)};
+    \node[box, fill=lgLightGreen, draw=lgForestGreen, minimum width=105mm] (bridge) at (3, -0.5) {Cầu nối đa luồng an toàn: control.BeginInvoke(Action) hoặc SynchronizationContext};
+
+    \draw[arr, <->] (ui) -- (bridge);
+    \draw[arr, <->] (network) -- (bridge);
+  \end{tikzpicture}
+  \caption{Mô hình phân tách giữa luồng giao diện UI và luồng mạng nền trong WinForms}
+  \label{fig:admin_threading_model}
+\end{figure}
+
+Ý chính: Mọi thao tác cập nhật dữ liệu lên giao diện đồ họa bắt buộc phải được điều phối qua luồng giao diện chính để ứng dụng không bị văng lỗi.
+
+\begin{importantbox}
+\textbf{Hiện trạng mã nguồn thực tế:}
+Toàn bộ phần việc của Thành viên C đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN}. Thư mục \texttt{src/LabGuard.Admin/} hiện chỉ có file \texttt{Program.cs} và form giao diện rỗng. Bạn sẽ tự tay thiết kế và lập trình theo lộ trình 6 chặng dưới đây.
+\end{importantbox}
+
+\begin{takeawaybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Luôn tách biệt rõ ràng giữa luồng mạng (đọc socket) và luồng giao diện (vẽ màn hình).
+  \item Mọi gói tin gửi lên Central trên cổng 5000 đều được đóng khung 4 byte qua \texttt{FrameCodec}.
+\end{itemize}
+\end{takeawaybox}
+
+% ==============================================================================
+% PHAN 2: SAU CHANG PHAT TRIEN UNG DUNG ADMIN DASHBOARD
+% ==============================================================================
+\section{Sáu chặng phát triển ứng dụng Admin Dashboard}
+
+\begin{summarybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Chặng 1: Dựng layout trực quan (lưới phòng máy, danh sách sự cố, nút thao tác).
+  \item Chặng 2--3: Mở kết nối TCP Cổng 5000 và màn hình đăng nhập phân quyền RBAC.
+  \item Chặng 4: Cập nhật giao diện an toàn đa luồng bằng \texttt{BeginInvoke}.
+  \item Chặng 5--6: Xử lý xung đột khóa lạc quan OCC và hoàn thiện trải nghiệm người dùng.
+\end{itemize}
+\end{summarybox}
+
+% ------------------------------------------------------------------------------
+\subsection{VIỆC TIẾP THEO: Xây dựng bố cục giao diện WinForms trực quan}
+{\footnotesize\color{lgGray}\textit{Chặng 1 — Mã tác vụ nội bộ: LG-C-001, LG-C-002}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Người quản trị hoặc giảng viên coi thi không thể đọc từng dòng chữ đen trắng của 50 máy tính. Họ cần một bảng điều khiển đồ họa: nhìn lướt qua là biết ngay máy nào đang tốt (xanh), máy nào tải cao (vàng), máy nào bị tắt (đỏ).
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Bố trí 4 khu vực giao diện rõ ràng bằng các Control chuẩn WinForms:
+\begin{enumerate}
+  \item \textbf{Thanh trên cùng:} Hiển thị trạng thái kết nối mạng, địa chỉ IP:5000 và nút Đăng nhập.
+  \item \textbf{Lưới phòng máy (DataGridView):} Hiển thị danh sách máy tính, mức CPU/RAM và tô màu xanh/vàng/đỏ theo trạng thái.
+  \item \textbf{Bảng sự cố thời gian thực:} Hiển thị các sự cố phát sinh (\texttt{HIGH\_CPU}, \texttt{DEVICE\_OFFLINE}).
+  \item \textbf{Khu vực nút bấm:} Nút "Tiếp nhận sự cố", "Giải quyết xong" và "Khởi động lại máy".
+\end{enumerate}
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Sửa file: \texttt{src/LabGuard.Admin/DashboardForm.cs} và \texttt{DashboardForm.Designer.cs}.
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Sự kiện \texttt{CellFormatting} tự động chạy khi vẽ từng ô dữ liệu.
+  \item Tô màu nền và màu chữ tương ứng với trạng thái ONLINE (xanh), WARNING (vàng), OFFLINE (đỏ).
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn: Tô màu hàng theo trạng thái trong DataGridView}]
+// To mau dong tu dong theo trang thai may tinh
+private void dgvDevices_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+{
+    if (e.RowIndex < 0 || e.RowIndex >= dgvDevices.Rows.Count) return;
+    string status = dgvDevices.Rows[e.RowIndex].Cells["Status"].Value?.ToString() ?? "OFFLINE";
+    var row = dgvDevices.Rows[e.RowIndex];
+    if (status == "ONLINE") row.DefaultCellStyle.BackColor = Color.FromArgb(240, 253, 244);
+    else if (status == "WARNING") row.DefaultCellStyle.BackColor = Color.FromArgb(254, 252, 232);
+    else row.DefaultCellStyle.BackColor = Color.FromArgb(254, 242, 242);
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Bấm phím \texttt{F5} trong Visual Studio: cửa sổ Dashboard xuất hiện với đầy đủ bảng lưới, màu sắc hài hòa và các nút bấm rõ ràng.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Giao diện hiển thị đầy đủ 4 khu vực chức năng.
+  \item Lưới dữ liệu tự động đổi màu chuẩn xác khi trạng thái máy thay đổi.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 2: VIỆC TIẾP THEO: Mở kết nối TCP tới Central Server}
+{\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-C-003}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Dashboard không thể tự sinh ra dữ liệu. Nó phải mở một luồng socket TCP kết nối tới Central Server trên cổng 5000 để nhận danh sách máy tính và hứng các thông báo sự cố phát sinh.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Khi bấm "Kết nối", Admin mở \texttt{TcpClient} kết nối tới Central cổng 5000, sau đó chạy vòng lặp ngầm đọc từng khung tin bằng \texttt{FrameCodec.ReadFrameAsync} và phát sự kiện \texttt{OnMessageReceived}.
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo mới file: \texttt{src/LabGuard.Admin/AdminNetworkService.cs}.
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Khởi tạo \texttt{TcpClient} kết nối tới host và port 5000.
+  \item Chạy vòng lặp ngầm nhận tin qua \texttt{FrameCodec} mà không làm đơ giao diện đồ họa.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Vòng lặp nhận tin ngầm của Admin}]
+// Pseudocode minh hoa: Doc khung tin ngam tu Central
+public async Task StartReceiveLoopAsync(NetworkStream stream, CancellationToken ct)
+{
+    while (!ct.IsCancellationRequested)
+    {
+        byte[]? frame = await FrameCodec.ReadFrameAsync(stream, ct: ct);
+        if (frame == null) break;
+        var env = ProtocolSerializer.DeserializeEnvelope(frame);
+        if (env != null) OnMessageReceived?.Invoke(env);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Bật Central lên, mở Dashboard bấm "Kết nối": thanh trạng thái chuyển sang màu xanh lá "Đã kết nối".
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Kết nối TCP cổng 5000 ổn định, không làm giật lag giao diện.
+  \item Bóc tách chính xác từng khung tin qua \texttt{FrameCodec}.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 3: VIỆC TIẾP THEO: Đăng nhập và phân quyền quản trị (RBAC)}
+{\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-C-004}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Không phải ai mở Dashboard lên cũng được phép bấm nút khởi động lại máy tính sinh viên hay đóng sự cố. Cần có màn hình đăng nhập để phân chia quyền: \texttt{Admin} (toàn quyền) và \texttt{Viewer} (chỉ được xem).
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Admin nhập tài khoản mật khẩu vào \texttt{LoginForm.cs}. Giao diện gửi gói \texttt{LOGIN} lên cổng 5000. Central trả về \texttt{LOGIN\_RESULT} chứa vai trò (\texttt{Role}). Nếu là \texttt{Viewer}, các nút bấm thao tác nguy hiểm sẽ bị mờ đi (\texttt{Enabled = false}).
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Tạo mới file: \texttt{src/LabGuard.Admin/LoginForm.cs}.
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Kiểm tra \texttt{result.Role}: nếu là Viewer thì khóa các nút bấm điều khiển.
+  \item Hiển thị tên người dùng và quyền hạn rõ ràng trên thanh tiêu đề.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn: Phân quyền vai trò sau đăng nhập}]
+// Phan quyen nut bam sau khi dang nhap thanh cong
+private void ApplyRolePermissions(string role)
+{
+    bool isAdmin = (role == "Admin");
+    btnAcknowledge.Enabled = isAdmin;
+    btnResolve.Enabled = isAdmin;
+    btnReboot.Enabled = isAdmin;
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Đăng nhập tài khoản Viewer: các nút bấm bị mờ đi. Đăng nhập tài khoản Admin: các nút bấm sáng lên và thao tác được bình thường.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Phân quyền chính xác giữa Admin và Viewer.
+  \item Khóa an toàn các nút bấm khi chưa đủ thẩm quyền.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 4: VIỆC TIẾP THEO: Cập nhật giao diện an toàn đa luồng (BeginInvoke)}
+{\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-C-005}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Đây là bẫy lỗi số 1 của sinh viên làm đồ án WinForms! Luồng đọc socket chạy ngầm trong hệ thống. Nếu từ luồng này bạn cập nhật trực tiếp Control trên form, WinForms sẽ lập tức bị văng ngoại lệ \texttt{Cross-thread operation not valid} và tắt ngúm!
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Mọi Control trong WinForms chỉ được phép truy cập từ luồng tạo ra nó (UI Thread). Để chuyển dữ liệu từ luồng socket sang UI Thread an toàn, bạn kiểm tra \texttt{InvokeRequired} và gọi \texttt{BeginInvoke}:
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Sửa file: \texttt{src/LabGuard.Admin/DashboardForm.cs}.
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Kiểm tra \texttt{this.InvokeRequired} để biết có đang ở luồng mạng hay không.
+  \item Dùng \texttt{BeginInvoke} chuyển lời gọi hàm về UI Thread mà không làm nghẽn luồng mạng.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn: Cập nhật giao diện an toàn đa luồng}]
+// Cap nhat luoi du lieu an toan da luong bang BeginInvoke
+public void UpdateDeviceGridSafe(string deviceId, double cpu, string status)
+{
+    if (this.InvokeRequired)
+    {
+        this.BeginInvoke(new Action(() => UpdateDeviceGridSafe(deviceId, cpu, status)));
+        return;
+    }
+    // Da o UI Thread an toan: cap nhat truc tiep len DataGridView
+    UpdateRowCells(deviceId, cpu, status);
+}
+\end{lstlisting}
+
+\subsubsection{Làm sao thử?}
+Cho Central liên tục bắn các gói thông báo sự cố: bảng lưới trên màn hình cập nhật liên tục mà con trỏ chuột vẫn cuộn lướt mượt mà, không bị văng lỗi.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item 100\% các thao tác cập nhật giao diện đều đi qua \texttt{BeginInvoke}.
+  \item Tuyệt đối không xảy ra ngoại lệ \texttt{InvalidOperationException}.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{Chặng 5: VIỆC TIẾP THEO: Xử lý xung đột Khóa lạc quan (OCC) trên màn hình}
+{\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-C-006}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Nếu hai Admin cùng nhìn thấy một sự cố và cùng bấm nút "Tiếp nhận", người bấm sau sẽ nhận phản hồi lỗi \texttt{409 Conflict} từ Central Server. Giao diện phải thông báo khéo léo để người đó hiểu sự cố đã được đồng nghiệp xử lý trước.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Khi bấm nút "Tiếp nhận sự cố", Dashboard gửi kèm \texttt{ExpectedRowVersion}.
+\begin{itemize}
+  \item Nếu kết quả là \texttt{200 OK}: Đổi màu dòng sự cố sang màu đã tiếp nhận (\texttt{ACKNOWLEDGED}).
+  \item Nếu kết quả là \texttt{409 Conflict}: Hiện hộp thoại: \textit{"Sự cố này đã được quản trị viên khác tiếp nhận trước!"} và tự động tải lại dữ liệu mới nhất.
+\end{itemize}
+
+\subsubsection{Bạn sẽ đụng file nào?}
+Sửa file: \texttt{src/LabGuard.Admin/DashboardForm.cs}.
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Bắt mã trạng thái 409 Conflict từ máy chủ.
+  \item Hiển thị thông báo thân thiện và tự động làm mới danh sách dữ liệu.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn: Xử lý phản hồi 409 Conflict trên giao diện}]
+// Xu ly phan hoi OCC khi tiep nhan su co
+var result = await _networkService.SendCommandAsync(cmd);
+if (result.StatusCode == 200)
+{
+    MessageBox.Show("Tiep nhan su co thanh cong!");
+}
+else if (result.StatusCode == 409)
+{
+    MessageBox.Show("Ban ghi da duoc Admin khac tiep nhan truoc!", "Canh bao OCC");
+    await RefreshDataAsync(); // Tu dong tai lai du lieu moi
+}
+\end{lstlisting}
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Bắt đúng mã phản hồi 409 Conflict từ máy chủ.
+  \item Tự động làm mới giao diện khi có xung đột dữ liệu.
+\end{itemize}
+
+% ------------------------------------------------------------------------------
+\subsection{VIỆC TIẾP THEO: Kiểm thử thủ công và hoàn thiện giao diện}
+{\footnotesize\color{lgGray}\textit{Chặng 6 — Mã tác vụ nội bộ: LG-C-007}}\par
+\vspace{2mm}
+
+\subsubsection{Tại sao cần phần này?}
+Màn hình quản trị là nơi hiển thị trực tiếp dữ liệu hoạt động của hệ thống. Giao diện trực quan, ổn định, xử lý lỗi thân thiện sẽ nâng cao chất lượng trải nghiệm của đồ án.
+
+\subsubsection{Khi chạy, chuyện gì xảy ra?}
+Thực hiện kịch bản kiểm thử toàn diện: đăng nhập tài khoản, mất mạng rồi kết nối lại, tiếp nhận sự cố, lọc danh sách máy theo trạng thái và gửi lệnh điều khiển.
+
+\subsubsection{Khi nào coi là xong? (PASS Criteria)}
+\begin{itemize}
+  \item Mọi luồng tương tác của người dùng diễn ra trơn tru.
+  \item Giao diện không bị giật lag ngay cả khi nhận dữ liệu dồn dập.
+\end{itemize}
+
+\begin{takeawaybox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Mọi cập nhật UI từ luồng mạng phải dùng \texttt{BeginInvoke}.
+  \item Luôn xử lý mã lỗi 409 Conflict một cách lịch sự và tải lại dữ liệu mới.
+\end{itemize}
+\end{takeawaybox}
+
+% ==============================================================================
+% PHAN 3: 5 BAY LOI LAP TRINH CAN TRANH DANG CHO THANH VIEN C
+% ==============================================================================
+\section{Năm bẫy lỗi lập trình cần tránh dành cho Thành viên C}
+
+\begin{pitfallbox}
+\textbf{Bẫy 1: Cập nhật Control từ luồng mạng ngầm (Cross-thread Exception)}
+\newline Không bao giờ gán trực tiếp thuộc tính Control từ luồng nhận tin của Socket. Luôn kiểm tra \texttt{InvokeRequired} và gọi \texttt{BeginInvoke}.
+\end{pitfallbox}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Gán trực tiếp từ luồng nền sẽ ném ngoại lệ làm sập ứng dụng.
+  \item Dùng \texttt{BeginInvoke} chuyển việc về cho UI Thread thực thi.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={So sánh Bẫy 1: Gán trực tiếp vs BeginInvoke chuẩn}]
+// [SAI] Vang loi System.InvalidOperationException:
+lblStatus.Text = "Connecting..."; // Goi tu ThreadPool Thread
+
+// [DUNG] Chuyen ve UI Thread an toan bang BeginInvoke:
+if (lblStatus.InvokeRequired)
+    lblStatus.BeginInvoke(new Action(() => lblStatus.Text = "Connecting..."));
+else
+    lblStatus.Text = "Connecting...";
+\end{lstlisting}
+
+\begin{pitfallbox}
+\textbf{Bẫy 2: Dùng Invoke đồng bộ thay vì BeginInvoke bất đồng bộ}
+\newline Gọi \texttt{control.Invoke} sẽ bắt luồng mạng ngầm phải đứng chờ luồng giao diện vẽ xong mới được đi tiếp. Nếu giao diện đang bận vẽ, luồng mạng sẽ bị nghẽn làm chậm các gói tin tiếp theo. Luôn ưu tiên dùng \texttt{BeginInvoke}.
+\end{pitfallbox}
+
+\begin{pitfallbox}
+\textbf{Bẫy 3: Đóng băng giao diện do gọi lệnh mạng đồng bộ}
+\newline Nếu bạn viết \texttt{client.Connect("127.0.0.1", 5000)} trực tiếp trong sự kiện nút bấm \texttt{btnConnect\_Click} mà không dùng \texttt{await}, con trỏ chuột sẽ biến thành hình vòng xoay và giao diện bị đơ cứng (\textit{Not Responding}). Luôn dùng \texttt{async/await}.
+\end{pitfallbox}
+
+\begin{orientationbox}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Lệnh mạng đồng bộ khóa cứng vòng lặp vẽ giao diện.
+  \item \texttt{await client.ConnectAsync} giúp giao diện vẫn phản hồi chuột trong lúc chờ.
+\end{itemize}
+\end{orientationbox}
+
+\begin{lstlisting}[language=CSharp, caption={So sánh Bẫy 3: Blocking Connect vs Async Connect}]
+// [SAI] Dong bang giao dien chuot quay vong xoay (Not Responding):
+private void btnConnect_Click(object sender, EventArgs e) { client.Connect(ip, port); }
+
+// [DUNG] Giao dien van muot ma trong luc cho ket noi:
+private async void btnConnect_Click(object sender, EventArgs e) { await client.ConnectAsync(ip, port); }
+\end{lstlisting}
+
+\begin{pitfallbox}
+\textbf{Bẫy 4: Quên hủy đăng ký sự kiện gây rò rỉ bộ nhớ (Memory Leak)}
+\newline Nếu form phụ đăng ký lắng nghe sự kiện từ \texttt{AdminNetworkService} mà khi đóng form không hủy đăng ký (\texttt{-=}), form phụ đó sẽ không bao giờ được bộ dọn rác (GC) thu hồi.
+\end{pitfallbox}
+
+\begin{pitfallbox}
+\textbf{Bẫy 5: Không khóa các nút bấm khi đang chờ máy chủ phản hồi}
+\newline Khi bấm nút "Khởi động lại máy", nếu không tạm thời vô hiệu hóa nút bấm (\texttt{Enabled = false}), người dùng có thể bấm liên tục 5--10 lần khiến máy chủ nhận dồn dập nhiều lệnh trùng lặp.
+\end{pitfallbox}
+
+% ==============================================================================
+% PHAN 4: BO CAU HOI VAN DAP DANG CHO THANH VIEN C (20 CAU)
+% ==============================================================================
+\section{Bộ câu hỏi vấn đáp dành riêng cho Thành viên C}
+
+Dưới đây là 20 câu hỏi trọng tâm thường gặp khi bảo vệ đồ án phần giao diện người dùng:
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*:}]
+  \item \textbf{Lỗi Cross-thread trên WinForms là gì? Tại sao lại xảy ra?} \\
+    \textit{Trả lời:} Là ngoại lệ \texttt{InvalidOperationException} xảy ra khi một luồng nền (ví dụ luồng nhận tin mạng TCP) cố gắng truy cập trực tiếp vào thuộc tính của một điều khiển giao diện. WinForms quy định chỉ luồng tạo ra điều khiển (UI Thread) mới có quyền thao tác trực tiếp trên nó.
+  \item \textbf{Khắc phục lỗi Cross-thread như thế nào?} \\
+    \textit{Trả lời:} Khắc phục bằng cách kiểm tra thuộc tính \texttt{InvokeRequired}. Nếu trả về \texttt{true}, ta dùng phương thức \texttt{BeginInvoke} để đẩy hành động sang cho UI Thread thực hiện.
+  \item \textbf{Tại sao em chọn BeginInvoke thay vì Invoke thông thường?} \\
+    \textit{Trả lời:} \texttt{Invoke} là gọi đồng bộ, luồng mạng sẽ bị chặn đứng chờ UI vẽ xong mới chạy tiếp, dễ làm chậm các gói tin mạng tiếp theo. \texttt{BeginInvoke} là gọi bất đồng bộ, đẩy tác vụ vào hàng đợi thông điệp của UI rồi luồng mạng tiếp tục đọc gói tin ngay lập tức, giúp ứng dụng mượt mà.
+  \item \textbf{Admin Client kết nối tới cổng nào của Central Server?} \\
+    \textit{Trả lời:} Kết nối tới cổng 5000 (Central TCP Endpoint), điểm tiếp nhận kết nối chung duy nhất của hệ thống. Central Server dựa vào bản tin đăng nhập \texttt{LOGIN} ban đầu để phân loại đối tác vào kênh quản trị.
+  \item \textbf{Giao diện của em có những khu vực chính nào?} \\
+    \textit{Trả lời:} Gồm 4 khu vực: 1. Thanh trạng thái kết nối và đăng nhập; 2. Bảng lưới danh sách máy trạm phòng thi; 3. Bảng danh sách sự cố thời gian thực; 4. Khu vực các nút bấm điều khiển sự cố và máy trạm.
+  \item \textbf{Màu sắc trên bảng lưới máy trạm biểu thị điều gì?} \\
+    \textit{Trả lời:} Màu xanh lá: máy trạm trực tuyến bình thường; Màu vàng cam: máy đang có cảnh báo tài nguyên; Màu đỏ: máy bị mất mạng hoặc đang gặp sự cố nghiêm trọng.
+  \item \textbf{Hệ thống của em phân quyền quản trị như thế nào?} \\
+    \textit{Trả lời:} Phân chia thành 2 vai trò qua cơ chế RBAC: vai trò \texttt{Admin} có toàn quyền xử lý sự cố và gửi lệnh điều khiển; vai trò \texttt{Viewer} chỉ có quyền xem thông số, các nút bấm thao tác sẽ bị vô hiệu hóa.
+  \item \textbf{Khi hai Admin cùng bấm tiếp nhận một sự cố, giao diện xử lý thế nào?} \\
+    \textit{Trả lời:} Dashboard gửi kèm số phiên bản \texttt{ExpectedRowVersion}. Người bấm trước được máy chủ trả về \texttt{200 OK}. Người bấm sau nhận mã lỗi \texttt{409 Conflict}, giao diện sẽ hiện hộp thoại cảnh báo và tự động tải lại trạng thái mới nhất của sự cố.
+  \item \textbf{Làm thế nào để giao diện không bị đơ chuột khi đang kết nối mạng?} \\
+    \textit{Trả lời:} Bằng cách sử dụng từ khóa \texttt{async/await} với phương thức \texttt{ConnectAsync}, giúp giải phóng luồng giao diện để tiếp tục xử lý các sự kiện chuột và bàn phím trong thời gian chờ bắt tay mạng.
+  \item \textbf{Khi mở form lên lần đầu, Dashboard lấy danh sách máy tính bằng cách nào?} \\
+    \textit{Trả lời:} Gửi bản tin yêu cầu \texttt{HELLO\_ADMIN} lên Central Server; Central Server sẽ truy vấn CSDL và gửi trả danh sách thiết bị hiện có.
+  \item \textbf{Sự cố có những trạng thái nào trên bảng giao diện?} \\
+    \textit{Trả lời:} 3 trạng thái chuẩn: \texttt{OPEN} (Mới phát hiện), \texttt{ACKNOWLEDGED} (Đã tiếp nhận xử lý), và \texttt{RESOLVED} (Đã giải quyết xong).
+  \item \textbf{Người quản trị có thể gửi lệnh điều khiển gì xuống máy tính?} \\
+    \textit{Trả lời:} Có thể gửi lệnh điều khiển từ xa (khởi động lại máy, khóa màn hình) thông qua các bản tin quản trị chuẩn hóa trong giao thức, và nhận kết quả qua bản tin \texttt{COMMAND\_RESULT}.
+  \item \textbf{Tại sao em không dùng GDI+ để tự vẽ biểu đồ?} \\
+    \textit{Trả lời:} Để giữ mã nguồn đơn giản, dễ bảo trì và tập trung vào kiến trúc mạng cốt lõi theo đúng yêu cầu đồ án môn Lập trình mạng.
+  \item \textbf{Dữ liệu gửi từ Admin lên Central có được đóng khung 4 byte không?} \\
+    \textit{Trả lời:} Có, toàn bộ kết nối TCP trong LabGuard đều tuân thủ nghiêm ngặt chuẩn đóng khung 4 byte Big-Endian của \texttt{FrameCodec}.
+  \item \textbf{Nếu giảng viên yêu cầu đăng xuất để đổi tài khoản khác thì form xử lý thế nào?} \\
+    \textit{Trả lời:} Bấm nút Đăng xuất, ứng dụng xóa thông tin phiên làm việc, khóa lại các chức năng quản trị và hiển thị lại hộp thoại Đăng nhập.
+  \item \textbf{Thành viên C phối hợp với Thành viên B như thế nào khi làm đồ án?} \\
+    \textit{Trả lời:} Hai bạn thống nhất các loại thông điệp quản trị trao đổi trên cổng 5000 (\texttt{LOGIN}, \texttt{LOGIN\_RESULT}, \texttt{INCIDENT\_ACK}, \texttt{COMMAND\_RESULT}) dựa trên hợp đồng giao thức chuẩn \texttt{LabGuard.Protocol}.
+  \item \textbf{Làm thế nào để người quản trị biết kết nối mạng giữa Dashboard và Server bị đứt?} \\
+    \textit{Trả lời:} Khi luồng mạng ngầm ném ngoại lệ mất kết nối, dịch vụ kích hoạt sự kiện cập nhật giao diện: thanh trạng thái đổi sang chữ "MẤT KẾT NỐI" màu đỏ và tự động thử kết nối lại.
+  \item \textbf{Em dùng công cụ gì để thiết kế giao diện WinForms?} \\
+    \textit{Trả lời:} Sử dụng Visual Studio Windows Forms Designer kết hợp với việc tùy biến màu sắc và sự kiện \texttt{CellFormatting} trong mã nguồn C\#.
+  \item \textbf{Hiện tại mã nguồn của Admin Dashboard đã làm được những gì?} \\
+    \textit{Trả lời:} Hiện tại mã nguồn Admin đang ở giai đoạn phân công nhiệm vụ (CHƯA LÀM / DỰ KIẾN). Em sẽ tự tay thiết kế và lập trình hoàn chỉnh phân hệ này.
+  \item \textbf{Điểm sáng tạo nhất trong phần việc của em là gì?} \\
+    \textit{Trả lời:} Là việc xử lý xung đột khóa lạc quan (OCC) trực quan ngay trên giao diện và tách biệt hoàn toàn giữa luồng giao diện UI và luồng mạng nền, giúp ứng dụng luôn phản hồi tức thời mà không bị giật lag.
+\end{enumerate}
+
+\begin{center}
+  \vspace{10mm}
+  {\color{lgDeepBlue}\hrule height 1pt}
+  \vspace{4mm}
+  {\bfseries\color{lgSlate} — HẾT CẨM NANG HƯỚNG DẪN THÀNH VIÊN C —\par}
+\end{center}
+
+\end{document}
