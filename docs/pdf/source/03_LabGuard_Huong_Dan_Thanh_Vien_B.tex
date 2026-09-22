@@ -145,7 +145,7 @@ Hình này chỉ cần nhìn từ trên xuống dưới: từ luồng mạng ti�
     \node[box, fill=lgLightBlue, draw=lgDeepBlue, minimum width=45mm] (dispatcher) at (1.5, 2) {Bộ định tuyến thông điệp\\(Message Dispatcher)};
     \node[box, fill=lgLightGreen, draw=lgForestGreen, minimum width=35mm] (liveness) at (-4.5, -0.5) {Động cơ Liveness\\(Kiểm tra sống còn $>20$s)};
     \node[box, fill=lgLightRed, draw=lgCrimson, minimum width=35mm] (rule) at (1.5, -0.5) {Động cơ quy tắc\\(Rule Engine $\ge 90\%$)};
-    \node[box, fill=lgLightSlate, draw=lgSlate, minimum width=100mm] (db) at (-1.5, -2.5) {Cơ sở dữ liệu SQL Server (Devices, Metrics, Incidents, AuditLogs)};
+    \node[box, fill=lgLightSlate, draw=lgSlate, minimum width=100mm] (db) at (-1.5, -2.5) {Cơ sở dữ liệu SQL Server (schema sẽ chốt ở B-005)};
 
     \draw[arr] (listener) -- node[above, font=\scriptsize] {Khung tin} (dispatcher);
     \draw[arr] (dispatcher) -- (rule);
@@ -296,32 +296,31 @@ $$\texttt{[Central] Da nhan HELLO\_AGENT tu DeviceId=PC-01}$$
 Nếu không lưu vào cơ sở dữ liệu, mọi thông số CPU/RAM và lịch sử sự cố sẽ biến mất hoàn toàn ngay khi tắt máy chủ. CSDL giúp lưu vết lịch sử phục vụ cho việc thống kê và báo cáo.
 
 \subsubsection{Khi chạy, chuyện gì xảy ra?}
-Khi nhận gói tin \texttt{METRIC\_BATCH}, máy chủ trích xuất các mẫu đo tài nguyên và thực thi câu lệnh SQL có tham số để lưu trữ vào bảng \texttt{Metrics}.
+Khi nhận gói tin \texttt{METRIC\_BATCH}, Central kiểm tra khóa \texttt{(DeviceId, BootId, BatchId)} để chống ghi trùng, rồi lưu CPU/RAM/Uptime vào bảng \texttt{MetricSamples}. Chỉ sau khi transaction commit thành công mới gửi \texttt{BATCH\_ACK}.
 
 \subsubsection{Bạn sẽ đụng file nào?}
 Tạo mới hoặc hoàn thiện: \texttt{database/schema.sql}, \texttt{database/seed.sql} và \texttt{src/LabGuard.Central/DatabaseRepository.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Luôn dùng Parameterized Query (\texttt{@DeviceId}, \texttt{@MetricValue}) để phòng chống tấn công SQL Injection.
+  \item Luôn dùng Parameterized Query để tránh ghép chuỗi SQL trực tiếp từ dữ liệu mạng.
   \item Thực thi bất đồng bộ bằng \texttt{ExecuteNonQueryAsync()}.
 \end{itemize}
 \end{orientationbox}
 
-\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Thao tác ghi số liệu đo đạc vào CSDL}]
-// Pseudocode minh hoa: Ghi so lieu vao SQL Server an toan
-const string sql = "INSERT INTO Metrics (DeviceId, MetricName, MetricValue) VALUES (@Dev, @Name, @Val);";
-using var conn = new SqlConnection(_connString);
-await conn.OpenAsync();
-using var cmd = new SqlCommand(sql, conn);
-cmd.Parameters.AddWithValue("@Dev", deviceId);
-cmd.Parameters.AddWithValue("@Name", sample.MetricName);
-cmd.Parameters.AddWithValue("@Val", sample.MetricValue);
-await cmd.ExecuteNonQueryAsync();
+\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Ghi một mẻ telemetry theo schema đã đóng băng}]
+// Truoc do: transaction da kiem tra/ghi khoa
+// (DeviceId, BootId, BatchId) vao ProcessedBatches.
+const string sql = @"
+INSERT INTO dbo.MetricSamples
+(DeviceId, BootId, BatchId, CpuPercent, MemoryPercent, UptimeSeconds)
+VALUES (@Dev, @Boot, @Batch, @Cpu, @Ram, @Uptime);";
+// Gan tham so tu METRIC_BATCH, ExecuteNonQueryAsync(), roi COMMIT.
+// Chi sau COMMIT thanh cong Central moi gui BATCH_ACK.
 \end{lstlisting}
 
 \subsubsection{Làm sao thử?}
-Dùng SQL Server Management Studio mở bảng \texttt{Metrics} và kiểm tra các dòng dữ liệu mới xuất hiện.
+Dùng SQL Server Management Studio mở \texttt{MetricSamples} và \texttt{ProcessedBatches}; gửi lại cùng một \texttt{METRIC\_BATCH} để kiểm tra không tạo mẫu trùng nhưng vẫn nhận lại \texttt{BATCH\_ACK}.
 
 \subsubsection{Khi nào coi là xong? (PASS Criteria)}
 \begin{itemize}
@@ -444,20 +443,22 @@ Tạo mới file: \texttt{src/LabGuard.Central/AdminService.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Câu lệnh SQL kiểm tra đồng thời cả \texttt{Id} và \texttt{RowVersion = @ExpectedVer}.
+  \item Câu lệnh SQL kiểm tra đồng thời cả \texttt{IncidentId} và \texttt{RowVersion = @ExpectedVer}.
   \item Nếu số dòng cập nhật được bằng 0, nghĩa là đã bị sửa trước đó $\rightarrow$ Báo lỗi 409 Conflict.
 \end{itemize}
 \end{orientationbox}
 
 \begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Cập nhật sự cố với khóa lạc quan OCC}]
-// Pseudocode minh hoa: Cap nhat su co co kiem tra phien ban (OCC)
-const string sql = "UPDATE Incidents SET WorkflowState = 'ACKNOWLEDGED', RowVersion = @NewVer " +
-                   "WHERE Id = @Id AND RowVersion = @ExpectedVer;";
+// RowVersion la SQL Server rowversion: KHONG tu gan gia tri moi.
+const string sql = @"
+UPDATE dbo.Incidents
+SET WorkflowState = @State
+OUTPUT inserted.RowVersion
+WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;";
 using var cmd = new SqlCommand(sql, conn);
-cmd.Parameters.AddWithValue("@Id", id);
-cmd.Parameters.AddWithValue("@ExpectedVer", expectedVersion);
-int rows = await cmd.ExecuteNonQueryAsync();
-return rows > 0 ? 200 : 409; // 200 OK hoac 409 Conflict
+// Gan @State, @Id, @ExpectedVer.
+var newVersion = await cmd.ExecuteScalarAsync();
+return newVersion is null ? 409 : 200;
 \end{lstlisting}
 
 \subsubsection{Khi nào coi là xong? (PASS Criteria)}
@@ -589,11 +590,11 @@ Dưới đây là 20 câu hỏi trọng tâm thường gặp nhất khi bảo v�
   \item \textbf{Tại sao em lại dùng Stopwatch.GetTimestamp() thay vì DateTime.UtcNow?} \\
     \textit{Trả lời:} \texttt{DateTime.UtcNow} là đồng hồ thời gian thực tế có thể bị nhảy cóc khi hệ điều hành đồng bộ giờ NTP hoặc chỉnh giờ. \texttt{Stopwatch.GetTimestamp()} là đồng hồ đơn điệu (Monotonic Clock) luôn tăng đều, bảo đảm việc tính khoảng cách thời gian chính xác tuyệt đối.
   \item \textbf{Thuật toán Khóa lạc quan (OCC) trên cơ sở dữ liệu hoạt động ra sao?} \\
-    \textit{Trả lời:} CSDL sử dụng cột \texttt{RowVersion} trong bảng \texttt{Incidents}. Khi cập nhật, câu lệnh SQL kiểm tra \texttt{WHERE Id = @Id AND RowVersion = @ExpectedVersion}. Nếu số hàng bị ảnh hưởng bằng 1 thì thành công; nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi 409 Conflict.
+    \textit{Trả lời:} CSDL sử dụng cột \texttt{RowVersion} trong bảng \texttt{Incidents}. Khi cập nhật, câu lệnh SQL kiểm tra \texttt{WHERE IncidentId = @Id AND RowVersion = @ExpectedVersion}. Nếu số hàng bị ảnh hưởng bằng 1 thì thành công; nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi 409 Conflict.
   \item \textbf{Quy tắc cảnh báo CPU quá tải hoạt động như thế nào?} \\
     \textit{Trả lời:} Động cơ quy tắc yêu cầu mức tải CPU $\ge 90\%$ trong 3 mẫu đo liên tiếp để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để tự động giải quyết sự cố.
   \item \textbf{Cơ sở dữ liệu của em hiện tại đã hiện thực chưa và dự kiến gồm những gì?} \\
-    \textit{Trả lời:} CSDL hiện tại chưa được hiện thực. Số bảng cuối cùng sẽ được chốt khi thực hiện nhiệm vụ thiết kế schema (Task B-005). Các thực thể dự kiến gồm: \texttt{Devices}, \texttt{Metrics}, \texttt{Incidents}, và \texttt{AuditLogs}.
+    \textit{Trả lời:} CSDL hiện tại chưa được hiện thực. Số bảng cuối cùng sẽ được chốt khi thực hiện nhiệm vụ thiết kế schema (Task B-005). Kiến trúc đã chốt các yêu cầu cốt lõi như \texttt{MetricSamples}, \texttt{ProcessedBatches} và \texttt{Incidents.RowVersion}; số bảng đầy đủ sẽ được chốt khi B-005 được thực hiện.
   \item \textbf{Làm thế nào để phòng tránh tấn công SQL Injection?} \\
     \textit{Trả lời:} Luôn sử dụng truy vấn tham số hóa (Parameterized Queries) thông qua \texttt{SqlCommand.Parameters.AddWithValue}, tuyệt đối không bao giờ cộng chuỗi lệnh SQL.
   \item \textbf{Tại sao phải dùng ConcurrentDictionary để lưu danh sách kết nối?} \\
@@ -604,7 +605,7 @@ Dưới đây là 20 câu hỏi trọng tâm thường gặp nhất khi bảo v�
     \textit{Trả lời:} Nhờ cơ chế khóa lạc quan (OCC), người gửi lệnh đến trước sẽ cập nhật thành công (nhận \texttt{200 OK}), người gửi đến sau sẽ bị từ chối (nhận \texttt{409 Conflict}) và màn hình sẽ yêu cầu tải lại dữ liệu mới nhất.
   \item \textbf{Làm thế nào để giới hạn số lượng kết nối tối đa vào Server?} \\
     \textit{Trả lời:} Bằng cách kiểm tra số lượng phần tử trong \texttt{ConcurrentDictionary}. Nếu vượt quá ngưỡng (ví dụ 100 kết nối), máy chủ từ chối kết nối mới bằng cách đóng socket ngay lập tức.
-  \item \textbf{Bảng Metrics có cần tạo Index không? Tại sao?} \\
+  \item \textbf{Bảng MetricSamples có cần tạo Index không? Tại sao?} \\
     \textit{Trả lời:} Cần tạo chỉ mục không phân cụm (Non-clustered Index) trên 2 cột \texttt{(DeviceId, RecordedAtUtc DESC)} để tối ưu hóa tốc độ truy vấn biểu đồ lịch sử và tìm kiếm số liệu mới nhất của từng máy trạm.
   \item \textbf{Nếu máy chủ SQL Server bị dừng đột ngột thì Central xử lý thế nào?} \\
     \textit{Trả lời:} Central Server duy trì kết nối TCP nếu có thể; nhịp tim \texttt{HEARTBEAT} và liveness vẫn hoạt động trên RAM. Central \textbf{không} duy trì hàng đợi đệm số liệu thứ hai trên RAM. Khi nhận \texttt{METRIC\_BATCH} lúc CSDL gián đoạn, server không commit và không gửi \texttt{BATCH\_ACK}; phía Agent giữ quyền sở hữu số liệu qua \texttt{ReplayBuffer} và sẽ gửi bù sau khi CSDL phục hồi. Các lệnh ghi của Admin sẽ nhận mã lỗi \texttt{ERR\_DATABASE\_UNAVAILABLE}.
