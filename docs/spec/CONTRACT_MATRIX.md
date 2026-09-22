@@ -195,9 +195,9 @@ Catalog được đối chiếu bằng phép so sánh tập hợp tên message v
 - **Ingest Ring Buffer (Bộ nhớ RAM tại Central Server):** Là hàng đợi bộ nhớ có giới hạn (`System.Threading.Channels.Channel<T>` Bounded Queue) để điều tiết áp lực ghi đĩa (backpressure) giữa luồng mạng và luồng ghi CSDL. Ingest Ring Buffer không phải nơi chống trùng lặp bền vững vì dữ liệu sẽ mất khi máy chủ restart.
 - **Bảng `ProcessedBatches` (Lưu trữ CSDL SQL Server):**
   - **Khóa chính (PK):** `(DeviceId, BootId, BatchId)`.
-  - **Các cột:** `DeviceId` (NVARCHAR(64)), `BootId` (UNIQUEIDENTIFIER), `BatchId` (BIGINT), `ReceivedUtc` (DATETIME2), `Status` (TINYINT).
+  - **Các cột:** `DeviceId` (NVARCHAR(64)), `BootId` (UNIQUEIDENTIFIER), `BatchId` (UNIQUEIDENTIFIER), `ReceivedUtc` (DATETIME2), `Status` (TINYINT).
   - **TTL & Purge Policy:** Lưu vết 24 giờ. Job định kỳ dọn dẹp bản ghi cũ theo `ReceivedUtc < DATEADD(hour, -24, SYSUTCDATETIME())`.
-  - **Hành vi xử lý:** Khi Central nhận `METRIC_BATCH` hoặc `SERVICE_STATUS`, kiểm tra nếu khóa đã tồn tại trong `ProcessedBatches`: Bỏ qua bước ghi telemetry mới, nhưng **bắt buộc gửi lại `BATCH_ACK`** để Agent xóa mẻ tin khỏi hàng đợi replay.
+  - **Hành vi xử lý:** Khi Central nhận `METRIC_BATCH`, kiểm tra nếu khóa đã tồn tại trong `ProcessedBatches`: bỏ qua bước ghi telemetry mới nhưng **bắt buộc gửi lại `BATCH_ACK`** để Agent giải phóng mẻ tin khỏi `ReplayBuffer`. `SERVICE_STATUS` không dùng khóa `(BootId, BatchId)` và không đi qua cơ chế replay/dedup này.
 - **Bảng `ProcessedCommands` (Lưu trữ CSDL SQL Server):**
   - **Khóa chính (PK):** `(UserId, CommandId)`.
   - **Các cột:** `UserId` (NVARCHAR(64)), `CommandId` (UNIQUEIDENTIFIER), `RequestDigest` (CHAR(64) - mã băm SHA-256 của byte serialized canonical), `ResponsePayload` (NVARCHAR(MAX) - chuỗi JSON kết quả đã trả), `ExecutedUtc` (DATETIME2), `Status` (NVARCHAR(32)).
