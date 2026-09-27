@@ -1,3 +1,4 @@
+using LabGuard.Admin;
 namespace LabGuard.Admin;
 
 internal static class Program
@@ -6,6 +7,6 @@ internal static class Program
     static void Main()
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new DashboardForm());
+        Application.Run(new global::LabGuard.Admin.DashboardForm());
     }
 }
