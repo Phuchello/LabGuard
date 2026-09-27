@@ -2,19 +2,19 @@
 
 > **Tài liệu tra cứu cấu trúc mã nguồn thực tế của dự án LabGuard.**  
 > Hiện tại, dự án đang ở giai đoạn bắt đầu phân công cho 4 sinh viên thực hiện.  
-> **Đã nghiệm thu hoàn thành: thư viện giao thức (`LabGuard.Protocol` — A-001, A-002) và kết nối TCP Agent (`LabGuard.Agent` — A-003).**  
-> Các phân hệ Central, Admin, Database hiện tại chỉ giữ lại khung sườn tối thiểu (skeleton).  
+> **Đã nghiệm thu chính thức (`DONE / ACCEPTED / CLOSED`): thư viện giao thức (`LabGuard.Protocol` — A-001, A-002), kết nối TCP Agent (`LabGuard.Agent` — A-003), và thu thập CPU/RAM/Uptime & dịch vụ định kỳ (`LabGuard.Agent` — A-004, đối soát Windows Reference 10/10 PASS).**
+> Các phân hệ Central, Admin, Database hiện tại chỉ giữ lại khung sườn tối thiểu (skeleton). Nhiệm vụ tiếp theo của Agent là A-005 (Reconnect).
 >
-> **Ký hiệu hiện trạng:**  
-> - ✅ **ĐÃ XONG & NGHIỆM THU:** Mã nguồn chính thức đã hoàn thành và kiểm thử 100% pass (A-001, A-002, A-003).  
-> - ⚪ **CHƯA LÀM (KHUNG SƯỜN TỐI THIỂU):** Khung dự án chờ sinh viên tự tay lập trình theo nhiệm vụ được giao.
+> **Ký hiệu hiện trạng:**
+> - ✅ **ĐÃ XONG & NGHIỆM THU (`DONE / ACCEPTED / CLOSED`):** Mã nguồn chính thức đã hoàn thành và nghiệm thu (A-001, A-002, A-003, A-004).
+> - ⚪ **CHƯA LÀM (KHUNG SƯỜN TỐI THIỂU):** Khung dự án chờ sinh viên tự tay lập trình theo nhiệm vụ được giao (A-005+ và Central/Admin).
 
 ---
 
 ## MỤC LỤC
 
 1. [Phần 1: Thư viện giao thức dùng chung (`src/LabGuard.Protocol/`) — ĐÃ HOÀN THÀNH (A-001 & A-002)](#phần-1-thư-viện-giao-thức-dùng-chung-srclabguardprotocol--đã-hoàn-thành-a-001--a-002)
-2. [Phần 2: Ứng dụng máy trạm (`src/LabGuard.Agent/`) — Sinh viên A (A-003 ĐÃ XONG, A-004+ chưa làm)](#phần-2-ứng-dụng-máy-trạm-srclabguardagent--sinh-viên-a-a-003-đã-xong-a-004-chưa-làm)
+2. [Phần 2: Ứng dụng máy trạm (`src/LabGuard.Agent/`) — Sinh viên A (A-001 đến A-004 ĐÃ XONG / NGHIỆM THU; A-005+ chưa làm)](#phần-2-ứng-dụng-máy-trạm-srclabguardagent--sinh-viên-a-a-001-đến-a-004-đã-xong--nghiệm-thu)
 3. [Phần 3: Máy chủ trung tâm (`src/LabGuard.Central/`) — Sinh viên B (Bắt đầu từ B-001)](#phần-3-máy-chủ-trung-tâm-srclabguardcentral--sinh-viên-b-bắt-đầu-từ-b-001)
 4. [Phần 4: Giao diện quản trị (`src/LabGuard.Admin/`) — Sinh viên C (Bắt đầu từ C-001)](#phần-4-giao-diện-quản-trị-srclabguardadmin--sinh-viên-c-bắt-đầu-từ-c-001)
 5. [Phần 5: Công cụ giả lập tải (`src/LabGuard.Simulator/`)](#phần-5-công-cụ-giả-lập-tải-srclabguardsimulator)
@@ -44,21 +44,23 @@ Toàn bộ thư viện này là giao ước mạng chuẩn của LabGuard, toàn
 
 ---
 
-## PHẦN 2: ỨNG DỤNG MÁY TRẠM (`src/LabGuard.Agent/`) — SINH VIÊN A (A-003 ĐÃ XONG)
+## PHẦN 2: ỨNG DỤNG MÁY TRẠM (`src/LabGuard.Agent/`) — SINH VIÊN A (A-001 ĐẾN A-004 ĐÃ XONG / NGHIỆM THU)
 
-Chương trình chạy ngầm trên máy con sinh viên. A-003 đã hoàn thành. Các tính năng thu thập metrics, reconnect, ReplayBuffer... do **Sinh viên A tự tay viết** từ A-004 trở đi.
+Chương trình chạy ngầm trên máy con sinh viên. Toàn bộ các nhiệm vụ A-001, A-002, A-003 và A-004 đã được nghiệm thu chính thức (18/18 xUnit cases PASS, đối soát tham chiếu Windows Reference 10/10 PASS). Các tính năng reconnect, ReplayBuffer, ServiceMonitor... do **Sinh viên A tự tay viết** từ A-005 trở đi.
 
 | File | Nói đơn giản nó làm gì | Ai cần file này | Hiện trạng thực tế |
 | :--- | :--- | :--- | :--- |
 | [`AgentSocketClient.cs`](src/LabGuard.Agent/AgentSocketClient.cs) | Quản lý TcpClient + hàng đợi Bounded Channel 256 gửi tuần tự; Single-Writer Loop; xử lý lỗi ghi mạng; DisposeAsync đúng | Sinh viên A | ✅ **A-003 ĐÃ XONG:** 16/16 tests PASS. Public ctor cố định 256; `CreateOutbox` factory nội bộ. |
-| [`Program.cs`](src/LabGuard.Agent/Program.cs) | Khung chương trình Console tối thiểu | Sinh viên A | ⚪ **KHUNG SƯỜN:** A sẽ bổ sung logic khởi động các service sau này. |
+| [`MetricsCollector.cs`](src/LabGuard.Agent/MetricsCollector.cs) | Thu thập CPU (GetSystemTimes delta), RAM (GlobalMemoryStatusEx), Uptime (GetTickCount64) qua P/Invoke Win32 API | Sinh viên A | ✅ **A-004 ĐÃ XONG:** Nghiệm thu PASS — 10/10 xUnit cases PASS, đạt yêu cầu WBS < 100 ms (phiên validation 10 mẫu max = 0.616 ms; mẫu warm-up trước đó ghi nhận 1.137 ms). |
+| [`MetricsService.cs`](src/LabGuard.Agent/MetricsService.cs) | Hẹn giờ 5s (PeriodicTimer) lấy số liệu đóng gói METRIC_BATCH gửi qua AgentSocketClient | Sinh viên A | ✅ **A-004 ĐÃ XONG:** Nghiệm thu PASS — BootId ổn định, BatchId duy nhất, 4/4 xUnit cases PASS. |
+| [`HeartbeatService.cs`](src/LabGuard.Agent/HeartbeatService.cs) | Hẹn giờ 5s (PeriodicTimer) phát tín hiệu nhịp tim HEARTBEAT với SequenceNumber tăng dần | Sinh viên A | ✅ **A-004 ĐÃ XONG:** Nghiệm thu PASS — Gửi qua AgentSocketClient (kênh outbox nội bộ), 4/4 xUnit cases PASS. |
+| [`Program.cs`](src/LabGuard.Agent/Program.cs) | Điểm khởi đầu chương trình Console (khung hiển thị trạng thái hiện tại của Agent) | Sinh viên A | ⚪ **KHUNG SƯỜN TÍCH HỢP:** Sẽ kết nối Central khi B-001+ hoàn tất. |
 | [`LabGuard.Agent.csproj`](src/LabGuard.Agent/LabGuard.Agent.csproj) | Cấu hình dự án máy trạm Agent, tham chiếu tới `LabGuard.Protocol` | .NET SDK | Giữ nguyên để toàn bộ Solution biên dịch thành công. |
 
-> **Các file Sinh viên A sẽ tự tay tạo mới khi làm việc tiếp theo:**  
-> - `MetricsCollector.cs` & `MetricsService.cs` (Task A-004 [CHƯA LÀM — TIẾP THEO]: Gọi Win32 API đo CPU, RAM, Uptime)  
-> - `AgentSocketClient.cs` mở rộng (Task A-005: Kết nối lại Exponential Backoff)  
-> - `ReplayBuffer.cs` (Task A-006: Bộ đệm giữ 50 gói tin khi mất mạng)  
-> - `ServiceMonitor.cs` (Task A-007: Kiểm tra cổng dịch vụ 80 và 8080)  
+> **Các file Sinh viên A sẽ tự tay tạo mới khi làm việc tiếp theo:**
+> - `AgentSocketClient.cs` mở rộng (Task A-005 [CHƯA LÀM — TIẾP THEO]: Kết nối lại Exponential Backoff + Jitter)
+> - `ReplayBuffer.cs` (Task A-006: Bộ đệm giữ 50 gói tin khi mất mạng)
+> - `ServiceMonitor.cs` (Task A-007: Kiểm tra cổng dịch vụ 80 và 8080)
 
 ---
 
@@ -118,7 +120,7 @@ Máy chủ trung tâm điều hành toàn bộ hệ thống. Toàn bộ logic m�
 | Thư mục / File | Nói đơn giản nó làm gì | Hiện trạng thực tế |
 | :--- | :--- | :--- |
 | `tests/LabGuard.Protocol.Tests/` | Các bài kiểm tra tự động xác thực việc cắt khung tin 4 byte (`FrameCodecTests.cs`) và 16 bản tin mẫu canonical (`WireContractAndFixturesTests.cs`, `ProtocolSpecificationTests.cs`). 16 tệp JSON trong `Fixtures/` là bộ fixture quy chuẩn của nhiệm vụ A-001. | ✅ **Protocol tests PASS:** Kiểm thử chính thức của 2 nhiệm vụ đã hoàn thành (A-001 & A-002). |
-| `tests/LabGuard.Agent.Tests/` | Bộ kiểm thử A-003: `AgentSocketClientTests.cs` (16/16 PASS) và `FakeTcpServer.cs` (máy chủ TCP giả lập loopback dùng `FrameCodec`). | ✅ **A-003 tests PASS:** 16/16 kiểm thử kết nối TCP, hàng đợi, backpressure, writer failure, DisposeAsync. |
+| `tests/LabGuard.Agent.Tests/` | Bộ kiểm thử Agent: `AgentSocketClientTests.cs` (16 tests A-003), `MetricsCollectorTests.cs`, `MetricsServiceTests.cs`, `HeartbeatServiceTests.cs` (18 tests A-004), và `FakeTcpServer.cs`. | ✅ **Agent tests PASS:** 34/34 tests đạt 100% (kết nối socket, hàng đợi, CPU delta, RAM, Uptime, FakeServer, Concurrency, Latency < 100ms). |
 | `tests/LabGuard.Central.Tests/` | Dự án kiểm thử cho Central | ⚪ **KHUNG CHỜ (SKELETON):** Sinh viên B sẽ viết các bài test khi thực hiện B-001+. |
 | `tools/validation/test_frame_codec/` | Công cụ console độc lập giúp kiểm tra nhanh khung tin TCP của A-002 | ✅ **ĐÃ CÓ:** Phục vụ kiểm tra độc lập việc đóng/mở khung tin 4 byte. |
 

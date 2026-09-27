@@ -300,7 +300,7 @@ Hình này chỉ cần nhìn theo các đường kết nối: Agent và Admin k�
 \begin{itemize}
   \item \textbf{Bản chất:} Ứng dụng chạy ngầm trên từng máy tính sinh viên, không chiếm dụng màn hình làm bài.
   \item \textbf{Cơ chế hoạt động:} Là TCP Client chủ động mở kết nối ra Central Server tại cổng 5000.
-  \item \textbf{Nhiệm vụ chính:} Định kỳ 5 giây đo CPU, RAM và gửi nhịp tim \texttt{HEARTBEAT}; lưu đệm vào \texttt{ReplayBuffer} khi rớt mạng để gửi bù sau.
+  \item \textbf{Nhiệm vụ hiện tại:} Định kỳ thu thập CPU/RAM và phát \texttt{HEARTBEAT}. Khả năng lưu \texttt{METRIC\_BATCH} khi mất mạng và gửi bù bằng \texttt{ReplayBuffer} thuộc A-006, hiện CHƯA TRIỂN KHAI.
 \end{itemize}
 
 \subsection{LabGuard.Central (Máy chủ trung tâm)}
@@ -718,7 +718,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Thư viện \texttt{Protocol} (A-001 \& A-002) đã hoàn thành 100\% (toàn bộ kiểm thử tự động đã PASS).
-  \item Phân hệ Agent đã hoàn thành A-003 (\texttt{AgentSocketClient.cs}, 16/16 tests PASS); các chặng A-004+ chưa triển khai để sinh viên A tự tay viết.
+  \item Phân hệ Agent đã hoàn thành A-001 đến A-004 (\texttt{AgentSocketClient.cs}, \texttt{MetricsCollector.cs}, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests PASS, Windows reference 10/10 PASS); chặng A-005+ (Reconnect, ReplayBuffer) là việc tiếp theo chưa triển khai.
   \item Các phân hệ Central, Admin hiện là khung sườn tối thiểu để sinh viên B, C tự tay lập trình.
 \end{itemize}
 \end{summarybox}
@@ -735,7 +735,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
     \hline
     \textbf{src/LabGuard.Protocol/} & \textbf{ĐÃ HOÀN THÀNH (100\%)} & Chứa \texttt{WireEnvelope}, \texttt{FrameCodec}, \texttt{EnvelopeValidator}, các DTO và bộ kiểm thử giao thức đã PASS. \\
     \hline
-    \textbf{src/LabGuard.Agent/} & \textbf{A-003 ĐÃ XONG} & Chứa \texttt{AgentSocketClient.cs} (BoundedChannel 256, Single-Writer Loop, \texttt{CreateOutbox} factory, DisposeAsync đúng) và \texttt{Program.cs} khung sườn. Kiểm thử A-003: 16/16 PASS. A-004+ do Sinh viên A thực hiện. \\
+    \textbf{src/LabGuard.Agent/} & \textbf{A-001--A-004 ĐÃ XONG} & Chứa \texttt{AgentSocketClient.cs} (BoundedChannel 256, Single-Writer Loop), \texttt{MetricsCollector.cs} (đo CPU/RAM/Uptime qua Win32 API), \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}. Đã nghiệm thu (34/34 tests PASS, đối soát Windows 10/10 PASS). Chặng A-005+ (Reconnect) là bước tiếp theo. \\
     \hline
     \textbf{src/LabGuard.Central/} & \textbf{CHƯA LÀM / DỰ KIẾN} & Hiện chỉ chứa file \texttt{Program.cs} giữ chỗ. Bạn B sẽ tự tay viết server TCP, CSDL và RuleEngine. \\
     \hline
@@ -1209,7 +1209,7 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
 \end{lstlisting}
     Nếu số dòng cập nhật được bằng 1 thì thành công (\texttt{200 OK}). Nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi \texttt{409 Conflict} để giao diện tải lại dữ liệu mới nhất.
   \item \textbf{Hiện tại mã nguồn của dự án đã làm được những gì?} \\
-    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} (A-001 \& A-002, 107/107 tests PASS) và tầng kết nối mạng của Agent (A-003: \texttt{AgentSocketClient.cs} hàng đợi Single-Writer 256, 16/16 tests PASS). Các tác vụ tiếp theo của Agent (A-004+ như đo CPU/RAM, ReplayBuffer) đang trong kế hoạch thực hiện. Các phân hệ Central và Admin hiện là khung sườn tối thiểu để sinh viên B và C tự tay xây dựng.
+    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} (A-001 \& A-002, 107/107 tests PASS) và các chặng A-003, A-004 của Agent (\texttt{AgentSocketClient.cs} hàng đợi Single-Writer 256, \texttt{MetricsCollector.cs} đo CPU/RAM qua Win32 P/Invoke, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests PASS, đối soát Windows reference 10/10 PASS). Tác vụ tiếp theo của Agent là A-005 (Tự động kết nối lại / Reconnect). Các phân hệ Central và Admin hiện là khung sườn tối thiểu để sinh viên B và C tự tay xây dựng.
   \item \textbf{Tại sao toàn bộ code mẫu viết sẵn trước đây lại bị dọn dẹp khỏi dự án?} \\
     \textit{Trả lời:} Để bảo đảm tính liêm chính học thuật, giúp 4 bạn sinh viên tự tay lập trình từng dòng lệnh, hiểu sâu môn học và chịu trách nhiệm độc lập trên phân hệ của mình.
   \item \textbf{Máy chủ Central lắng nghe trên cổng nào?} \\
@@ -1222,8 +1222,8 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
     \textit{Trả lời:} Là ngoại lệ xảy ra khi một luồng nền nhận tin TCP cố tình gán thuộc tính Control của giao diện. Khắc phục bằng cách kiểm tra \texttt{InvokeRequired} và gọi \texttt{BeginInvoke} để chuyển hành động về cho UI Thread thực hiện an toàn.
   \item \textbf{Bộ kiểm thử tự động của Protocol có bao nhiêu bài test?} \\
     \textit{Trả lời:} Đúng 107 bài test tự động, kiểm thử bao phủ toàn bộ các trường hợp hợp lệ, trường hợp biên, đóng khung tin nhị phân và dữ liệu sai hỏng.
-  \item \textbf{Tại sao chuỗi thời gian ISO 8601 bắt buộc phải có chỉ định UTC tường minh ('Z')?} \\
-    \textit{Trả lời:} Ký tự 'Z' đại diện cho giờ chuẩn quốc tế UTC, loại bỏ hoàn toàn nguy cơ sai lệch thời gian khi máy trạm và máy chủ đặt ở các múi giờ khác nhau.
+  \item \textbf{Tại sao chuỗi thời gian ISO 8601 trong sentAtUtc bắt buộc phải có chỉ định UTC zero offset ('Z' hoặc '+00:00')?} \\
+    \textit{Trả lời:} Chỉ định UTC zero offset tường minh ('Z' hoặc '+00:00') loại bỏ hoàn toàn nguy cơ sai lệch thời gian khi máy trạm và máy chủ đặt ở các múi giờ khác nhau. Bộ xác thực \texttt{EnvelopeValidator} bắt buộc độ lệch UTC zero và từ chối mọi chuỗi thiếu múi giờ, dùng múi giờ địa phương (như '+07:00'), dùng chữ thường ('z') hoặc '-00:00'.
   \item \textbf{Làm thế nào để sinh một RequestId chuẩn?} \\
     \textit{Trả lời:} Sử dụng phương thức \texttt{Guid.NewGuid().ToString("D")}, sinh ra chuỗi 36 ký tự gồm chữ và số phân tách bằng 4 dấu gạch nối.
   \item \textbf{Tại sao không dùng Dictionary thông thường để lưu kết nối trên Central?} \\
