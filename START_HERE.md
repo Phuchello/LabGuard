@@ -8,7 +8,7 @@
 ## 📚 BỘ TÀI LIỆU PDF CHUYÊN BIỆT CHO 4 THÀNH VIÊN
 
 Mỗi bạn có riêng một cuốn cẩm nang chi tiết kèm hình ảnh minh họa, hướng dẫn từng bước và bộ câu hỏi vấn đáp:
-* 📖 **Cả nhóm:** [`docs/pdf/LabGuard_Tong_Quan_A-Z.pdf`](docs/pdf/LabGuard_Tong_Quan_A-Z.pdf) — Sổ tay toàn diện (Master Book): Luồng mạng, giao ước 6 trường, ma trận RACI và 35 câu hỏi bảo vệ đồ án.
+* 📖 **Cả nhóm:** [`docs/pdf/LabGuard_Tong_Quan_A-Z.pdf`](docs/pdf/LabGuard_Tong_Quan_A-Z.pdf) — Sổ tay toàn diện (Master Book): Luồng mạng, giao ước 6 trường, ma trận RACI và 30 câu hỏi bảo vệ đồ án.
 * 📕 **Sinh viên A:** [`docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_A.pdf`](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_A.pdf) — Sổ tay Agent & Protocol: Đo CPU/RAM thật, hàng đợi BoundedChannel, ReplayBuffer và 20 câu hỏi vấn đáp.
 * 📗 **Sinh viên B:** [`docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_B.pdf`](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_B.pdf) — Sổ tay Central & Database: TCP Server đa luồng, SQL Server, RuleEngine, OCC và 20 câu hỏi vấn đáp.
 * 📘 **Sinh viên C:** [`docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_C.pdf`](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_C.pdf) — Sổ tay Admin WinForms: Thiết kế DataGridView, an toàn luồng UI `BeginInvoke`, RBAC và 20 câu hỏi vấn đáp.
@@ -23,7 +23,7 @@ Mỗi bạn có riêng một cuốn cẩm nang chi tiết kèm hình ảnh minh 
 > **Các bạn sinh viên sẽ tự tay lập trình từng file mã nguồn theo phân công của mình.**
 >
 > **Hiện trạng chính thức toàn nhóm lúc này:**
-> * **Sinh viên A:** Mới chỉ có 2 việc đầu tiên (giao thức đóng khung TCP `FrameCodec.cs` và 16 bản tin mẫu) là đã nghiệm thu **XONG**. Từ việc A-003 trở đi là **CHƯA LÀM**.
+> * **Sinh viên A:** Đã hoàn thành 3 việc đầu tiên (giao thức đóng khung TCP `FrameCodec.cs`, 16 bản tin mẫu và hàng đợi TCP `AgentSocketClient.cs`) là đã nghiệm thu **XONG**. Từ việc A-004 trở đi là **CHƯA LÀM**.
 > * **Sinh viên B:** **100% việc là CHƯA LÀM** (Bắt đầu từ B-001).
 > * **Sinh viên C:** **100% việc là CHƯA LÀM** (Bắt đầu từ C-001).
 > * **Sinh viên D:** **100% việc là CHƯA LÀM** (Bắt đầu làm quen socket TCP).
@@ -50,12 +50,12 @@ Chương trình chạy ngầm trên từng máy tính trong phòng máy, định
 * `tests/LabGuard.Agent.Tests/` (nơi viết bài kiểm thử cho Agent)
 
 ### 3. Hiện trạng mã nguồn trong thư mục của bạn:
-* Hiện tại `src/LabGuard.Agent/` chỉ có file khung sườn [`Program.cs`](src/LabGuard.Agent/Program.cs).
-* Bạn sẽ **tự tay tạo mới** các file tính năng khi thực hiện nhiệm vụ:
-  1. `AgentSocketClient.cs` (Task A-003: Quản lý socket TCP và hàng đợi gửi tuần tự; Task A-005: Tự động kết nối lại)
-  2. `MetricsCollector.cs` (Task A-004: Gọi Win32 API đo CPU, RAM, Uptime thật)
-  3. `MetricsService.cs` (Task A-004: Hẹn giờ 5s lấy số liệu đóng gói gửi đi)
-  4. `HeartbeatService.cs` (Task A-004: Hẹn giờ 5s gửi nhịp tim báo sống)
+* Hiện tại `src/LabGuard.Agent/` đã có [`AgentSocketClient.cs`](src/LabGuard.Agent/AgentSocketClient.cs) (A-003) và file khung sườn [`Program.cs`](src/LabGuard.Agent/Program.cs).
+* Bạn sẽ **tự tay tạo mới** các file tính năng khi thực hiện nhiệm vụ tiếp theo:
+  1. `MetricsCollector.cs` (Task A-004: Gọi Win32 API đo CPU, RAM, Uptime thật)
+  2. `MetricsService.cs` (Task A-004: Hẹn giờ 5s lấy số liệu đóng gói gửi đi)
+  3. `HeartbeatService.cs` (Task A-004: Hẹn giờ 5s gửi nhịp tim báo sống)
+  4. `AgentSocketClient.cs` mở rộng (Task A-005: Tự động kết nối lại)
   5. `ReplayBuffer.cs` (Task A-006: Bộ đệm giữ 50 gói tin khi mất mạng)
   6. `ServiceMonitor.cs` (Task A-007: Thử bắt tay TCP kiểm tra cổng dịch vụ 80 và 8080)
 
@@ -65,8 +65,8 @@ Chương trình chạy ngầm trên từng máy tính trong phòng máy, định
 | :--- | :---: | :--- |
 | **Đóng khung gói tin TCP 4 byte (A-002)** | **XONG** | Đã viết xong `FrameCodec.cs`, test tự động 100% pass, đã nghiệm thu. |
 | **16 bản tin JSON mẫu chuẩn (A-001)** | **XONG** | Đã đóng băng giao ước `WireEnvelope.cs` và 16 fixtures, đã nghiệm thu. |
-| **Làm kết nối TCP & hàng đợi gửi dữ liệu (A-003)** | **CHƯA LÀM** | **Việc A bắt đầu làm:** Tạo mới `AgentSocketClient.cs`, mở socket TCP tới Central và làm hàng đợi `Channel<T>` để nhịp tim và số liệu không bị trộn byte. |
-| **Đo CPU, RAM và Uptime thật (A-004)** | **CHƯA LÀM** | Sẽ làm sau A-003: Tạo `MetricsCollector.cs` gọi hàm Windows đo tài nguyên thật. |
+| **Làm kết nối TCP & hàng đợi gửi dữ liệu (A-003)** | **XONG** | Đã tạo `AgentSocketClient.cs`, BoundedChannel 256, Single Writer Loop, `CreateOutbox` factory, 16/16 tests pass. |
+| **Đo CPU, RAM và Uptime thật (A-004)** | **CHƯA LÀM — TIẾP THEO** | Việc tiếp theo của A: Tạo `MetricsCollector.cs` gọi hàm Windows đo tài nguyên thật. |
 | **Tự động kết nối lại khi rớt mạng (A-005)** | **CHƯA LÀM** | Sẽ làm sau A-004: Thêm thuật toán Exponential Backoff (1s, 2s, 4s... 30s). |
 | **Bộ nhớ giữ dữ liệu chưa gửi được (A-006)** | **CHƯA LÀM** | Sẽ làm sau A-005: Tạo `ReplayBuffer.cs` lưu tối đa 50 gói khi mất mạng. |
 | **Kiểm tra cổng dịch vụ mạng (A-007)** | **CHƯA LÀM** | Sẽ làm sau A-006: Tạo `ServiceMonitor.cs` thử cổng 80 và 8080. |
@@ -175,7 +175,7 @@ Cả nhóm mở file **[`LabGuard_Task_Tracker.xlsx`](LabGuard_Task_Tracker.xlsx
 * **Sheet `B - MÁY CHỦ`**: Danh sách toàn bộ việc của B (100% Chưa làm).
 * **Sheet `C - GIAO DIỆN`**: Danh sách toàn bộ việc của C (100% Chưa làm).
 * **Sheet `D - MỞ RỘNG`**: Danh sách toàn bộ việc của D (100% Chưa làm).
-* **Sheet `KY_THUAT_CU_KHONG_CAN_DOC`**: Nơi cất giữ dữ liệu kỹ thuật và mã WBS cũ để lưu trữ, thành viên không cần đọc.
+
 
 ---
 

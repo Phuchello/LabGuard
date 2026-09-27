@@ -94,7 +94,7 @@ Catalog được đối chiếu bằng phép so sánh tập hợp tên message v
 |:---|:---:|:---:|:---|:---|:---|:---|
 | Agent $\rightarrow$ Central | SV A | SV B | `METRIC_BATCH` | `BATCH_ACK` | Mẻ CPU, RAM, NIC, Uptime; cờ isReplay trong payload | `DeviceId+BootId+BatchId` (TTL 24h) |
 | Central $\rightarrow$ Agent | SV B | SV A | `BATCH_ACK` | *(Xóa replay)* | Xác nhận mẻ telemetry đã commit CSDL | `batchId` |
-| Agent $\rightarrow$ Central | SV A | SV B | `SERVICE_STATUS` | `BATCH_ACK` | Báo cáo probe TCP allowlist ($\le 5$ cổng, timeout 2s) | `DeviceId+BootId+BatchId` (TTL 24h) |
+| Agent $\rightarrow$ Central | SV A | SV B | `SERVICE_STATUS` | *(Không yêu cầu)* | Báo cáo probe TCP allowlist ($\le 5$ cổng, timeout 2s); latest-state telemetry (không ReplayBuffer, không retry) | Không dedup / Server UPSERT theo `(DeviceId, ServiceName)` |
 | Central $\rightarrow$ Agent | SV B | SV A | `CONFIG_UPDATE` | `CONFIG_RESULT` | Cập nhật cấu hình chu kỳ và allowlist cổng | Version cấu hình |
 | Agent $\rightarrow$ Central | SV A | SV B | `CONFIG_RESULT` | *(Hoàn tất)* | Báo cáo kết quả áp dụng cấu hình mới | `requestId` correlation |
 | Central $\rightarrow$ Agent | SV B | SV A | `SERVICE_CHECK_REQUEST` | `SERVICE_STATUS` | Yêu cầu Agent probe tức thời một dịch vụ | `requestId` correlation |
@@ -387,41 +387,65 @@ Tất cả 16 fixture canonical đều:
 - **Payload `METRIC_BATCH`:**
   ```json
   {
-    "bootId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "batchId": 1042,
+    "bootId": "b0000000-0000-4000-8000-000000000001",
+    "batchId": "b0000000-0000-4000-8000-000000000002",
+    "sampleCount": 2,
+    "uptimeSeconds": 3600,
     "isReplay": false,
-    "cpuPercent": 92.4,
-    "memoryUsedBytes": 6442450944,
-    "memoryTotalBytes": 8589934592,
-    "networkBytesSent": 1250440,
-    "networkBytesRecv": 4512000,
-    "uptimeSeconds": 14250
+    "samples": [
+      {
+        "metricName": "CPU",
+        "metricValue": 45.5,
+        "unit": "%",
+        "recordedAtUtc": "2026-09-20T10:00:00.0000000Z"
+      },
+      {
+        "metricName": "RAM",
+        "metricValue": 62.0,
+        "unit": "%",
+        "recordedAtUtc": "2026-09-20T10:00:00.0000000Z"
+      }
+    ]
   }
   ```
 - **Envelope Phản hồi:** `messageType = "BATCH_ACK"`
 - **Payload `BATCH_ACK`:**
   ```json
   {
-    "batchId": 1042,
-    "status": "COMMITTED"
+    "bootId": "b0000000-0000-4000-8000-000000000001",
+    "batchId": "b0000000-0000-4000-8000-000000000002",
+    "accepted": true,
+    "samplesRecorded": 2,
+    "errorMessage": null
   }
   ```
 
-### 3. `SERVICE_STATUS` (Agent $\rightarrow$ Central) & `BATCH_ACK`
+### 3. `SERVICE_STATUS` (Agent $\rightarrow$ Central)
 - **Envelope:** `messageType = "SERVICE_STATUS"`
 - **Payload `SERVICE_STATUS`:**
   ```json
   {
-    "bootId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "batchId": 501,
     "isReplay": false,
     "services": [
-      { "port": 80, "serviceName": "HTTP", "isUp": true, "responseTimeMs": 4 },
-      { "port": 8080, "serviceName": "InternalApp", "isUp": false, "responseTimeMs": 2000 }
+      {
+        "serviceName": "HTTP",
+        "port": 80,
+        "isListening": true,
+        "responseTimeMs": 4,
+        "lastCheckedUtc": "2026-09-20T10:00:00.0000000Z"
+      },
+      {
+        "serviceName": "SSH",
+        "port": 22,
+        "isListening": true,
+        "responseTimeMs": 12,
+        "lastCheckedUtc": "2026-09-20T10:00:00.0000000Z"
+      }
     ]
   }
   ```
-- **Envelope Phản hồi:** `messageType = "BATCH_ACK"`
+> *Ghi chú:* `SERVICE_STATUS` mang ngữ nghĩa telemetry trạng thái mới nhất (latest-state telemetry), không đưa vào `ReplayBuffer`, không retry ở tầng ứng dụng, không yêu cầu `BATCH_ACK`, và máy chủ UPSERT vào CSDL theo cặp khóa `(DeviceId, ServiceName)`. Cờ `isReplay` được giữ giá trị `false` theo đúng DTO chuẩn (`ServiceStatusPayload`), nhưng trong MVP `SERVICE_STATUS` không bao giờ được replay.
+
 
 ### 4. `LOGIN` (Admin $\rightarrow$ Central) & `LOGIN_RESULT`
 - **Envelope:** `messageType = "LOGIN"`
