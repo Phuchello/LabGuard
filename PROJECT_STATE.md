@@ -2,7 +2,7 @@
 
 **Dự án:** LABGUARD — Hệ thống giám sát phòng máy tính tập trung thời gian thực  
 **Môn học:** NT106 — Lập trình mạng căn bản (Khoa MMT&TT, UIT)  
-**Thời điểm cập nhật:** 22/09/2026  
+**Thời điểm cập nhật:** 27/09/2026  
 **Chế độ làm việc:** Team Takeover Mode (Nhóm 4 sinh viên A, B, C, D trực tiếp lập trình, AI hỗ trợ Mentor/Review/Debug)  
 **Tài liệu nhập môn cho nhóm:** [START_HERE.md](START_HERE.md) & [FILE_MAP.md](FILE_MAP.md) (Tài liệu kỹ thuật nội bộ lưu trữ tại `docs/internal/`)  
 
@@ -12,13 +12,13 @@
 
 > [!IMPORTANT]
 > **Hiện trạng thực tế của mã nguồn:**  
-> - **ĐÃ HOÀN THÀNH & NGHIỆM THU:** Duy nhất hai nhiệm vụ **LG-A-001** (Giao ước Wire Contract & 16 Fixtures) và **LG-A-002** (`FrameCodec.cs` & xử lý phân mảnh TCP) trong thư viện dùng chung `src/LabGuard.Protocol/`. Toàn bộ 107 bài kiểm thử tự động giao thức đã PASS.
-> - **CÁC PHÂN HỆ CÒN LẠI LÀ KHUNG SƯỜN TỐI THIỂU (SKELETON):** Toàn bộ mã nguồn tạm thời trước đây đã được dọn sạch. Hiện tại các thư mục `src/LabGuard.Agent/`, `src/LabGuard.Central/`, `src/LabGuard.Admin/`, `src/LabGuard.Simulator/` chỉ chứa khung chương trình tối thiểu (`Program.cs`, `DashboardForm.cs`) để đảm bảo solution biên dịch thành công.
+> - **ĐÃ HOÀN THÀNH & NGHIỆM THU:** Nhiệm vụ **LG-A-001** (Wire Contract & 16 Fixtures), **LG-A-002** (`FrameCodec.cs` & xử lý phân mảnh TCP) và **LG-A-003** (`AgentSocketClient.cs` & hàng đợi Single-Writer 256). Tổng: **123/123 tests PASS** (Protocol 107, Agent 16).
+> - **CÁC PHÂN HỆ CHƯA TRIỂN KHAI:** `src/LabGuard.Central/`, `src/LabGuard.Admin/`, `src/LabGuard.Simulator/` chỉ chứa khung sườn tối thiểu (`Program.cs`, `DashboardForm.cs`). Sinh viên B/C/D sẽ tự tay lập trình từng tính năng.
 > - **CÁC THÀNH VIÊN SẼ TỰ TAY LẬP TRÌNH TỪNG TÍNH NĂNG:** Sinh viên sẽ trực tiếp tạo mới và lập trình các file tính năng theo đúng nhiệm vụ được phân công trong bảng theo dõi `LabGuard_Task_Tracker.xlsx`.
 
 - **Chi tiết hiện trạng từng phân hệ:**
   - `src/LabGuard.Protocol/`: **HOÀN THÀNH 100%**. Gồm `FrameCodec.cs`, `WireEnvelope.cs`, `EnvelopeValidator.cs`, `MessageTypes.cs`, `ErrorCodes.cs`, các DTOs và `ProtocolSerializer.cs`. Đã đóng băng giao ước.
-  - `src/LabGuard.Agent/`: **KHUNG SƯỜN CHỜ TRIỂN KHAI**. Chưa có logic kết nối mạng, chưa có thu thập metrics, chưa có ReplayBuffer. Sinh viên A sẽ bắt đầu từ A-003 (`AgentSocketClient.cs`).
+  - `src/LabGuard.Agent/`: **A-003 HOÀN THÀNH**. Có `AgentSocketClient.cs` (BoundedChannel 256, Single-Writer Loop, `CreateOutbox` factory, DisposeAsync đúng, xử lý lỗi ghi) và `Program.cs` khung sườn. 16/16 Agent tests PASS. Từ A-004 trở đi là **CHƯA LÀM** — Sinh viên A tự tay thực hiện.
   - `src/LabGuard.Central/`: **KHUNG SƯỜN CHỜ TRIỂN KHAI**. Chưa có TCP listener, chưa có bắt tay xác thực, chưa có liveness monitor, chưa có rule engine hay database repository. Sinh viên B sẽ bắt đầu từ B-001 (`CentralServer.cs`).
   - `src/LabGuard.Admin/`: **KHUNG SƯỜN GIAO DIỆN CHỜ TRIỂN KHAI**. Đã có form rỗng `DashboardForm.cs`. Chưa có kết nối mạng `AdminClient.cs`, chưa có bảng DataGridView và các nút điều khiển. Sinh viên C sẽ bắt đầu từ C-001 và C-002.
   - `src/LabGuard.Gateway/` & `src/LabGuard.Collector/`: **CHƯA TỒN TẠI TRONG SRC**. Là phân hệ mở rộng dự kiến cho Thành viên D sau khi hệ thống cốt lõi của A, B, C ổn định. D hiện thực hành socket trong `tools/`.
@@ -53,21 +53,31 @@
   - Chương trình kiểm chứng độc lập `tools/validation/test_frame_codec/Program.cs` (10/10 scenarios passed).
   - Đồng bộ Task Tracker `LabGuard_Task_Tracker.xlsx`: LG-A-002 / TEST-A02 chuyển sang `Xong` / `PASS`.
 
+- **Task LG-A-003 (Agent TCP connection và writer queue):** Đã hoàn thành (DONE).
+  - Tạo mới `AgentSocketClient.cs` trong `src/LabGuard.Agent/`:
+    - Quản lý vòng đời `TcpClient` và `NetworkStream` rõ ràng.
+    - Hàng đợi xuất `Channel<byte[]>` có chặn (Bounded Channel) dung lượng đúng 256 items (`DefaultOutboxCapacity = 256`), chế độ tràn `BoundedChannelFullMode.Wait` (áp lực ngược / Backpressure), `SingleWriter = false`, `SingleReader = true`.
+    - Vòng lặp ghi duy nhất (`WriterLoopAsync`): Nơi duy nhất gọi `NetworkStream.WriteAsync`, đọc tuần tự từng frame từ hàng đợi và ghi trọn vẹn xuống socket, ngăn ngừa hoàn toàn hiện tượng Frame Interleaving.
+    - Tái sử dụng trọn vẹn `FrameCodec.Encode(envelope)` và `FrameCodec.Encode(payload)` từ thư viện giao thức A-001/A-002 mà không lặp lại mã nguồn.
+    - Xử lý lỗi ngắt kết nối an toàn, dừng êm đềm (cancellation), không tự động kết nối lại khi chưa đến nhiệm vụ A-005.
+  - Bộ kiểm thử tự động `AgentSocketClientTests.cs` (16/16 tests PASS, 100%) kiểm chứng toàn diện các kịch bản với máy chủ giả lập nội bộ `FakeTcpServer` trên loopback. Bao gồm: `Scenario8b` (DisposeAsync trực tiếp), `Scenario10` (writer fault → IsConnected=false), `PublicConstructor_AlwaysUses256Capacity`, backpressure qua `CreateOutbox` factory.
+  - Đồng bộ Task Tracker `LabGuard_Task_Tracker.xlsx`: LG-A-003 / TEST-A03 chuyển sang `Xong` / `PASS`.
+
 ---
 
 ## 2. KẾT QUẢ KIỂM THỬ HIỆN TẠI (AUTOMATED TEST COUNT)
 
-**Tổng số kiểm thử tự động hiện tại:** **107 / 107 tests PASSED (100%)**
+**Tổng số kiểm thử tự động hiện tại:** **123 / 123 tests PASSED (100%)**
 - `LabGuard.Protocol.Tests`: **107 / 107 passed** (Kiểm thử FrameCodec, ReadExactlyBytesAsync, chunking 1-byte header/payload, coalescing 3 frames, boundary 262,144 bytes, WireEnvelope, raw JSON validation, 8 yêu cầu wire contract, 16 canonical fixtures minified/no-BOM/DTO deserialization, strict casing, duplicate keys, non-object payloads, strict uppercase 'Z'/'+00:00' UTC designator, ReadEnvelopeAsync strictness).
-- `LabGuard.Agent.Tests`: **0 tests** (Chờ Thành viên A triển khai Agent từ A-003 trở đi).
+- `LabGuard.Agent.Tests`: **16 / 16 passed** (Kiểm thử AgentSocketClient kết nối TCP, gửi đơn frame, tuần tự, nhiều producer đồng thời, single writer, backpressure qua CreateOutbox factory, cancellation, dispose đồng bộ, DisposeAsync trực tiếp với server EOF, lỗi ghi mạng IsConnected=false, lỗi kết nối không auto-reconnect, public constructor 256).
 - `LabGuard.Central.Tests`: **0 tests** (Chờ Thành viên B triển khai Central Server từ B-001 trở đi).
 
 ---
 
 ## 2.1. CHECKPOINT AN TOÀN & HÀNH ĐỘNG TIẾP THEO (CHECKPOINT & NEXT ACTION)
 
-- **Last Safe Checkpoint:** `LG-A-002 CLOSED` (107/107 automated tests pass, zero regressions, zero warnings).
-- **Exact Next Action:** Triển khai tiếp nhiệm vụ **`LG-A-003` — Agent TCP connection và writer queue** (`AgentSocketClient.cs`, `BoundedChannelOptions(256)`, `FullMode.Wait`).
+- **Last Safe Checkpoint:** `LG-A-003 ADVERSARIAL PASS CLOSED` (123/123 automated tests pass, zero regressions, zero warnings). Branch: `feat/lg-a-003-writer-queue`, commit `5c9ada1`.
+- **Exact Next Action:** Sinh viên A triển khai tiếp nhiệm vụ **`LG-A-004 [CHƯA LÀM — TIẾP THEO]` — Thu thập CPU, RAM, Uptime hệ thống** (`MetricsCollector.cs`, `MetricsService.cs`).
 
 ---
 
@@ -78,8 +88,8 @@ Toàn bộ dự án được tổ chức theo kế hoạch chuẩn hóa 34 nhi�
 - **Thành viên A (Máy trạm Agent & Giao thức):** 9 nhiệm vụ (`A-001` đến `A-009`)
   - A-001 [XONG]: 16 bản tin JSON mẫu chuẩn.
   - A-002 [XONG]: Đóng khung gói tin TCP 4 byte độ dài (`FrameCodec.cs`).
-  - A-003 [ĐANG LÀM]: Kết nối TCP và hàng đợi gửi tuần tự (`AgentSocketClient.cs`, capacity 256, FullMode.Wait).
-  - A-004 [CHƯA LÀM]: Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`).
+  - A-003 [XONG]: Kết nối TCP và hàng đợi gửi tuần tự (`AgentSocketClient.cs`, capacity 256, FullMode.Wait).
+  - A-004 [CHƯA LÀM — TIẾP THEO]: Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`).
   - A-005 [CHƯA LÀM]: Tự động kết nối lại khi rớt mạng (`AgentSocketClient.cs` với Exponential Backoff + Jitter).
   - A-006 [CHƯA LÀM]: Bộ nhớ giữ dữ liệu ngoại tuyến (`ReplayBuffer.cs`, tối đa 50 batches, `METRIC_BATCH` duy nhất, FIFO Drop-Oldest, `isReplay = true`).
   - A-007 [CHƯA LÀM]: Giám sát cổng dịch vụ mạng 80 và 8080 (`ServiceMonitor.cs`).

@@ -717,9 +717,9 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
 
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Thư viện \texttt{Protocol} đã hoàn thành 100\% (toàn bộ kiểm thử tự động đã PASS).
-  \item Các phân hệ Agent, Central, Admin hiện là khung dự án sạch sẽ để sinh viên tự tay lập trình.
-  \item Toàn bộ code sinh sẵn trước đây đã được dọn sạch để đảm bảo tính liêm chính học thuật.
+  \item Thư viện \texttt{Protocol} (A-001 \& A-002) đã hoàn thành 100\% (toàn bộ kiểm thử tự động đã PASS).
+  \item Phân hệ Agent đã hoàn thành A-003 (\texttt{AgentSocketClient.cs}, 16/16 tests PASS); các chặng A-004+ chưa triển khai để sinh viên A tự tay viết.
+  \item Các phân hệ Central, Admin hiện là khung sườn tối thiểu để sinh viên B, C tự tay lập trình.
 \end{itemize}
 \end{summarybox}
 
@@ -735,7 +735,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
     \hline
     \textbf{src/LabGuard.Protocol/} & \textbf{ĐÃ HOÀN THÀNH (100\%)} & Chứa \texttt{WireEnvelope}, \texttt{FrameCodec}, \texttt{EnvelopeValidator}, các DTO và bộ kiểm thử giao thức đã PASS. \\
     \hline
-    \textbf{src/LabGuard.Agent/} & \textbf{CHƯA LÀM / DỰ KIẾN} & Hiện chỉ chứa file \texttt{Program.cs} giữ chỗ. Bạn A sẽ tự tay viết socket, đo CPU/RAM và bộ đệm. \\
+    \textbf{src/LabGuard.Agent/} & \textbf{A-003 ĐÃ XONG} & Chứa \texttt{AgentSocketClient.cs} (BoundedChannel 256, Single-Writer Loop, \texttt{CreateOutbox} factory, DisposeAsync đúng) và \texttt{Program.cs} khung sườn. Kiểm thử A-003: 16/16 PASS. A-004+ do Sinh viên A thực hiện. \\
     \hline
     \textbf{src/LabGuard.Central/} & \textbf{CHƯA LÀM / DỰ KIẾN} & Hiện chỉ chứa file \texttt{Program.cs} giữ chỗ. Bạn B sẽ tự tay viết server TCP, CSDL và RuleEngine. \\
     \hline
@@ -1209,13 +1209,13 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
 \end{lstlisting}
     Nếu số dòng cập nhật được bằng 1 thì thành công (\texttt{200 OK}). Nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi \texttt{409 Conflict} để giao diện tải lại dữ liệu mới nhất.
   \item \textbf{Hiện tại mã nguồn của dự án đã làm được những gì?} \\
-    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} với bộ kiểm thử tự động vượt qua 100\% (107 tests). Các phân hệ Agent, Central, Admin đang ở giai đoạn bắt đầu phân công thực hiện.
+    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} (A-001 \& A-002, 107/107 tests PASS) và tầng kết nối mạng của Agent (A-003: \texttt{AgentSocketClient.cs} hàng đợi Single-Writer 256, 16/16 tests PASS). Các tác vụ tiếp theo của Agent (A-004+ như đo CPU/RAM, ReplayBuffer) đang trong kế hoạch thực hiện. Các phân hệ Central và Admin hiện là khung sườn tối thiểu để sinh viên B và C tự tay xây dựng.
   \item \textbf{Tại sao toàn bộ code mẫu viết sẵn trước đây lại bị dọn dẹp khỏi dự án?} \\
     \textit{Trả lời:} Để bảo đảm tính liêm chính học thuật, giúp 4 bạn sinh viên tự tay lập trình từng dòng lệnh, hiểu sâu môn học và chịu trách nhiệm độc lập trên phân hệ của mình.
   \item \textbf{Máy chủ Central lắng nghe trên cổng nào?} \\
     \textit{Trả lời:} Máy chủ Central mở cổng TCP 5000 duy nhất cho toàn bộ hệ thống. Máy chủ đọc bản tin đầu tiên sau khi kết nối (\texttt{HELLO\_AGENT} hoặc \texttt{LOGIN}) để nhận diện và điều phối xử lý tương ứng.
   \item \textbf{Khi mất mạng, Agent lưu trữ dữ liệu như thế nào để không bị mất?} \\
-    \textit{Trả lời:} Agent sử dụng bộ đệm ngoại tuyến (\texttt{ReplayBuffer}) lưu tối đa 50 mẻ số liệu (\texttt{METRIC\_BATCH}, tương đương 250 giây dữ liệu) theo chính sách FIFO Drop-Oldest (loại bỏ mẻ cũ nhất khi đầy để bảo vệ bộ nhớ RAM). Khi mạng phục hồi, Agent tự động gửi bù các mẻ này kèm cờ \texttt{isReplay = true}. Lưu ý rằng bản tin nhịp tim (\texttt{HEARTBEAT}) và trạng thái dịch vụ (\texttt{SERVICE\_STATUS}) không được lưu vào bộ đệm vì dữ liệu thời gian thực cũ không còn giá trị liveness.
+    \textit{Trả lời:} Theo thiết kế hệ thống (tác vụ A-006 dự kiến triển khai), Agent sẽ sử dụng bộ đệm ngoại tuyến (\texttt{ReplayBuffer}) lưu tối đa 50 mẻ số liệu (\texttt{METRIC\_BATCH}, tương đương 250 giây dữ liệu) theo chính sách FIFO Drop-Oldest (loại bỏ mẻ cũ nhất khi đầy để bảo vệ bộ nhớ RAM). Khi mạng phục hồi, Agent tự động gửi bù các mẻ này kèm cờ \texttt{isReplay = true}. Lưu ý rằng bản tin nhịp tim (\texttt{HEARTBEAT}) và trạng thái dịch vụ (\texttt{SERVICE\_STATUS}) không được lưu vào bộ đệm vì dữ liệu thời gian thực cũ không còn giá trị liveness.
   \item \textbf{Quy tắc cảnh báo quá tải CPU hoạt động ra sao?} \\
     \textit{Trả lời:} Động cơ quy tắc yêu cầu mức CPU $\ge 90\%$ liên tục trong 3 mẫu đo (sau 3 chu kỳ đo liên tiếp, mỗi chu kỳ 5 giây) để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để tự động giải quyết sự cố.
   \item \textbf{Lỗi Cross-thread trên WinForms là gì? Khắc phục thế nào?} \\

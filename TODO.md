@@ -3,7 +3,7 @@
 > **Bảng theo dõi tiến độ công việc dành cho 4 thành viên nhóm (A, B, C, D).**  
 > Chi tiết từng việc, file cần mở, trạng thái và cách thử được cập nhật tại file Excel **[`LabGuard_Task_Tracker.xlsx`](LabGuard_Task_Tracker.xlsx)** và tài liệu **[`START_HERE.md`](START_HERE.md)**.  
 >
-> *Lưu ý quan trọng:* Hiện tại chỉ có hai nhiệm vụ A-001 và A-002 là đã được chính thức nghiệm thu Xong. Toàn bộ các nhiệm vụ còn lại đều là **CHƯA LÀM**, các thành viên sẽ tự tay tạo mới và lập trình các file tính năng theo phân công.
+> *Lưu ý quan trọng:* Hiện tại các nhiệm vụ **A-001**, **A-002** và **A-003** đã được chính thức nghiệm thu Xong (123/123 tests PASS). Toàn bộ các nhiệm vụ còn lại đều là **CHƯA LÀM**, các thành viên sẽ tự tay tạo mới và lập trình các file tính năng theo phân công.
 
 ---
 
@@ -18,8 +18,8 @@
 ### Sinh viên A — Máy trạm Agent & Giao thức
 - [x] **A-001:** 16 bản tin JSON mẫu chuẩn *(Đã nghiệm thu Xong)*.
 - [x] **A-002:** Đóng khung gói tin TCP tiền tố 4 byte *(Đã nghiệm thu Xong)*.
-- [ ] **A-003 [ĐANG LÀM]:** Cho dữ liệu gửi đi xếp hàng tuần tự (`AgentSocketClient.cs`, BoundedChannel 256, FullMode.Wait) để nhịp tim và số liệu không bị trộn byte khi gửi đồng thời *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
-- [ ] **A-004 [CHƯA LÀM]:** Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [x] **A-003:** Cho dữ liệu gửi đi xếp hàng tuần tự (`AgentSocketClient.cs`, BoundedChannel 256, FullMode.Wait) *(Đã nghiệm thu Xong)*.
+- [ ] **A-004 [CHƯA LÀM — TIẾP THEO]:** Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
 - [ ] **A-005 [CHƯA LÀM]:** Tự động kết nối lại khi rớt mạng với Exponential Backoff + Jitter (`AgentSocketClient.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
 - [ ] **A-006 [CHƯA LÀM]:** Bộ nhớ giữ dữ liệu chưa gửi được (`ReplayBuffer.cs`, tối đa 50 batches, `METRIC_BATCH` duy nhất, FIFO Drop-Oldest, `isReplay = true`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
 - [ ] **A-007 [CHƯA LÀM]:** Giám sát dịch vụ mạng cổng 80 và 8080 (`ServiceMonitor.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.

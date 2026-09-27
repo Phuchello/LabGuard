@@ -77,7 +77,7 @@ Bạn là người phụ trách phần mềm chạy ngầm trên máy sinh viên
 \begin{tcolorbox}[enhanced, colback=lgLightGreen, colframe=lgForestGreen, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
 {\large\bfseries\color{lgForestGreen} 4. HÔM NAY BẮT ĐẦU Ở ĐÂU?}\par
 \vspace{1mm}
-Chạy lệnh \texttt{dotnet test tests/LabGuard.Protocol.Tests} trong cửa sổ dòng lệnh để tận mắt thấy 107 bài kiểm thử màu xanh. Sau đó mở file \texttt{src/LabGuard.Agent/Program.cs} để bắt đầu viết kết nối TCP đầu tiên tới máy chủ.
+Chạy lệnh \texttt{dotnet test tests/LabGuard.Agent.Tests} để thấy 16 bài kiểm thử A-003 màu xanh. Tầng kết nối mạng của Agent đã hoàn thành trong \texttt{AgentSocketClient.cs}. Bước tiếp theo của bạn là thực hiện chặng A-004: tạo \texttt{MetricsCollector.cs} để đo CPU, RAM, Uptime thật.
 \end{tcolorbox}
 \vspace{2mm}
 
@@ -117,7 +117,7 @@ Chạy lệnh \texttt{dotnet test tests/LabGuard.Protocol.Tests} trong cửa s�
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Bạn chịu trách nhiệm hai phần: thư viện giao thức chung (\textbf{Protocol}) và phần mềm máy trạm (\textbf{Agent}).
   \item Thư viện \texttt{Protocol} đã hoàn thành 100\% (toàn bộ kiểm thử giao thức đã PASS), là hợp đồng mạng bất biến cho cả nhóm.
-  \item Phần mềm \texttt{Agent} hiện là khung dự án để bạn tự tay viết mã thu thập dữ liệu và kết nối mạng.
+  \item Phần mềm \texttt{Agent} hiện đã có nền tảng kết nối TCP và hàng đợi gửi tuần tự của A-003. Các phần thu thập dữ liệu, heartbeat, reconnect, replay và giám sát dịch vụ vẫn chưa được triển khai.
   \item Bạn phối hợp chặt chẽ với Thành viên B (máy chủ tiếp nhận các gói tin của bạn).
 \end{itemize}
 \end{summarybox}
@@ -128,7 +128,7 @@ Chào mừng bạn đến với phân hệ nền tảng của đồ án LabGuard
 \textbf{Hai khu vực mã nguồn do Thành viên A phụ trách:}
 \begin{enumerate}
   \item \textbf{Thư viện Giao thức dùng chung (\texttt{src/LabGuard.Protocol/}):} Định nghĩa cấu trúc phong bì dữ liệu \texttt{WireEnvelope} và bộ đóng khung \texttt{FrameCodec}. Đây là hợp đồng mạng bất biến mà cả 3 thành viên còn lại (B, C, D) đều phải dựa vào để trao đổi thông tin. Phân hệ này hiện \textbf{ĐÃ HOÀN THÀNH 100\%} với bộ kiểm thử tự động đã PASS.
-  \item \textbf{Phần mềm Máy trạm Agent (\texttt{src/LabGuard.Agent/}):} Lập trình ứng dụng chạy ngầm trên từng máy tính sinh viên, định kỳ đo tài nguyên CPU/RAM, gửi nhịp tim sống còn và giữ lại dữ liệu khi bị đứt cáp mạng. Toàn bộ các tác vụ của Agent đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN} để bạn tự tay xây dựng.
+  \item \textbf{Phần mềm Máy trạm Agent (\texttt{src/LabGuard.Agent/}):} Lập trình ứng dụng chạy ngầm trên từng máy tính sinh viên, định kỳ đo tài nguyên CPU/RAM, gửi nhịp tim sống còn và giữ lại dữ liệu khi bị đứt cáp mạng. \textbf{Tác vụ A-003 (kết nối TCP \& hàng đợi Single-Writer) đã XONG (16/16 tests PASS).} Các tác vụ A-004+ là \textbf{CHƯA LÀM} để bạn tự tay xây dựng.
 \end{enumerate}
 \end{conceptbox}
 
@@ -141,7 +141,7 @@ Hình này chỉ cần nhìn theo mũi tên từ dưới lên trên: Agent sử 
     arr/.style={-{Latex[length=3mm]}, thick, color=lgTeal}
   ]
     \node[box, fill=lgLightGreen, draw=lgForestGreen, minimum width=130mm] (proto) at (0, 2.5) {Thư viện Giao thức Core: src/LabGuard.Protocol/ [ĐÃ HOÀN THÀNH — Protocol tests PASS]\\(WireEnvelope 6 trường, FrameCodec 4B Big-Endian, EnvelopeValidator, DTOs)};
-    \node[box, fill=lgLightRed, draw=lgCrimson, dashed, minimum width=130mm] (agent) at (0, -0.5) {Chương trình Máy trạm: src/LabGuard.Agent/ [CHƯA LÀM — DỰ KIẾN]\\(Socket Reconnect, Thu thập CPU/RAM, Heartbeat 5s, Bộ đệm ngoại tuyến Replay Buffer)};
+    \node[box, fill=lgLightGreen, draw=lgForestGreen, dashed, minimum width=130mm] (agent) at (0, -0.5) {Chương trình Máy trạm: src/LabGuard.Agent/ [A-003 ĐÃ XONG — 16/16 tests PASS]\\(AgentSocketClient.cs: BoundedChannel 256, Single-Writer, CreateOutbox)\\A-004+ [CHƯA LÀM]: Thu thập CPU/RAM, Heartbeat, ReplayBuffer};
 
     \draw[arr] (agent) -- node[right, font=\footnotesize]{Tham chiếu và sử dụng thư viện} (proto);
   \end{tikzpicture}
@@ -311,24 +311,25 @@ Thư viện kiểm thử \texttt{tests/LabGuard.Protocol.Tests} bao gồm 107 b�
 % ==============================================================================
 % PHAN 3: CAC CHANG CONG VIEC MAY TRAM AGENT (CHUA LAM / DU KIEN)
 % ==============================================================================
-\section[Các chặng công việc máy trạm Agent]{Các chặng công việc máy trạm Agent (Chưa làm / Dự kiến)}
+\section[Các chặng công việc máy trạm Agent]{Chặng 2 — A-003 ĐÃ XONG \& Chặng 3–7 (Chưa làm / Dự kiến)}
 
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Agent chạy ngầm trên máy sinh viên, kết nối TCP tới Central Server (Port 5000).
-  \item Dùng hàng đợi một luồng ghi (\texttt{Single-Writer Channel}) để gửi tin an toàn không bị trộn byte.
-  \item Định kỳ 5s gửi nhịp tim (\texttt{HEARTBEAT}) và số liệu CPU/RAM (\texttt{METRIC\_BATCH}).
-  \item Dùng bộ đệm Replay Buffer (tối đa 50 mẻ METRIC\_BATCH) giữ lại số liệu khi bị rớt mạng.
+  \item Dùng hàng đợi một luồng ghi (\texttt{Single-Writer Channel}) để gửi tin an toàn không bị trộn byte (A-003 ĐÃ XONG).
+  \item A-004 sẽ bổ sung HEARTBEAT và METRIC\_BATCH định kỳ.
+  \item A-006 dự kiến bổ sung ReplayBuffer tối đa 50 METRIC\_BATCH.
 \end{itemize}
 \end{summarybox}
 
 \begin{importantbox}
-Toàn bộ các chặng từ 2 đến 7 dưới đây đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN}. Bạn sẽ tự tay lập trình từng lớp đối tượng trong thư mục \texttt{src/LabGuard.Agent/}.
+\textbf{Chặng 2 (A-003) ĐÃ HOÀN THÀNH:} \texttt{AgentSocketClient.cs} với BoundedChannel 256, Single-Writer Loop, \texttt{CreateOutbox} factory, xử lý lỗi ghi mạng và DisposeAsync đúng — 16/16 kiểm thử PASS.\\
+Các chặng từ 3 đến 7 dưới đây đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN}. Bạn sẽ tự tay lập trình từng lớp đối tượng trong thư mục \texttt{src/LabGuard.Agent/}.
 \end{importantbox}
 
 % ------------------------------------------------------------------------------
-\subsection{VIỆC TIẾP THEO: Cho Agent kết nối TCP tới Central và gửi tin an toàn}
-{\footnotesize\color{lgGray}\textit{Chặng 2 — Mã tác vụ nội bộ: LG-A-003}}\par
+\subsection{ĐÃ HOÀN THÀNH (A-003): Kết nối TCP tới Central và hàng đợi gửi tin an toàn}
+{\footnotesize\color{lgGray}\textit{Chặng 2 — Mã tác vụ nội bộ: LG-A-003 — XONG (16/16 tests PASS)}}\par
 \vspace{2mm}
 
 \subsubsection{Tại sao cần phần này?}

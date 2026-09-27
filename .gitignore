@@ -40,6 +40,8 @@ venv/
 *.lof
 *.fls
 *.fdb_latexmk
+# xelatex output PDFs in source dir (build artifacts; final PDFs are in docs/pdf/)
+docs/pdf/source/*.pdf
 
 # --- Scratch, QA & Temporary Archives ---
 scratch/
