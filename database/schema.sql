@@ -1,3 +1,4 @@
+USE LabGuardDb
 CREATE TABLE ProcessedBatches (
     DeviceId NVARCHAR(50) NOT NULL,
     BootId NVARCHAR(50) NOT NULL,
