@@ -1,5 +1,34 @@
--- ============================================================================
--- LABGUARD DATABASE DDL SCRIPT (CHƯA HIỆN THỰC)
--- CSDL chưa được hiện thực. Số bảng cuối cùng sẽ được chốt tại nhiệm vụ
--- thiết kế schema của Thành viên B (Task B-005).
--- ============================================================================
+CREATE TABLE ProcessedBatches (
+    DeviceId NVARCHAR(50) NOT NULL,
+    BootId NVARCHAR(50) NOT NULL,
+    BatchId BIGINT NOT NULL,
+    ProcessedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    PRIMARY KEY (DeviceId, BootId, BatchId)
+);
+
+CREATE TABLE MetricSamples (
+    SampleId BIGINT IDENTITY(1,1) PRIMARY KEY,
+    DeviceId NVARCHAR(50) NOT NULL,
+    BootId NVARCHAR(50) NOT NULL,
+    BatchId BIGINT NOT NULL,
+    CpuPercent FLOAT NOT NULL,
+    MemoryPercent FLOAT NOT NULL,
+    UptimeSeconds BIGINT NOT NULL,
+    RecordedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE NONCLUSTERED INDEX IX_MetricSamples_Device_Time 
+ON MetricSamples (DeviceId, RecordedAtUtc DESC);
+
+CREATE TABLE Incidents (
+    IncidentId NVARCHAR(50) PRIMARY KEY,
+    DeviceId NVARCHAR(50) NOT NULL,
+    RuleName NVARCHAR(50) NOT NULL,
+    ConditionState NVARCHAR(20) NOT NULL,
+    WorkflowState NVARCHAR(20) NOT NULL,
+    Severity NVARCHAR(20) NOT NULL,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    UpdatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    AssigneeId NVARCHAR(50) NULL,
+    RowVersion rowversion NOT NULL
+);
