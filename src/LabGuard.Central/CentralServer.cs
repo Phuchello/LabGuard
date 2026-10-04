@@ -4,7 +4,8 @@ using System.Net.Sockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using LabGuard.Protocol; 
+using LabGuard.Protocol;
+using LabGuard.Protocol.Serialization;
 namespace LabGuard.Central
 {
     public class CentralServer
@@ -58,7 +59,7 @@ namespace LabGuard.Central
                         break;
                     }
 
-                    var env = ProtocolSerializer.DeserializeEnvelope<JsonElement>(frame);
+                    var env = ProtocolSerializer.DeserializeEnvelope(frame);
 
                     if (env != null && EnvelopeValidator.Validate(env).IsValid)
                     {

@@ -9,6 +9,10 @@ namespace LabGuard.Central
         static async Task Main(string[] args)
         {
             Console.WriteLine("=== LABGUARD CENTRAL SERVER ===");
+
+            var db = new DatabaseManager();
+            await db.TestConnectionAsync();
+
             using var cts = new CancellationTokenSource();
             Console.CancelKeyPress += (sender, e) =>
             {
