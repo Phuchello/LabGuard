@@ -1,13 +1,23 @@
-namespace LabGuard.Central;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-internal class Program
+namespace LabGuard.Central
 {
-    static void Main(string[] args)
+    class Program
     {
-        Console.WriteLine("==================================================");
-        Console.WriteLine("LabGuard Central Server — Máy chủ trung tâm");
-        Console.WriteLine("Chưa hiện thực mã nguồn — Đang chờ Sinh viên B thực hiện.");
-        Console.WriteLine("Nhiệm vụ bắt đầu: B-001 (Mở Socket TCP lắng nghe cổng 5000).");
-        Console.WriteLine("==================================================");
+        static async Task Main(string[] args)
+        {
+            Console.WriteLine("=== LABGUARD CENTRAL SERVER ===");
+            using var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true;
+                cts.Cancel();
+            };
+
+            var server = new CentralServer();
+            await server.StartAsync(cts.Token);
+        }
     }
 }
