@@ -89,21 +89,26 @@ public class Program
                     continue;
                 }
 
-                // Xử lý mỗi client trên một task riêng biệt để hỗ trợ đa kết nối đồng thời
-                Task clientTask = null!;
-                clientTask = Task.Run(async () =>
+                // Đảm bảo đóng socket nếu việc điều phối tác vụ thất bại
+                try
                 {
-                    try
-                    {
-                        await HandleClientAsync(client, ct).ConfigureAwait(false);
-                    }
-                    finally
-                    {
-                        activeClientTasks.TryRemove(clientTask, out _);
-                    }
-                }, CancellationToken.None);
+                    // Khởi chạy tác vụ xử lý client độc lập, không bắt biến cục bộ clientTask trong closure
+                    Task clientTask = Task.Run(() => HandleClientAsync(client, ct), CancellationToken.None);
+                    activeClientTasks.TryAdd(clientTask, 0);
 
-                activeClientTasks.TryAdd(clientTask, 0);
+                    // Đăng ký continuation tự gỡ bỏ task đã hoàn thành khỏi danh sách theo dõi
+                    // 't' được runtime truyền trực tiếp qua tham số, triệt tiêu hoàn toàn race condition
+                    _ = clientTask.ContinueWith(
+                        t => activeClientTasks.TryRemove(t, out _),
+                        CancellationToken.None,
+                        TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default);
+                }
+                catch
+                {
+                    try { client.Close(); } catch { }
+                    throw;
+                }
             }
         }
         catch (OperationCanceledException)
