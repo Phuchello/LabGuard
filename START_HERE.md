@@ -86,7 +86,7 @@ Máy chủ nhận kết nối từ tất cả máy con, kiểm tra tài khoản,
 
 ### 3. Hiện trạng mã nguồn trong thư mục của bạn:
 * `src/LabGuard.Central/` đã có [`Program.cs`](src/LabGuard.Central/Program.cs) và [`CentralServer.cs`](src/LabGuard.Central/CentralServer.cs) (Task B-001: Đã nghiệm thu qua PR #7, mở Socket TCP lắng nghe cổng 5000, hỗ trợ đa client, `Central.Tests` 9/9 PASS).
-* Thư mục `database/` đã có [`schema.sql`](database/schema.sql) (Task B-005 DDL: Đã merge qua PR #5 tạo bảng `ProcessedBatches`, `DeviceSessions`, `MetricSamples`).
+* Thư mục `database/` đã có [`schema.sql`](database/schema.sql) (Task B-005 DDL: Đã merge qua PR #5 tạo bảng `ProcessedBatches`, `MetricSamples`, `Incidents`).
 * Bạn sẽ **tự tay tạo mới và hoàn thiện** các file tính năng tiếp theo:
   1. `ClientConnection.cs` (Task B-002: Bắt tay HELLO/AUTH; Task B-004: Phân quyền RBAC)
   2. `LivenessMonitor.cs` & `MonotonicLivenessRegistry.cs` (Task B-003: Nhận nhịp tim và báo OFFLINE sau 20s)

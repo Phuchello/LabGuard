@@ -26,9 +26,9 @@
 1. [Phần 1: Thư viện giao thức dùng chung (`src/LabGuard.Protocol/`) — ĐÃ HOÀN THÀNH (A-001 & A-002)](#phần-1-thư-viện-giao-thức-dùng-chung-srclabguardprotocol--đã-hoàn-thành-a-001--a-002)
 2. [Phần 2: Ứng dụng máy trạm (`src/LabGuard.Agent/`) — Sinh viên A (A-001 đến A-004 ĐÃ XONG; A-005 là việc tiếp theo)](#phần-2-ứng-dụng-máy-trạm-srclabguardagent--sinh-viên-a-a-001-đến-a-004-đã-xong--nghiệm-thu)
 3. [Phần 3: Máy chủ trung tâm (`src/LabGuard.Central/`) — Sinh viên B (B-001 ĐÃ XONG; B-002 là việc tiếp theo)](#phần-3-máy-chủ-trung-tâm-srclabguardcentral--sinh-viên-b-b-001-đã-xong-b-002-là-việc-tiếp-theo)
-4. [Phần 4: Giao diện quản trị (`src/LabGuard.Admin/`) — Sinh viên C (C-001 ĐANG LÀM; C-002 là việc tiếp theo)](#phần-4-giao-diện-quản-trị-srclabguardadmin--sinh-viên-c-c-001-đang-làm--layout-01-c-002-là-việc-tiếp-theo)
+4. [Phần 4: Giao diện quản trị (`src/LabGuard.Admin/`) — Sinh viên C (C-001 ĐANG LÀM; C-002 là việc tiếp theo)](#phần-4-giao-diện-quản-trị-srclabguardadmin--sinh-viên-c-c-001-đang-làm-c-002-là-việc-tiếp-theo)
 5. [Phần 5: Công cụ giả lập tải (`src/LabGuard.Simulator/`)](#phần-5-công-cụ-giả-lập-tải-srclabguardsimulator)
-6. [Phần 6: Cơ sở dữ liệu SQL Server (`database/`) — Sinh viên B (B-005 ĐANG LÀM / schema.sql đã merge)](#phần-6-cơ-sở-dữ-liệu-sql-server-database--sinh-viên-b-task-b-005)
+6. [Phần 6: Cơ sở dữ liệu SQL Server (`database/`) — Sinh viên B (B-005 ĐANG LÀM / schema.sql đã merge)](#phần-6-cơ-sở-dữ-liệu-sql-server-database--sinh-viên-b-b-005-đang-làm--schemasql-đã-merge)
 7. [Phần 7: Các dự án kiểm thử tự động (`tests/`) & Công cụ (`tools/`) — D-002 & Mock Harness](#phần-7-các-dự-án-kiểm-thử-tự-động-tests--công-cụ-tools)
 8. [Phần 8: Tài liệu đặc tả kỹ thuật & Hướng dẫn (`docs/`)](#phần-8-tài-liệu-đặc-tả-kỹ-thuật--hướng-dẫn-docs)
 
@@ -120,7 +120,7 @@ Máy chủ trung tâm điều hành toàn bộ hệ thống. Nhiệm vụ B-001 
 
 | File | Nói đơn giản nó làm gì | Hiện trạng thực tế |
 | :--- | :--- | :--- |
-| [`schema.sql`](database/schema.sql) | Kịch bản DDL tạo CSDL và các bảng ProcessedBatches, DeviceSessions, MetricSamples | 🟡 **B-005 ĐANG LÀM (PR #5):** Kịch bản DDL đã merge vào repository; phần code C# persistence và kiểm thử SQL Server chưa nghiệm thu. |
+| [`schema.sql`](database/schema.sql) | Kịch bản DDL tạo CSDL và các bảng ProcessedBatches, MetricSamples, Incidents | 🟡 **B-005 ĐANG LÀM (PR #5):** Kịch bản DDL đã merge vào repository; phần code C# persistence và kiểm thử SQL Server chưa nghiệm thu. |
 | [`seed.sql`](database/seed.sql) | Kịch bản nạp tài khoản mẫu ban đầu | ⚪ **KHUNG CHỜ (PLACEHOLDER):** Sinh viên B sẽ hoàn thiện khi làm phần xác thực người dùng. |
 
 ---
@@ -132,7 +132,7 @@ Máy chủ trung tâm điều hành toàn bộ hệ thống. Nhiệm vụ B-001 
 | `tests/LabGuard.Protocol.Tests/` | Các bài kiểm tra tự động xác thực việc cắt khung tin 4 byte (`FrameCodecTests.cs`) và 16 bản tin mẫu canonical (`WireContractAndFixturesTests.cs`, `ProtocolSpecificationTests.cs`). 16 tệp JSON trong `Fixtures/` là bộ fixture quy chuẩn của nhiệm vụ A-001. | ✅ **Protocol tests PASS:** 107/107 tests đạt 100% (A-001 & A-002). |
 | `tests/LabGuard.Agent.Tests/` | Bộ kiểm thử Agent: `AgentSocketClientTests.cs` (16 tests A-003), `MetricsCollectorTests.cs`, `MetricsServiceTests.cs`, `HeartbeatServiceTests.cs` (18 tests A-004), và `FakeTcpServer.cs`. | ✅ **Agent tests PASS:** 34/34 tests đạt 100% (A-003 & A-004; đối soát Windows Reference 10/10 PASS). |
 | `tests/LabGuard.Central.Tests/` | Bộ kiểm thử máy chủ Central: kiểm tra mở cổng 5000, nhiều client kết nối đồng thời, phân mảnh/ghép khung tin, đóng socket an toàn (`CentralServerTests.cs`). | ✅ **Central tests PASS:** 9/9 tests đạt 100% (PR #7, B-001). |
-| `tests/LabGuard.MockHarness.Tests/` | Bộ kiểm thử tích hợp công cụ giả lập: kiểm tra FakeAgent gửi heartbeat/batch, FakeCentral phản hồi ACK chuẩn và bắt lỗi gói tin sai (`FakeAgentIntegrationTests.cs`, `FakeCentralIntegrationTests.cs`). | ✅ **MockHarness tests PASS:** 15/15 tests đạt 100% (PR #9). |
+| `tests/LabGuard.MockHarness.Tests/` | Bộ kiểm thử công cụ giả lập (`MockHarnessTests.cs`): kiểm tra HEARTBEAT / HEARTBEAT_ACK, sequence correlation, từ chối ACK sai cấu trúc/thiếu trường, phân mảnh/ghép khung TCP, đa client đồng thời, ngắt kết nối và shutdown an toàn. | ✅ **MockHarness tests PASS:** 15/15 tests đạt 100% (PR #9). |
 | `tools/TcpEcho/` | Chương trình Console TCP Echo Server đơn giản thử nghiệm socket TCP (Task D-002: đa client, shutdown an toàn). | ✅ **D-002 ĐÃ XONG (PR #8):** Đã nghiệm thu chính thức (`docs/evidence/D002_TCP_ECHO_VERIFICATION.md`). |
 | `tools/mock_harness/` | Bộ công cụ giả lập kiểm thử độc lập gồm `FakeAgent` (máy con giả lập) và `FakeCentral` (máy chủ giả lập phản hồi ACK). | ✅ **ĐÃ CÓ (PR #9):** Công cụ bổ trợ kiểm thử giao thức độc lập, không thay thế nhiệm vụ D-003. |
 | `tools/validation/test_frame_codec/` | Công cụ console độc lập giúp kiểm tra nhanh khung tin TCP của A-002 | ✅ **ĐÃ CÓ:** Phục vụ kiểm tra độc lập việc đóng/mở khung tin 4 byte (10/10 scenarios passed). |

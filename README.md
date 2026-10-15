@@ -50,7 +50,7 @@ Hệ thống phân chia thành 4 phân hệ chính cho 4 sinh viên:
 >   - **B-001 (Central Server):** Đã nghiệm thu qua PR #7 (`CentralServer.cs` mở cổng Socket TCP 5000, hỗ trợ đa client, `Central.Tests` 9/9 PASS).
 >   - **D-002 (TCP Echo):** Đã nghiệm thu qua PR #8 (`tools/TcpEcho/Program.cs` hỗ trợ đa client, shutdown an toàn).
 > - 🟡 **ĐANG LÀM / NGHIỆM THU TỪNG PHẦN:**
->   - **B-005 (Database SQL Server):** PR #5 đã merge `database/schema.sql` (DDL tạo bảng `ProcessedBatches`, `DeviceSessions`, `MetricSamples`). Phần C# persistence trong `DatabaseRepository.cs` và kiểm thử tương tác SQL Server chưa nghiệm thu.
+>   - **B-005 (Database SQL Server):** PR #5 đã merge `database/schema.sql` (DDL tạo bảng `ProcessedBatches`, `MetricSamples`, `Incidents`). Phần C# persistence trong `DatabaseRepository.cs` và kiểm thử tương tác SQL Server chưa nghiệm thu.
 >   - **C-001 (Admin WinForms UI):** PR #4 đã merge khung giao diện UI 0.1 (`DashboardForm.cs`, ảnh bằng chứng `docs/evidence/admin_dashboard_c001.png`). Nghiệm thu toàn diện UI và data binding đang chờ thực hiện.
 > - ⚪ **CHƯA LÀM / TIẾP THEO:**
 >   - **Sinh viên A:** Tiếp theo là `A-005` (Tự động kết nối lại khi rớt mạng).
