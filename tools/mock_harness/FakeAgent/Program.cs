@@ -122,7 +122,7 @@ public class Program
                 return 1;
             }
 
-            // 3. Xác thực ACK: messageType, requestId, acknowledgedSequence, serverTimeUtc
+            // 3. Xác thực ACK: messageType, requestId
             if (ackEnvelope.MessageType != MessageTypes.HeartbeatAck)
             {
                 Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Sai MessageType: nhận '{ackEnvelope.MessageType}', mong đợi '{MessageTypes.HeartbeatAck}'.");
@@ -135,6 +135,63 @@ public class Program
                 return 1;
             }
 
+            // 4. Thẩm định raw JsonElement payload TRƯỚC KHI deserialize để tránh default initializer che giấu trường thiếu
+            if (ackEnvelope.Payload.ValueKind != JsonValueKind.Object)
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Payload HEARTBEAT_ACK phải là JSON object, nhận được {ackEnvelope.Payload.ValueKind}.");
+                return 1;
+            }
+
+            // 4.1 Bắt buộc có trường 'serverTimeUtc' tường minh dạng chuỗi không rỗng và là timestamp UTC hợp lệ
+            bool hasServerTime = ackEnvelope.Payload.TryGetProperty("serverTimeUtc", out var timeProp) ||
+                                 ackEnvelope.Payload.TryGetProperty("ServerTimeUtc", out timeProp);
+            if (!hasServerTime)
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Thiếu trường bắt buộc 'serverTimeUtc' trong payload HEARTBEAT_ACK.");
+                return 1;
+            }
+
+            if (timeProp.ValueKind != JsonValueKind.String)
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Trường 'serverTimeUtc' phải là kiểu String (nhận được {timeProp.ValueKind}).");
+                return 1;
+            }
+
+            string? rawTime = timeProp.GetString();
+            if (string.IsNullOrWhiteSpace(rawTime))
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Trường 'serverTimeUtc' rỗng.");
+                return 1;
+            }
+
+            if (!IsValidUtcTimestamp(rawTime))
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] ServerTimeUtc '{rawTime}' không phải mốc thời gian UTC hợp lệ ('Z' hoặc '+00:00').");
+                return 1;
+            }
+
+            // 4.2 Bắt buộc có trường 'acknowledgedSequence' tường minh dạng số nguyên hợp lệ
+            bool hasSeq = ackEnvelope.Payload.TryGetProperty("acknowledgedSequence", out var seqProp) ||
+                          ackEnvelope.Payload.TryGetProperty("AcknowledgedSequence", out seqProp);
+            if (!hasSeq)
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Thiếu trường bắt buộc 'acknowledgedSequence' trong payload HEARTBEAT_ACK.");
+                return 1;
+            }
+
+            if (seqProp.ValueKind != JsonValueKind.Number || !seqProp.TryGetInt64(out long rawSeq) || rawSeq < 0)
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Trường 'acknowledgedSequence' phải là số nguyên không âm hợp lệ.");
+                return 1;
+            }
+
+            if (rawSeq != heartbeat.Payload.SequenceNumber)
+            {
+                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Sai AcknowledgedSequence: nhận {rawSeq}, mong đợi {heartbeat.Payload.SequenceNumber}.");
+                return 1;
+            }
+
+            // 4.3 Deserialize vào HeartbeatAckPayload sau khi đã xác thực raw payload hợp lệ
             HeartbeatAckPayload? ackPayload;
             try
             {
@@ -152,19 +209,7 @@ public class Program
                 return 1;
             }
 
-            if (ackPayload.AcknowledgedSequence != heartbeat.Payload.SequenceNumber)
-            {
-                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] Sai AcknowledgedSequence: nhận {ackPayload.AcknowledgedSequence}, mong đợi {heartbeat.Payload.SequenceNumber}.");
-                return 1;
-            }
-
-            if (!IsValidUtcTimestamp(ackPayload.ServerTimeUtc))
-            {
-                Console.Error.WriteLine($"[FakeAgent LỖI #{i}] ServerTimeUtc '{ackPayload.ServerTimeUtc}' không phải mốc thời gian UTC hợp lệ ('Z' hoặc '+00:00').");
-                return 1;
-            }
-
-            Console.WriteLine($"[FakeAgent NHẬN #{i}] Nhận ACK hợp lệ! AcknowledgedSeq: {ackPayload.AcknowledgedSequence} | ServerTimeUtc: {ackPayload.ServerTimeUtc}\n");
+            Console.WriteLine($"[FakeAgent NHẬN #{i}] Nhận ACK hợp lệ! AcknowledgedSeq: {rawSeq} | ServerTimeUtc: {rawTime}\n");
 
             if (i < count && effectiveInterval > TimeSpan.Zero)
             {

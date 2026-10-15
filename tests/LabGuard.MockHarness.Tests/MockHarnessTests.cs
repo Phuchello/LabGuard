@@ -316,6 +316,47 @@ public class MockHarnessTests
     // -------------------------------------------------------------------------
     // SCENARIO 7: Wrong ACK requestId / acknowledgedSequence detected by FakeAgent
     // -------------------------------------------------------------------------
+    private static async Task<int> RunAgentAgainstSingleAckServerAsync(
+        Func<WireEnvelope<JsonElement>, WireEnvelope<JsonElement>?> ackFactory)
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        var serverTask = Task.Run(async () =>
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var client = await listener.AcceptTcpClientAsync(cts.Token).ConfigureAwait(false);
+                using var stream = client.GetStream();
+                var env = await FrameCodec.ReadEnvelopeAsync(stream, ct: cts.Token).ConfigureAwait(false);
+                if (env != null)
+                {
+                    var ack = ackFactory(env);
+                    if (ack != null)
+                    {
+                        byte[] frame = FrameCodec.Encode(ack);
+                        await stream.WriteAsync(frame, cts.Token).ConfigureAwait(false);
+                        await stream.FlushAsync(cts.Token).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                try { listener.Stop(); } catch { }
+            }
+        });
+
+        int exitCode = await Tools.MockHarness.FakeAgent.Program.RunAsync(
+            port: port, count: 1, ackTimeout: TimeSpan.FromSeconds(2));
+        await serverTask;
+        return exitCode;
+    }
+
     [Fact]
     public async Task Scenario7_MismatchedAckOrInvalidUtc_DetectedAndRejectedByFakeAgent()
     {
@@ -324,80 +365,176 @@ public class MockHarnessTests
         listenerA.Start();
         int portA = ((IPEndPoint)listenerA.LocalEndpoint).Port;
 
-        _ = Task.Run(async () =>
+        var taskA = Task.Run(async () =>
         {
-            using var c = await listenerA.AcceptTcpClientAsync();
-            using var s = c.GetStream();
-            var env = await FrameCodec.ReadEnvelopeAsync(s);
-            if (env != null)
+            try
             {
-                // Trả về RequestId SAI (không khớp với request)
-                var wrongAck = WireEnvelope<HeartbeatAckPayload>.Create(
-                    MessageTypes.HeartbeatAck, "CENTRAL-MOCK",
-                    new HeartbeatAckPayload { AcknowledgedSequence = 1, ServerTimeUtc = DateTime.UtcNow.ToString("O") },
-                    requestId: Guid.NewGuid().ToString("D") // Khác với env.RequestId!
-                );
-                await s.WriteAsync(FrameCodec.Encode(wrongAck));
-                await s.FlushAsync();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var c = await listenerA.AcceptTcpClientAsync(cts.Token);
+                using var s = c.GetStream();
+                var env = await FrameCodec.ReadEnvelopeAsync(s, ct: cts.Token);
+                if (env != null)
+                {
+                    var wrongAck = WireEnvelope<HeartbeatAckPayload>.Create(
+                        MessageTypes.HeartbeatAck, "CENTRAL-MOCK",
+                        new HeartbeatAckPayload { AcknowledgedSequence = 1, ServerTimeUtc = DateTime.UtcNow.ToString("O") },
+                        requestId: Guid.NewGuid().ToString("D") // Khác với env.RequestId!
+                    );
+                    await s.WriteAsync(FrameCodec.Encode(wrongAck), cts.Token);
+                    await s.FlushAsync(cts.Token);
+                }
             }
-            listenerA.Stop();
+            catch { }
+            finally { try { listenerA.Stop(); } catch { } }
         });
 
         int exitA = await Tools.MockHarness.FakeAgent.Program.RunAsync(port: portA, count: 1, ackTimeout: TimeSpan.FromSeconds(2));
-        Assert.Equal(1, exitA); // Bị từ chối!
+        await taskA;
+        Assert.Equal(1, exitA); // Bị từ chối vì sai RequestId!
 
         // 7b. Mismatched AcknowledgedSequence
         var listenerB = new TcpListener(IPAddress.Loopback, 0);
         listenerB.Start();
         int portB = ((IPEndPoint)listenerB.LocalEndpoint).Port;
 
-        _ = Task.Run(async () =>
+        var taskB = Task.Run(async () =>
         {
-            using var c = await listenerB.AcceptTcpClientAsync();
-            using var s = c.GetStream();
-            var env = await FrameCodec.ReadEnvelopeAsync(s);
-            if (env != null)
+            try
             {
-                // Trả về sequenceNumber SAI (client gửi seq 1, server trả 999)
-                var wrongAck = WireEnvelope<HeartbeatAckPayload>.Create(
-                    MessageTypes.HeartbeatAck, "CENTRAL-MOCK",
-                    new HeartbeatAckPayload { AcknowledgedSequence = 999, ServerTimeUtc = DateTime.UtcNow.ToString("O") },
-                    requestId: env.RequestId
-                );
-                await s.WriteAsync(FrameCodec.Encode(wrongAck));
-                await s.FlushAsync();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var c = await listenerB.AcceptTcpClientAsync(cts.Token);
+                using var s = c.GetStream();
+                var env = await FrameCodec.ReadEnvelopeAsync(s, ct: cts.Token);
+                if (env != null)
+                {
+                    var wrongAck = WireEnvelope<HeartbeatAckPayload>.Create(
+                        MessageTypes.HeartbeatAck, "CENTRAL-MOCK",
+                        new HeartbeatAckPayload { AcknowledgedSequence = 999, ServerTimeUtc = DateTime.UtcNow.ToString("O") },
+                        requestId: env.RequestId
+                    );
+                    await s.WriteAsync(FrameCodec.Encode(wrongAck), cts.Token);
+                    await s.FlushAsync(cts.Token);
+                }
             }
-            listenerB.Stop();
+            catch { }
+            finally { try { listenerB.Stop(); } catch { } }
         });
 
         int exitB = await Tools.MockHarness.FakeAgent.Program.RunAsync(port: portB, count: 1, ackTimeout: TimeSpan.FromSeconds(2));
-        Assert.Equal(1, exitB); // Bị từ chối!
+        await taskB;
+        Assert.Equal(1, exitB); // Bị từ chối vì sai sequence!
 
-        // 7c. Invalid ServerTimeUtc (không có chỉ chỉ múi giờ 'Z' hoặc '+00:00')
+        // 7c. Invalid ServerTimeUtc (không có chỉ định múi giờ 'Z' hoặc '+00:00')
         var listenerC = new TcpListener(IPAddress.Loopback, 0);
         listenerC.Start();
         int portC = ((IPEndPoint)listenerC.LocalEndpoint).Port;
 
-        _ = Task.Run(async () =>
+        var taskC = Task.Run(async () =>
         {
-            using var c = await listenerC.AcceptTcpClientAsync();
-            using var s = c.GetStream();
-            var env = await FrameCodec.ReadEnvelopeAsync(s);
-            if (env != null)
+            try
             {
-                var wrongAck = WireEnvelope<HeartbeatAckPayload>.Create(
-                    MessageTypes.HeartbeatAck, "CENTRAL-MOCK",
-                    new HeartbeatAckPayload { AcknowledgedSequence = 1, ServerTimeUtc = "2026-10-15 12:00:00" }, // Không phải ISO UTC!
-                    requestId: env.RequestId
-                );
-                await s.WriteAsync(FrameCodec.Encode(wrongAck));
-                await s.FlushAsync();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var c = await listenerC.AcceptTcpClientAsync(cts.Token);
+                using var s = c.GetStream();
+                var env = await FrameCodec.ReadEnvelopeAsync(s, ct: cts.Token);
+                if (env != null)
+                {
+                    var wrongAck = WireEnvelope<HeartbeatAckPayload>.Create(
+                        MessageTypes.HeartbeatAck, "CENTRAL-MOCK",
+                        new HeartbeatAckPayload { AcknowledgedSequence = 1, ServerTimeUtc = "2026-10-15 12:00:00" }, // Không phải ISO UTC!
+                        requestId: env.RequestId
+                    );
+                    await s.WriteAsync(FrameCodec.Encode(wrongAck), cts.Token);
+                    await s.FlushAsync(cts.Token);
+                }
             }
-            listenerC.Stop();
+            catch { }
+            finally { try { listenerC.Stop(); } catch { } }
         });
 
         int exitC = await Tools.MockHarness.FakeAgent.Program.RunAsync(port: portC, count: 1, ackTimeout: TimeSpan.FromSeconds(2));
-        Assert.Equal(1, exitC); // Bị từ chối!
+        await taskC;
+        Assert.Equal(1, exitC); // Bị từ chối vì sai định dạng UTC!
+    }
+
+    [Fact]
+    public async Task FakeAgent_RejectsAck_WhenServerTimeUtcIsMissing()
+    {
+        // Trường hợp P1 review: Payload CHỈ chứa acknowledgedSequence, thiếu serverTimeUtc.
+        // Phải bị từ chối, không được để default initializer của DTO che giấu!
+        int exitCode = await RunAgentAgainstSingleAckServerAsync(req =>
+        {
+            using var doc = JsonDocument.Parse("{\"acknowledgedSequence\": 1}");
+            return WireEnvelope<JsonElement>.Create(
+                MessageTypes.HeartbeatAck, "CENTRAL-MOCK", doc.RootElement.Clone(), req.RequestId);
+        });
+
+        Assert.Equal(1, exitCode);
+    }
+
+    [Fact]
+    public async Task FakeAgent_RejectsAck_WhenServerTimeUtcIsNull()
+    {
+        int exitCode = await RunAgentAgainstSingleAckServerAsync(req =>
+        {
+            using var doc = JsonDocument.Parse("{\"acknowledgedSequence\": 1, \"serverTimeUtc\": null}");
+            return WireEnvelope<JsonElement>.Create(
+                MessageTypes.HeartbeatAck, "CENTRAL-MOCK", doc.RootElement.Clone(), req.RequestId);
+        });
+
+        Assert.Equal(1, exitCode);
+    }
+
+    [Fact]
+    public async Task FakeAgent_RejectsAck_WhenServerTimeUtcIsInvalidTimestamp()
+    {
+        int exitCode = await RunAgentAgainstSingleAckServerAsync(req =>
+        {
+            using var doc = JsonDocument.Parse("{\"acknowledgedSequence\": 1, \"serverTimeUtc\": \"invalid-timestamp\"}");
+            return WireEnvelope<JsonElement>.Create(
+                MessageTypes.HeartbeatAck, "CENTRAL-MOCK", doc.RootElement.Clone(), req.RequestId);
+        });
+
+        Assert.Equal(1, exitCode);
+    }
+
+    [Fact]
+    public async Task FakeAgent_RejectsAck_WhenAcknowledgedSequenceIsMissing()
+    {
+        int exitCode = await RunAgentAgainstSingleAckServerAsync(req =>
+        {
+            using var doc = JsonDocument.Parse("{\"serverTimeUtc\": \"2026-10-15T05:00:00.000Z\"}");
+            return WireEnvelope<JsonElement>.Create(
+                MessageTypes.HeartbeatAck, "CENTRAL-MOCK", doc.RootElement.Clone(), req.RequestId);
+        });
+
+        Assert.Equal(1, exitCode);
+    }
+
+    [Fact]
+    public async Task FakeAgent_RejectsAck_WhenAcknowledgedSequenceIsWrong()
+    {
+        int exitCode = await RunAgentAgainstSingleAckServerAsync(req =>
+        {
+            using var doc = JsonDocument.Parse("{\"acknowledgedSequence\": 999, \"serverTimeUtc\": \"2026-10-15T05:00:00.000Z\"}");
+            return WireEnvelope<JsonElement>.Create(
+                MessageTypes.HeartbeatAck, "CENTRAL-MOCK", doc.RootElement.Clone(), req.RequestId);
+        });
+
+        Assert.Equal(1, exitCode);
+    }
+
+    [Fact]
+    public async Task FakeAgent_AcceptsAck_WhenValid()
+    {
+        int exitCode = await RunAgentAgainstSingleAckServerAsync(req =>
+        {
+            using var doc = JsonDocument.Parse("{\"acknowledgedSequence\": 1, \"serverTimeUtc\": \"2026-10-15T05:00:00.000Z\"}");
+            return WireEnvelope<JsonElement>.Create(
+                MessageTypes.HeartbeatAck, "CENTRAL-MOCK", doc.RootElement.Clone(), req.RequestId);
+        });
+
+        Assert.Equal(0, exitCode);
     }
 
     // -------------------------------------------------------------------------

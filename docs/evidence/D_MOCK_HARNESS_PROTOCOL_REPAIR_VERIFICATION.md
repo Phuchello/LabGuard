@@ -18,7 +18,11 @@
    - Sử dụng DTO chính thức `HeartbeatPayload` với `SequenceNumber` và `UptimeSeconds`.
    - Đóng gói và tuần tự hóa qua `WireEnvelope<HeartbeatPayload>` và `FrameCodec.Encode()`.
    - Đọc phản hồi `HEARTBEAT_ACK` bằng `FrameCodec.ReadEnvelopeAsync()`.
-   - Xác thực nghiêm ngặt 4 yếu tố: `messageType`, `requestId` tương ứng, `acknowledgedSequence` khớp với `sequenceNumber`, và `serverTimeUtc` là mốc thời gian UTC hợp lệ với chỉ định múi giờ rõ ràng (`Z` hoặc `+00:00`).
+   - **Khắc phục triệt để lỗi P1 (Missing Field Masking do Default Initializer):**
+     - Thẩm định trực tiếp đối tượng `JsonElement` thô của payload **TRƯỚC KHI** deserialize vào `HeartbeatAckPayload`.
+     - Bắt buộc trường `serverTimeUtc` phải tồn tại tường minh trong JSON, có kiểu String, không rỗng và là định dạng ISO-8601 UTC hợp lệ (`Z` hoặc `+00:00`).
+     - Bắt buộc trường `acknowledgedSequence` phải tồn tại tường minh trong JSON, có kiểu Number số nguyên không âm (`>= 0`).
+     - Từ chối ngay lập tức mọi payload thiếu trường, null, sai kiểu hoặc sai sequence trước khi chạm vào DTO (loại bỏ hoàn toàn trường hợp payload `{"acknowledgedSequence":1}` được chấp nhận do giá trị khởi tạo mặc định của C#).
    - Loại bỏ `Console.ReadKey()` để tránh treo các kịch bản kiểm thử tự động.
    - Thêm cơ chế timeout hữu hạn (Linked Token Source) để không bị treo vĩnh viễn khi thiếu ACK.
 
@@ -38,9 +42,9 @@
 
 ---
 
-## 2. Kết quả 9 kịch bản kiểm thử tự động (LabGuard.MockHarness.Tests)
+## 2. Kết quả kiểm thử tự động (LabGuard.MockHarness.Tests — 15/15 PASS)
 
-Toàn bộ 9 kịch bản kiểm thử theo yêu cầu đã được lập trình tự động trong `tests/LabGuard.MockHarness.Tests/MockHarnessTests.cs`:
+Bộ kiểm thử tự động xUnit trong `tests/LabGuard.MockHarness.Tests/MockHarnessTests.cs` bao phủ 15 kịch bản độc lập (bao gồm 9 kịch bản nghiệp vụ chính và 6 kịch bản kiểm tra dị dạng payload ACK):
 
 | STT | Kịch bản kiểm thử | Mô tả & Cách thức xác minh | Kết quả |
 |:---:|---|---|:---:|
@@ -51,8 +55,14 @@ Toàn bộ 9 kịch bản kiểm thử theo yêu cầu đã được lập trìn
 | 5 | **Fragmented TCP header and payload** | Cắt nhỏ gói tin thành từng byte rải rác kèm delay. Cơ chế `ReadExactlyBytesAsync` tích lũy đủ dữ liệu và giải mã chính xác. | **PASS** |
 | 6 | **Invalid payload -> no false success ACK** | Gửi HEARTBEAT thiếu trường, sai kiểu dữ liệu hoặc bản tin không hỗ trợ (`PING`). Server không gửi ACK giả mạo, client timeout 0 byte. | **PASS** |
 | 7 | **Wrong ACK requestId / sequence / UTC detected** | Tạo server giả gửi ACK sai RequestId, sai Sequence hoặc sai định dạng UTC. `FakeAgent` phát hiện lỗi và trả mã lỗi `ExitCode = 1`. | **PASS** |
-| 8 | **Normal and abrupt disconnection** | Thử nghiệm ngắt kết nối bình thường (EOF/Shutdown) và đột ngột (TCP RST via `LingerOption(true, 0)`). Server không sập và tiếp tục phục vụ client tiếp theo. | **PASS** |
-| 9 | **Clean tool shutdown** | Gửi tín hiệu hủy `CancellationTokenSource`. Server kết thúc vòng lặp, giải phóng listener và trả lại cổng cho hệ điều hành. | **PASS** |
+| 8 | **Missing serverTimeUtc rejected** | Server trả payload `{"acknowledgedSequence": 1}` thiếu trường `serverTimeUtc`. FakeAgent thẩm định raw JSON và từ chối (`ExitCode = 1`). | **PASS** |
+| 9 | **Null serverTimeUtc rejected** | Server trả payload `{"acknowledgedSequence": 1, "serverTimeUtc": null}`. FakeAgent từ chối (`ExitCode = 1`). | **PASS** |
+| 10 | **Invalid timestamp rejected** | Server trả payload với `serverTimeUtc: "invalid-timestamp"`. FakeAgent từ chối (`ExitCode = 1`). | **PASS** |
+| 11 | **Missing acknowledgedSequence rejected** | Server trả payload `{"serverTimeUtc": "..."}` thiếu trường `acknowledgedSequence`. FakeAgent từ chối (`ExitCode = 1`). | **PASS** |
+| 12 | **Wrong acknowledgedSequence rejected** | Server trả `acknowledgedSequence: 999` (sai lệch so với sequence gửi). FakeAgent từ chối (`ExitCode = 1`). | **PASS** |
+| 13 | **Valid ACK succeeds** | Server trả đầy đủ `acknowledgedSequence` và `serverTimeUtc` UTC hợp lệ. FakeAgent chấp nhận (`ExitCode = 0`). | **PASS** |
+| 14 | **Normal and abrupt disconnection** | Thử nghiệm ngắt kết nối bình thường (EOF/Shutdown) và đột ngột (TCP RST via `LingerOption(true, 0)`). Server không sập và tiếp tục phục vụ client tiếp theo. | **PASS** |
+| 15 | **Clean tool shutdown** | Gửi tín hiệu hủy `CancellationTokenSource`. Server kết thúc vòng lặp, giải phóng listener và trả lại cổng cho hệ điều hành. | **PASS** |
 
 ---
 
@@ -68,20 +78,20 @@ Thực thi chạy trực tiếp 2 tiến trình trên Windows qua cổng `6005`:
 [FakeAgent] Đang kết nối tới FakeCentral tại 127.0.0.1:6005...
 [FakeAgent] Kết nối thành công!
 
-[FakeAgent GỬI #1] Loại: HEARTBEAT | Seq: 1 | ReqId: 861399a9-7f3e-4ecc-89c8-b9709e50db4c
-[FakeAgent NHẬN #1] Nhận ACK hợp lệ! AcknowledgedSeq: 1 | ServerTimeUtc: 2026-10-15T05:18:41.4705541Z
+[FakeAgent GỬI #1] Loại: HEARTBEAT | Seq: 1 | ReqId: d5a0ba0d-6298-4339-a769-af6c0a775c48
+[FakeAgent NHẬN #1] Nhận ACK hợp lệ! AcknowledgedSeq: 1 | ServerTimeUtc: 2026-10-15T05:27:06.1477458Z
 
-[FakeAgent GỬI #2] Loại: HEARTBEAT | Seq: 2 | ReqId: 5d2471f2-ff99-41a9-8af4-d7437c296c47
-[FakeAgent NHẬN #2] Nhận ACK hợp lệ! AcknowledgedSeq: 2 | ServerTimeUtc: 2026-10-15T05:18:42.5081555Z
+[FakeAgent GỬI #2] Loại: HEARTBEAT | Seq: 2 | ReqId: 721d609b-5ae0-4f76-90d8-921d018a317b
+[FakeAgent NHẬN #2] Nhận ACK hợp lệ! AcknowledgedSeq: 2 | ServerTimeUtc: 2026-10-15T05:27:07.1803762Z
 
-[FakeAgent GỬI #3] Loại: HEARTBEAT | Seq: 3 | ReqId: f8d79b0d-d1d2-4545-877f-cc3c65de490d
-[FakeAgent NHẬN #3] Nhận ACK hợp lệ! AcknowledgedSeq: 3 | ServerTimeUtc: 2026-10-15T05:18:43.5092782Z
+[FakeAgent GỬI #3] Loại: HEARTBEAT | Seq: 3 | ReqId: d70240a3-7d54-41cf-81d7-c92c7d491b5e
+[FakeAgent NHẬN #3] Nhận ACK hợp lệ! AcknowledgedSeq: 3 | ServerTimeUtc: 2026-10-15T05:27:08.1926765Z
 
-[FakeAgent GỬI #4] Loại: HEARTBEAT | Seq: 4 | ReqId: 227ab607-ae75-4005-8c42-1fa5c9e6d257
-[FakeAgent NHẬN #4] Nhận ACK hợp lệ! AcknowledgedSeq: 4 | ServerTimeUtc: 2026-10-15T05:18:44.5134633Z
+[FakeAgent GỬI #4] Loại: HEARTBEAT | Seq: 4 | ReqId: 7c4265fe-79db-4275-9cce-e727df5a2615
+[FakeAgent NHẬN #4] Nhận ACK hợp lệ! AcknowledgedSeq: 4 | ServerTimeUtc: 2026-10-15T05:27:09.2077741Z
 
-[FakeAgent GỬI #5] Loại: HEARTBEAT | Seq: 5 | ReqId: b1ed567c-8ef3-449c-8791-fcbae565c53d
-[FakeAgent NHẬN #5] Nhận ACK hợp lệ! AcknowledgedSeq: 5 | ServerTimeUtc: 2026-10-15T05:18:45.5179485Z
+[FakeAgent GỬI #5] Loại: HEARTBEAT | Seq: 5 | ReqId: 93d350ea-2dd9-4c38-a538-cfa96556efcd
+[FakeAgent NHẬN #5] Nhận ACK hợp lệ! AcknowledgedSeq: 5 | ServerTimeUtc: 2026-10-15T05:27:10.2101594Z
 
 [FakeAgent] Đã hoàn thành 5 lượt gửi heartbeat và xác thực ACK thành công.
 Agent ExitCode: 0
@@ -95,19 +105,19 @@ Agent ExitCode: 0
 [FakeCentral] Đang lắng nghe tại 127.0.0.1:6005...
 [FakeCentral] Nhấn Ctrl+C để dừng.
 
-[FakeCentral] [+] Kết nối mới từ: 127.0.0.1:52580
-[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: 861399a9-7f3e-4ecc-89c8-b9709e50db4c
-[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: 861399a9-7f3e-4ecc-89c8-b9709e50db4c (AckSeq: 1)
-[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: 5d2471f2-ff99-41a9-8af4-d7437c296c47
-[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: 5d2471f2-ff99-41a9-8af4-d7437c296c47 (AckSeq: 2)
-[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: f8d79b0d-d1d2-4545-877f-cc3c65de490d
-[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: f8d79b0d-d1d2-4545-877f-cc3c65de490d (AckSeq: 3)
-[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: 227ab607-ae75-4005-8c42-1fa5c9e6d257
-[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: 227ab607-ae75-4005-8c42-1fa5c9e6d257 (AckSeq: 4)
-[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: b1ed567c-8ef3-449c-8791-fcbae565c53d
-[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: b1ed567c-8ef3-449c-8791-fcbae565c53d (AckSeq: 5)
-[FakeCentral] [-] Client 127.0.0.1:52580 đã ngắt kết nối bình thường (EOF).
-[FakeCentral] [-] Đã giải phóng kết nối: 127.0.0.1:52580
+[FakeCentral] [+] Kết nối mới từ: 127.0.0.1:63505
+[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: d5a0ba0d-6298-4339-a769-af6c0a775c48
+[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: d5a0ba0d-6298-4339-a769-af6c0a775c48 (AckSeq: 1)
+[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: 721d609b-5ae0-4f76-90d8-921d018a317b
+[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: 721d609b-5ae0-4f76-90d8-921d018a317b (AckSeq: 2)
+[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: d70240a3-7d54-41cf-81d7-c92c7d491b5e
+[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: d70240a3-7d54-41cf-81d7-c92c7d491b5e (AckSeq: 3)
+[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: 7c4265fe-79db-4275-9cce-e727df5a2615
+[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: 7c4265fe-79db-4275-9cce-e727df5a2615 (AckSeq: 4)
+[FakeCentral NHẬN] Loại: HEARTBEAT       | Device: AGENT-DEV-01 | ReqId: 93d350ea-2dd9-4c38-a538-cfa96556efcd
+[FakeCentral GỬI] -> Đã gửi HEARTBEAT_ACK cho ReqId: 93d350ea-2dd9-4c38-a538-cfa96556efcd (AckSeq: 5)
+[FakeCentral] [-] Client 127.0.0.1:63505 đã ngắt kết nối bình thường (EOF).
+[FakeCentral] [-] Đã giải phóng kết nối: 127.0.0.1:63505
 ```
 
 ---
@@ -124,5 +134,5 @@ Agent ExitCode: 0
   - `LabGuard.Protocol.Tests`: **107 / 107 Passed**
   - `LabGuard.Agent.Tests`: **34 / 34 Passed**
   - `LabGuard.Central.Tests`: **9 / 9 Passed**
-  - `LabGuard.MockHarness.Tests`: **9 / 9 Passed**
-  - **TỔNG CỘNG: 159 / 159 Passed (100%)** — Toàn bộ 150 test cũ được bảo toàn nguyên vẹn, 9 test Mock Harness mới đạt 100%.
+  - `LabGuard.MockHarness.Tests`: **15 / 15 Passed**
+  - **TỔNG CỘNG: 165 / 165 Passed (100%)** — Toàn bộ 150 test cũ được bảo toàn nguyên vẹn, 15 test Mock Harness đạt 100%.
