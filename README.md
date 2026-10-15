@@ -45,16 +45,16 @@ Hệ thống phân chia thành 4 phân hệ chính cho 4 sinh viên:
 
 > [!IMPORTANT]
 > **Hiện trạng chính thức của nhóm:**  
-> - ✅ **ĐÃ HOÀN THÀNH:** Thư viện giao thức `LabGuard.Protocol` (A-001 & A-002) + Kết nối TCP & hàng đợi gửi Agent (A-003). Tổng cộng **123/123 tests PASS**.
-> - ⚪ **KHUNG SƯỜN CHỜ SINH VIÊN THỰC HIỆN:** Các phân hệ `LabGuard.Central`, `LabGuard.Admin`, `LabGuard.Simulator` hiện chỉ giữ khung sườn tối thiểu. Sinh viên tự lập trình theo phân công.
+> - ✅ **ĐÃ HOÀN THÀNH & NGHIỆM THU (DONE / ACCEPTED):** Toàn bộ các nhiệm vụ **A-001, A-002, A-003 và A-004** đã được nghiệm thu chính thức. Toàn bộ **141/141 tests PASS** (Protocol 107/107, Agent 34/34 trong đó A-004 có 18/18 xUnit cases, và đối soát tham chiếu Windows Reference đạt 10/10 PASS).
+> - ⚪ **KHUNG SƯỜN CHỜ SINH VIÊN THỰC HIỆN:** Nhiệm vụ `A-005+` của Agent (việc tiếp theo của A: `A-005` Reconnect) và các phân hệ `LabGuard.Central`, `LabGuard.Admin`, `LabGuard.Simulator` hiện chỉ giữ khung sườn tối thiểu. Sinh viên tự lập trình theo phân công.
 
 ### Các lệnh kiểm tra hệ thống:
 
-#### 1. Chạy bộ kiểm thử tự động (A-001, A-002, A-003)
+#### 1. Chạy bộ kiểm thử tự động (A-001, A-002, A-003, A-004)
 ```powershell
 dotnet test
 ```
-*Kết quả:* `Passed! - Failed: 0` — Protocol.Tests 107/107 PASS, Agent.Tests 16/16 PASS.
+*Kết quả:* `Passed! - Failed: 0` — `Protocol.Tests` 107/107 PASS, `Agent.Tests` 34/34 PASS (16 cases A-003 + 18 cases A-004).
 
 #### 2. Chạy công cụ độc lập kiểm tra đóng khung tin TCP 4 byte (A-002)
 ```powershell
@@ -63,7 +63,7 @@ dotnet run --project tools/validation/test_frame_codec/test_frame_codec.csproj
 *Kết quả:* Toàn bộ 10 kịch bản kiểm tra phân mảnh và ghép khung tin TCP đều đạt chuẩn (`10/10 scenarios passed`).
 
 #### 3. Chạy thử các phân hệ dự án
-* Máy trạm Agent (đã hoàn thành A-003 kết nối TCP & hàng đợi Single-Writer; A-004+ chưa làm): `dotnet run --project src/LabGuard.Agent/LabGuard.Agent.csproj`
+* Máy trạm Agent (A-001/A-002/A-003/A-004 đã nghiệm thu; A-005+ chưa làm): `dotnet run --project src/LabGuard.Agent/LabGuard.Agent.csproj`
 * Khung sườn máy chủ Central: `dotnet run --project src/LabGuard.Central/LabGuard.Central.csproj`
 * Khung sườn giao diện Admin: `dotnet run --project src/LabGuard.Admin/LabGuard.Admin.csproj`
 

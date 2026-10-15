@@ -12,20 +12,20 @@
 
 > [!IMPORTANT]
 > **Hiện trạng thực tế của mã nguồn:**  
-> - **ĐÃ HOÀN THÀNH & NGHIỆM THU:** Nhiệm vụ **LG-A-001** (Wire Contract & 16 Fixtures), **LG-A-002** (`FrameCodec.cs` & xử lý phân mảnh TCP) và **LG-A-003** (`AgentSocketClient.cs` & hàng đợi Single-Writer 256). Tổng: **123/123 tests PASS** (Protocol 107, Agent 16).
+> - **ĐÃ HOÀN THÀNH & NGHIỆM THU (DONE / ACCEPTED):** Toàn bộ các nhiệm vụ **LG-A-001** (Wire Contract & 16 Fixtures), **LG-A-002** (`FrameCodec.cs` & xử lý phân mảnh TCP), **LG-A-003** (`AgentSocketClient.cs` & hàng đợi Single-Writer 256) và **LG-A-004** (`MetricsCollector.cs`, `MetricsService.cs`, `HeartbeatService.cs` — 18/18 xUnit cases PASS, đối soát tham chiếu Windows Reference 10/10 PASS). Tổng kiểm thử tự động toàn dự án: **141/141 tests PASS** (Protocol 107, Agent 34).
 > - **CÁC PHÂN HỆ CHƯA TRIỂN KHAI:** `src/LabGuard.Central/`, `src/LabGuard.Admin/`, `src/LabGuard.Simulator/` chỉ chứa khung sườn tối thiểu (`Program.cs`, `DashboardForm.cs`). Sinh viên B/C/D sẽ tự tay lập trình từng tính năng.
 > - **CÁC THÀNH VIÊN SẼ TỰ TAY LẬP TRÌNH TỪNG TÍNH NĂNG:** Sinh viên sẽ trực tiếp tạo mới và lập trình các file tính năng theo đúng nhiệm vụ được phân công trong bảng theo dõi `LabGuard_Task_Tracker.xlsx`.
 
 - **Chi tiết hiện trạng từng phân hệ:**
-  - `src/LabGuard.Protocol/`: **HOÀN THÀNH 100%**. Gồm `FrameCodec.cs`, `WireEnvelope.cs`, `EnvelopeValidator.cs`, `MessageTypes.cs`, `ErrorCodes.cs`, các DTOs và `ProtocolSerializer.cs`. Đã đóng băng giao ước.
-  - `src/LabGuard.Agent/`: **A-003 HOÀN THÀNH**. Có `AgentSocketClient.cs` (BoundedChannel 256, Single-Writer Loop, `CreateOutbox` factory, DisposeAsync đúng, xử lý lỗi ghi) và `Program.cs` khung sườn. 16/16 Agent tests PASS. Từ A-004 trở đi là **CHƯA LÀM** — Sinh viên A tự tay thực hiện.
+  - `src/LabGuard.Protocol/`: **HOÀN THÀNH 100% (DONE / ACCEPTED)**. Gồm `FrameCodec.cs`, `WireEnvelope.cs`, `EnvelopeValidator.cs`, `MessageTypes.cs`, `ErrorCodes.cs`, các DTOs và `ProtocolSerializer.cs`. Đã đóng băng giao ước.
+  - `src/LabGuard.Agent/`: **A-001 ĐẾN A-004 ĐÃ NGHIỆM THU CHÍNH THỨC (DONE / ACCEPTED)**. Có `AgentSocketClient.cs` (BoundedChannel 256, Single-Writer), `MetricsCollector.cs` (Win32 P/Invoke CPU/RAM/Uptime), `MetricsService.cs` (định kỳ 5s METRIC_BATCH), `HeartbeatService.cs` (định kỳ 5s HEARTBEAT). 34/34 Agent tests PASS (16 cases A-003 + 18 cases A-004). Đối soát tham chiếu Windows Reference 10/10 PASS. Từ A-005 trở đi là **CHƯA LÀM** (tiếp theo: A-005 Reconnect).
   - `src/LabGuard.Central/`: **KHUNG SƯỜN CHỜ TRIỂN KHAI**. Chưa có TCP listener, chưa có bắt tay xác thực, chưa có liveness monitor, chưa có rule engine hay database repository. Sinh viên B sẽ bắt đầu từ B-001 (`CentralServer.cs`).
   - `src/LabGuard.Admin/`: **KHUNG SƯỜN GIAO DIỆN CHỜ TRIỂN KHAI**. Đã có form rỗng `DashboardForm.cs`. Chưa có kết nối mạng `AdminClient.cs`, chưa có bảng DataGridView và các nút điều khiển. Sinh viên C sẽ bắt đầu từ C-001 và C-002.
   - `src/LabGuard.Gateway/` & `src/LabGuard.Collector/`: **CHƯA TỒN TẠI TRONG SRC**. Là phân hệ mở rộng dự kiến cho Thành viên D sau khi hệ thống cốt lõi của A, B, C ổn định. D hiện thực hành socket trong `tools/`.
   - `database/`: **KHUNG CHỜ (PLACEHOLDER)**. `schema.sql` và `seed.sql` hiện là khung chờ; Sinh viên B sẽ tự tay hoàn thiện trong B-005.
 
 - **Hiện trạng nhiệm vụ chính thức của các thành viên (Authoritative Team Status):**
-  - **Sinh viên A (Agent & Protocol):** Đã xong **A-001** và **A-002**. Từ **A-003 trở đi là CHƯA LÀM** (Bắt đầu với A-003: `AgentSocketClient.cs` với `BoundedChannelOptions(256)` và `FullMode.Wait`).
+  - **Sinh viên A (Agent & Protocol):** Đã nghiệm thu **A-001**, **A-002**, **A-003**, **A-004** (`DONE / ACCEPTED / CLOSED`). Nhiệm vụ **A-004** đã được nghiệm thu chính thức (18/18 A-004 tests PASS, 10/10 mẫu đối soát Windows Reference PASS). Từ **A-005 trở đi là CHƯA LÀM** (Tiếp theo: A-005 — Tự động kết nối lại khi rớt mạng với Exponential Backoff + Jitter trong `AgentSocketClient.cs`).
   - **Sinh viên B (Central & CSDL):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với B-001: `CentralServer.cs` mở cổng TCP 5000).
   - **Sinh viên C (Admin UI):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với C-001 thiết kế WinForms và C-002 tạo `AdminClient.cs`).
   - **Sinh viên D (Gateway & Collector):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với D-001 đọc hiểu giao thức và D-002 viết TCP Echo trong `tools/`).
@@ -63,21 +63,41 @@
   - Bộ kiểm thử tự động `AgentSocketClientTests.cs` (16/16 tests PASS, 100%) kiểm chứng toàn diện các kịch bản với máy chủ giả lập nội bộ `FakeTcpServer` trên loopback. Bao gồm: `Scenario8b` (DisposeAsync trực tiếp), `Scenario10` (writer fault → IsConnected=false), `PublicConstructor_AlwaysUses256Capacity`, backpressure qua `CreateOutbox` factory.
   - Đồng bộ Task Tracker `LabGuard_Task_Tracker.xlsx`: LG-A-003 / TEST-A03 chuyển sang `Xong` / `PASS`.
 
+- **Task LG-A-004 (Agent System Metrics & Periodic Producers):** Đã hoàn thành & nghiệm thu chính thức (**DONE / ACCEPTED / CLOSED**).
+  - Hiện thực `MetricsCollector.cs`:
+    - Sử dụng trực tiếp Win32 P/Invoke API từ `kernel32.dll`: `GetSystemTimes`, `GlobalMemoryStatusEx`, `GetTickCount64`.
+    - Không dùng WMI hoặc PerformanceCounter trong A-004; ưu tiên Win32 API trực tiếp để giữ implementation nhỏ và không thêm dependency.
+    - Đo độ trễ thực tế bằng production `WindowsMetricsCollector`: mẫu JIT/warm-up đầu 1.137 ms, các mẫu đo tiếp theo 0.026 – 0.332 ms; tất cả các mẫu đều đạt tiêu chuẩn < 100 ms của WBS.
+    - Công thức CPU delta, clamp [0.0, 100.0], RAM UsedPhysicalBytes, Uptime = GetTickCount64/1000.
+    - Thiết kế testable qua `ISystemMetricsNativeProvider` internal interface.
+  - Hiện thực `MetricsService.cs` và `HeartbeatService.cs`: `PeriodicTimer` 5s, gửi `METRIC_BATCH` / `HEARTBEAT` qua `AgentSocketClient.SendEnvelopeAsync`.
+  - Bộ kiểm thử tự động: 18 xUnit cases mới (tổng Agent 34/34 PASS):
+    - `MetricsCollectorTests.cs` — **10 xUnit cases** (7 `[Fact]` + 1 `[Theory]` × 3 `[InlineData]`).
+    - `MetricsServiceTests.cs` — **4 xUnit cases**.
+    - `HeartbeatServiceTests.cs` — **4 xUnit cases**.
+  - Đối soát tham chiếu tự động Windows Reference (Automated Acceptance):
+    - 10/10 mẫu liên tục PASS: chênh lệch CPU so với `PerformanceCounter` trung bình 0.106 pp (max 0.305 pp <= 5.0 pp); chênh lệch RAM so với WMI trung bình 0.016 pp (max 0.125 pp <= 5.0 pp); độ trễ tối đa 0.616 ms (< 100 ms).
+  - Hồ sơ kiểm chứng:
+    - `docs/evidence/A004_METRICS_VALIDATION.md`: Kết quả đo lường trực tiếp và đối soát tự động 10 mẫu Windows Reference PASS 100%.
+    - `docs/evidence/A004_IMPLEMENTATION_NOTES.md`: 19 mục giải trình kiến trúc chi tiết.
+  - Task Tracker `LabGuard_Task_Tracker.xlsx`: A-004 → `Xong` / Ghi chú: `Nghiệm thu PASS — 18/18 A-004 tests + Windows reference validation 10/10 PASS`.
+
+
 ---
 
 ## 2. KẾT QUẢ KIỂM THỬ HIỆN TẠI (AUTOMATED TEST COUNT)
 
-**Tổng số kiểm thử tự động hiện tại:** **123 / 123 tests PASSED (100%)**
+**Tổng số kiểm thử tự động hiện tại:** **141 / 141 tests PASSED (100%)**
 - `LabGuard.Protocol.Tests`: **107 / 107 passed** (Kiểm thử FrameCodec, ReadExactlyBytesAsync, chunking 1-byte header/payload, coalescing 3 frames, boundary 262,144 bytes, WireEnvelope, raw JSON validation, 8 yêu cầu wire contract, 16 canonical fixtures minified/no-BOM/DTO deserialization, strict casing, duplicate keys, non-object payloads, strict uppercase 'Z'/'+00:00' UTC designator, ReadEnvelopeAsync strictness).
-- `LabGuard.Agent.Tests`: **16 / 16 passed** (Kiểm thử AgentSocketClient kết nối TCP, gửi đơn frame, tuần tự, nhiều producer đồng thời, single writer, backpressure qua CreateOutbox factory, cancellation, dispose đồng bộ, DisposeAsync trực tiếp với server EOF, lỗi ghi mạng IsConnected=false, lỗi kết nối không auto-reconnect, public constructor 256).
+- `LabGuard.Agent.Tests`: **34 / 34 passed** (Kiểm thử AgentSocketClient 16 tests và Metrics/Heartbeat/Win32 PInvoke 18 tests).
 - `LabGuard.Central.Tests`: **0 tests** (Chờ Thành viên B triển khai Central Server từ B-001 trở đi).
 
 ---
 
 ## 2.1. CHECKPOINT AN TOÀN & HÀNH ĐỘNG TIẾP THEO (CHECKPOINT & NEXT ACTION)
 
-- **Last Safe Checkpoint:** `LG-A-003 ADVERSARIAL PASS CLOSED` (123/123 automated tests pass, zero regressions, zero warnings). Branch: `feat/lg-a-003-writer-queue`, commit `5c9ada1`.
-- **Exact Next Action:** Sinh viên A triển khai tiếp nhiệm vụ **`LG-A-004 [CHƯA LÀM — TIẾP THEO]` — Thu thập CPU, RAM, Uptime hệ thống** (`MetricsCollector.cs`, `MetricsService.cs`).
+- **Last Safe Checkpoint:** `LG-A-004 ACCEPTED / CLOSED` (141/141 automated tests pass, đối soát Windows Reference 10/10 pass, zero regressions, zero warnings). Branch: `feat/lg-a-004-system-metrics`.
+- **Exact Next Action:** Sinh viên A triển khai tiếp **`LG-A-005 [CHƯA LÀM — TIẾP THEO]` — Tự động kết nối lại khi rớt mạng** (`AgentSocketClient.cs` với Exponential Backoff + Jitter).
 
 ---
 
@@ -86,11 +106,11 @@
 Toàn bộ dự án được tổ chức theo kế hoạch chuẩn hóa 34 nhiệm vụ (phù hợp với `LabGuard_Task_Tracker.xlsx`, `TODO.md`, `START_HERE.md` và tài liệu hướng dẫn các thành viên):
 
 - **Thành viên A (Máy trạm Agent & Giao thức):** 9 nhiệm vụ (`A-001` đến `A-009`)
-  - A-001 [XONG]: 16 bản tin JSON mẫu chuẩn.
-  - A-002 [XONG]: Đóng khung gói tin TCP 4 byte độ dài (`FrameCodec.cs`).
-  - A-003 [XONG]: Kết nối TCP và hàng đợi gửi tuần tự (`AgentSocketClient.cs`, capacity 256, FullMode.Wait).
-  - A-004 [CHƯA LÀM — TIẾP THEO]: Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`).
-  - A-005 [CHƯA LÀM]: Tự động kết nối lại khi rớt mạng (`AgentSocketClient.cs` với Exponential Backoff + Jitter).
+  - A-001 [XONG / ACCEPTED]: 16 bản tin JSON mẫu chuẩn.
+  - A-002 [XONG / ACCEPTED]: Đóng khung gói tin TCP 4 byte độ dài (`FrameCodec.cs`).
+  - A-003 [XONG / ACCEPTED]: Kết nối TCP và hàng đợi gửi tuần tự (`AgentSocketClient.cs`, capacity 256, FullMode.Wait).
+  - A-004 [XONG / ACCEPTED]: Đo CPU, RAM và Uptime thật từ Windows qua Win32 P/Invoke (`GetSystemTimes`, `GlobalMemoryStatusEx`, `GetTickCount64`), định kỳ gửi `METRIC_BATCH` và `HEARTBEAT` (18/18 A-004 tests pass; đối soát Windows Reference 10/10 pass; tổng Agent.Tests 34/34 pass).
+  - A-005 [CHƯA LÀM — TIẾP THEO]: Tự động kết nối lại khi rớt mạng (`AgentSocketClient.cs` với Exponential Backoff + Jitter).
   - A-006 [CHƯA LÀM]: Bộ nhớ giữ dữ liệu ngoại tuyến (`ReplayBuffer.cs`, tối đa 50 batches, `METRIC_BATCH` duy nhất, FIFO Drop-Oldest, `isReplay = true`).
   - A-007 [CHƯA LÀM]: Giám sát cổng dịch vụ mạng 80 và 8080 (`ServiceMonitor.cs`).
   - A-008 [CHƯA LÀM]: Xử lý ngắt kết nối đột ngột và đóng socket an toàn.
