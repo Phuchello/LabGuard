@@ -3,24 +3,26 @@
 > **Bảng theo dõi tiến độ công việc dành cho 4 thành viên nhóm (A, B, C, D).**  
 > Chi tiết từng việc, file cần mở, trạng thái và cách thử được cập nhật tại file Excel **[`LabGuard_Task_Tracker.xlsx`](LabGuard_Task_Tracker.xlsx)** và tài liệu **[`START_HERE.md`](START_HERE.md)**.  
 >
-> *Lưu ý quan trọng:* Hiện tại các nhiệm vụ **A-001**, **A-002** và **A-003** đã được chính thức nghiệm thu Xong (123/123 tests PASS). Toàn bộ các nhiệm vụ còn lại đều là **CHƯA LÀM**, các thành viên sẽ tự tay tạo mới và lập trình các file tính năng theo phân công.
+> *Lưu ý quan trọng:* Hiện tại các nhiệm vụ **A-001**, **A-002**, **A-003** và **A-004** đã được chính thức nghiệm thu (`DONE / ACCEPTED / CLOSED`). Tổng cộng toàn dự án **141/141 tests PASS** và đối soát tham chiếu Windows Reference đạt 10/10 PASS. Toàn bộ các nhiệm vụ còn lại đều là **CHƯA LÀM** (`A-005` là việc tiếp theo của Sinh viên A).
 
 ---
 
-## 1. NHIỆM VỤ ĐÃ NGHIỆM THU CHÍNH THỨC (OFFICIALLY CLOSED)
-- [x] **Đóng khung gói tin TCP 4 byte độ dài (A-002):** Tiền tố độ dài 4-byte UInt32 Big-Endian (`FrameCodec.cs`), xử lý phân mảnh TCP (partial reads), ném lỗi khi frame <= 0 hoặc > 262,144 bytes. Bộ kiểm thử tự động giao thức đạt 100% PASS (Protocol tests PASS).
-- [x] **16 bản tin JSON mẫu chuẩn (A-001):** Khung phong bì 6 trường cố định (`EnvelopeValidator.cs`), 16 file mẫu JSON canonical trong `tests/LabGuard.Protocol.Tests/Fixtures/` kiểm thử đạt 100% PASS.
+## 1. NHIỆM VỤ ĐÃ NGHIỆM THU CHÍNH THỨC (OFFICIALLY ACCEPTED / CLOSED)
+- [x] **16 bản tin JSON mẫu chuẩn (A-001 — DONE / ACCEPTED):** Khung phong bì 6 trường cố định (`EnvelopeValidator.cs`), 16 file mẫu JSON canonical trong `tests/LabGuard.Protocol.Tests/Fixtures/` kiểm thử đạt 100% PASS.
+- [x] **Đóng khung gói tin TCP 4 byte độ dài (A-002 — DONE / ACCEPTED):** Tiền tố độ dài 4-byte UInt32 Big-Endian (`FrameCodec.cs`), xử lý phân mảnh TCP (partial reads), ném lỗi khi frame <= 0 hoặc > 262,144 bytes. Bộ kiểm thử tự động giao thức đạt 100% PASS (107/107 tests PASS).
+- [x] **Kết nối TCP & hàng đợi Single-Writer (A-003 — DONE / ACCEPTED):** Hàng đợi `Channel<byte[]>` dung lượng 256 items, `BoundedChannelFullMode.Wait`, một luồng ghi duy nhất chống đan xen byte (`AgentSocketClient.cs`, 16/16 tests PASS).
+- [x] **Thu thập CPU, RAM, Uptime hệ thống (A-004 — DONE / ACCEPTED / CLOSED):** Gọi trực tiếp Win32 API (`GetSystemTimes`, `GlobalMemoryStatusEx`, `GetTickCount64`), dịch vụ định kỳ 5s `MetricsService` và `HeartbeatService`. **18/18 A-004 xUnit cases PASS** (tổng `Agent.Tests` 34/34 PASS), **đối soát tự động tham chiếu Windows Reference 10/10 PASS**. Nghiệm thu chính thức hoàn tất.
 
 ---
 
 ## 2. NHIỆM VỤ CỦA TỪNG THÀNH VIÊN
 
 ### Sinh viên A — Máy trạm Agent & Giao thức
-- [x] **A-001:** 16 bản tin JSON mẫu chuẩn *(Đã nghiệm thu Xong)*.
-- [x] **A-002:** Đóng khung gói tin TCP tiền tố 4 byte *(Đã nghiệm thu Xong)*.
-- [x] **A-003:** Cho dữ liệu gửi đi xếp hàng tuần tự (`AgentSocketClient.cs`, BoundedChannel 256, FullMode.Wait) *(Đã nghiệm thu Xong)*.
-- [ ] **A-004 [CHƯA LÀM — TIẾP THEO]:** Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
-- [ ] **A-005 [CHƯA LÀM]:** Tự động kết nối lại khi rớt mạng với Exponential Backoff + Jitter (`AgentSocketClient.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
+- [x] **A-001:** 16 bản tin JSON mẫu chuẩn *(DONE / ACCEPTED — Đã nghiệm thu chính thức)*.
+- [x] **A-002:** Đóng khung gói tin TCP tiền tố 4 byte *(DONE / ACCEPTED — Đã nghiệm thu chính thức)*.
+- [x] **A-003:** Cho dữ liệu gửi đi xếp hàng tuần tự (`AgentSocketClient.cs`, BoundedChannel 256, FullMode.Wait) *(DONE / ACCEPTED — Đã nghiệm thu chính thức)*.
+- [x] **A-004:** Đo CPU, RAM và Uptime thật từ Windows (`MetricsCollector.cs`, `MetricsService.cs`, `HeartbeatService.cs`) *(DONE / ACCEPTED — Đã nghiệm thu chính thức: 18/18 tests PASS, Windows Reference 10/10 PASS)*.
+- [ ] **A-005 [CHƯA LÀM — TIẾP THEO]:** Tự động kết nối lại khi rớt mạng với Exponential Backoff + Jitter (`AgentSocketClient.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
 - [ ] **A-006 [CHƯA LÀM]:** Bộ nhớ giữ dữ liệu chưa gửi được (`ReplayBuffer.cs`, tối đa 50 batches, `METRIC_BATCH` duy nhất, FIFO Drop-Oldest, `isReplay = true`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
 - [ ] **A-007 [CHƯA LÀM]:** Giám sát dịch vụ mạng cổng 80 và 8080 (`ServiceMonitor.cs`) *(File sẽ được tạo khi thực hiện nhiệm vụ)*.
 - [ ] **A-008 [CHƯA LÀM]:** Bổ sung kịch bản ngắt kết nối đột ngột để kiểm tra đóng socket an toàn *(Kịch bản kiểm thử)*.
