@@ -112,20 +112,29 @@ namespace LabGuard.Admin
 
         private void DashboardFromNew_Load(object sender, EventArgs e)
         {
-            // Dữ liệu mẫu kiểm thử hiển thị giao diện C-001
+            // Dữ liệu mẫu (Demo/Mock) minh họa hiển thị giao diện C-001 khi chưa kết nối Central
             if (dgvPhongMay.Rows.Count == 0)
             {
-                dgvPhongMay.Rows.Add("PC-LAB-01", "15.2%", "4.2 / 16.0 GB", "ONLINE");
-                dgvPhongMay.Rows.Add("PC-LAB-02", "88.6%", "14.8 / 16.0 GB", "WARNING");
-                dgvPhongMay.Rows.Add("PC-LAB-03", "0.0%", "0.0 / 16.0 GB", "OFFLINE");
-                dgvPhongMay.Rows.Add("PC-LAB-04", "22.4%", "5.1 / 16.0 GB", "ONLINE");
+                dgvPhongMay.Rows.Add("PC-DEMO-01", "15.2%", "4.2 / 16.0 GB", "ONLINE");
+                dgvPhongMay.Rows.Add("PC-DEMO-02", "88.6%", "14.8 / 16.0 GB", "WARNING");
+                dgvPhongMay.Rows.Add("PC-DEMO-03", "0.0%", "0.0 / 16.0 GB", "OFFLINE");
+                dgvPhongMay.Rows.Add("PC-DEMO-04", "22.4%", "5.1 / 16.0 GB", "ONLINE");
             }
 
             if (dgvSuCo.Rows.Count == 0)
             {
-                dgvSuCo.Rows.Add("10:30:15", "PC-LAB-02", "CPU vượt ngưỡng 85%");
-                dgvSuCo.Rows.Add("10:32:00", "PC-LAB-03", "Mất kết nối Heartbeat");
+                dgvSuCo.Rows.Add("10:30:15", "PC-DEMO-02", "[Demo] CPU vượt ngưỡng 85%");
+                dgvSuCo.Rows.Add("10:32:00", "PC-DEMO-03", "[Demo] Mất kết nối Heartbeat");
             }
+        }
+
+        /// <summary>
+        /// Xóa dữ liệu minh họa khi bắt đầu nhận dữ liệu thật từ máy chủ (dành cho C-002/C-003).
+        /// </summary>
+        public void ClearDemoData()
+        {
+            dgvPhongMay.Rows.Clear();
+            dgvSuCo.Rows.Clear();
         }
 
         private void panel2_Paint(object sender, PaintEventArgs e)
