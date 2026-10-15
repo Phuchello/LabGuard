@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -18,7 +19,7 @@ public class Program
 {
     private static readonly CancellationTokenSource _cts = new();
 
-    public static async Task Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         int port = 5050;
         if (args.Length > 0 && int.TryParse(args[0], out int customPort))
@@ -33,25 +34,44 @@ public class Program
             _cts.Cancel();
         };
 
-        await RunServerAsync(port, _cts.Token);
+        int exitCode = await RunServerAsync(port, _cts.Token);
+        return exitCode;
     }
 
     /// <summary>
     /// Khởi động TCP Echo Server tại cổng chỉ định.
+    /// Trả về 0 nếu kết thúc bình thường, 1 nếu gặp lỗi khởi động (ví dụ cổng bị chiếm dụng).
     /// </summary>
-    public static async Task RunServerAsync(int port, CancellationToken ct = default)
+    public static async Task<int> RunServerAsync(int port, CancellationToken ct = default)
     {
         TcpListener listener = new(IPAddress.Any, port);
 
         try
         {
             listener.Start();
-            int actualPort = ((IPEndPoint)listener.LocalEndpoint).Port;
-            Console.WriteLine("==================================================");
-            Console.WriteLine($"[EchoServer] TCP Echo Server đang lắng nghe tại cổng {actualPort}...");
-            Console.WriteLine("[EchoServer] Nhấn Ctrl+C để dừng.");
-            Console.WriteLine("==================================================");
+        }
+        catch (SocketException ex)
+        {
+            Console.Error.WriteLine($"[EchoServer] [LỖI KHỞI ĐỘNG] Không thể lắng nghe tại cổng {port}: {ex.Message} (Mã lỗi: {ex.SocketErrorCode})");
+            return 1;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[EchoServer] [LỖI KHỞI ĐỘNG] Khởi động máy chủ thất bại: {ex.Message}");
+            return 1;
+        }
 
+        int actualPort = ((IPEndPoint)listener.LocalEndpoint).Port;
+        Console.WriteLine("==================================================");
+        Console.WriteLine($"[EchoServer] TCP Echo Server đang lắng nghe tại cổng {actualPort}...");
+        Console.WriteLine("[EchoServer] Nhấn Ctrl+C để dừng.");
+        Console.WriteLine("==================================================");
+
+        // Quản lý các task client đang hoạt động để dừng và giải phóng socket an toàn
+        ConcurrentDictionary<Task, byte> activeClientTasks = new();
+
+        try
+        {
             while (!ct.IsCancellationRequested)
             {
                 TcpClient client;
@@ -63,9 +83,27 @@ public class Program
                 {
                     break;
                 }
+                catch (Exception ex) when (!ct.IsCancellationRequested)
+                {
+                    Console.Error.WriteLine($"[EchoServer] Lỗi tiếp nhận client: {ex.Message}");
+                    continue;
+                }
 
                 // Xử lý mỗi client trên một task riêng biệt để hỗ trợ đa kết nối đồng thời
-                _ = Task.Run(() => HandleClientAsync(client, ct), ct);
+                Task clientTask = null!;
+                clientTask = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await HandleClientAsync(client, ct).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        activeClientTasks.TryRemove(clientTask, out _);
+                    }
+                }, CancellationToken.None);
+
+                activeClientTasks.TryAdd(clientTask, 0);
             }
         }
         catch (OperationCanceledException)
@@ -74,7 +112,8 @@ public class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[EchoServer] Lỗi máy chủ: {ex.Message}");
+            Console.Error.WriteLine($"[EchoServer] Lỗi vòng lặp máy chủ: {ex.Message}");
+            return 1;
         }
         finally
         {
@@ -83,8 +122,21 @@ public class Program
                 listener.Stop();
             }
             catch { }
+
+            // Chờ các client hiện có kết thúc an toàn trong tối đa 2 giây
+            if (!activeClientTasks.IsEmpty)
+            {
+                try
+                {
+                    await Task.WhenAny(Task.WhenAll(activeClientTasks.Keys), Task.Delay(2000)).ConfigureAwait(false);
+                }
+                catch { }
+            }
+
             Console.WriteLine("[EchoServer] Máy chủ đã đóng.");
         }
+
+        return 0;
     }
 
     /// <summary>
