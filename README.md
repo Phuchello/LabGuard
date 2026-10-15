@@ -1,6 +1,6 @@
 # LABGUARD — HỆ THỐNG GIÁM SÁT PHÒNG MÁY TẬP TRUNG
 
-> **Đồ án môn học:** NT106 — Lập trình mạng căn bản  
+> **Đồ án môn học:** NT106 — Lập trình mạng căn bản
 > **Khoa Mạng máy tính & Truyền thông — Trường ĐH Công nghệ Thông tin (UIT)**
 
 ---
@@ -44,17 +44,33 @@ Hệ thống phân chia thành 4 phân hệ chính cho 4 sinh viên:
 ## 2. HIỆN TRẠNG MÃ NGUỒN THỰC TẾ
 
 > [!IMPORTANT]
-> **Hiện trạng chính thức của nhóm:**  
-> - ✅ **ĐÃ HOÀN THÀNH & NGHIỆM THU (DONE / ACCEPTED):** Toàn bộ các nhiệm vụ **A-001, A-002, A-003 và A-004** đã được nghiệm thu chính thức. Toàn bộ **141/141 tests PASS** (Protocol 107/107, Agent 34/34 trong đó A-004 có 18/18 xUnit cases, và đối soát tham chiếu Windows Reference đạt 10/10 PASS).
-> - ⚪ **KHUNG SƯỜN CHỜ SINH VIÊN THỰC HIỆN:** Nhiệm vụ `A-005+` của Agent (việc tiếp theo của A: `A-005` Reconnect) và các phân hệ `LabGuard.Central`, `LabGuard.Admin`, `LabGuard.Simulator` hiện chỉ giữ khung sườn tối thiểu. Sinh viên tự lập trình theo phân công.
+> **Hiện trạng chính thức của nhóm (sau khi merge PR #4, #5, #7, #8, #9):**
+> - ✅ **ĐÃ HOÀN THÀNH & NGHIỆM THU (DONE / ACCEPTED):**
+>   - **A-001, A-002, A-003, A-004 (Agent & Protocol):** Đã nghiệm thu chính thức (`Protocol.Tests` 107/107 PASS, `Agent.Tests` 34/34 PASS trong đó A-004 có 18/18 xUnit cases và đối soát Windows Reference 10/10 PASS).
+>   - **B-001 (Central Server):** Đã nghiệm thu qua PR #7 (`CentralServer.cs` mở cổng Socket TCP 5000, hỗ trợ đa client, `Central.Tests` 9/9 PASS).
+>   - **D-002 (TCP Echo):** Đã nghiệm thu qua PR #8 (`tools/TcpEcho/Program.cs` hỗ trợ đa client, shutdown an toàn).
+> - 🟡 **ĐANG LÀM / NGHIỆM THU TỪNG PHẦN:**
+>   - **B-005 (Database SQL Server):** PR #5 đã merge `database/schema.sql` (DDL tạo bảng `ProcessedBatches`, `DeviceSessions`, `MetricSamples`). Phần C# persistence trong `DatabaseRepository.cs` và kiểm thử tương tác SQL Server chưa nghiệm thu.
+>   - **C-001 (Admin WinForms UI):** PR #4 đã merge khung giao diện UI 0.1 (`DashboardForm.cs`, ảnh bằng chứng `docs/evidence/admin_dashboard_c001.png`). Nghiệm thu toàn diện UI và data binding đang chờ thực hiện.
+> - ⚪ **CHƯA LÀM / TIẾP THEO:**
+>   - **Sinh viên A:** Tiếp theo là `A-005` (Tự động kết nối lại khi rớt mạng).
+>   - **Sinh viên B:** Tiếp theo là `B-002` (Bắt tay HELLO/AUTH) và hoàn thiện `B-005` persistence.
+>   - **Sinh viên C:** Tiếp theo là `C-002` (AdminClient kết nối Socket tới Central).
+>   - **Sinh viên D:** `D-001` (chưa có báo cáo); tiếp theo là `D-003` (TCP Relay). Các module `Gateway`, `Collector`, `Simulator` (`D-004..D-006`) là dự kiến mở rộng sau.
+> - 🛠️ **CÔNG CỤ GIẢ LẬP BỔ TRỢ (MOCK HARNESS):** PR #9 đã merge `tools/mock_harness/FakeAgent`, `FakeCentral` và `tests/LabGuard.MockHarness.Tests` (15/15 tests PASS). Đây là công cụ phục vụ kiểm thử giao thức độc lập, không thay thế cho nhiệm vụ `D-003`.
 
 ### Các lệnh kiểm tra hệ thống:
 
-#### 1. Chạy bộ kiểm thử tự động (A-001, A-002, A-003, A-004)
+#### 1. Chạy bộ kiểm thử tự động (165/165 tests PASS)
 ```powershell
 dotnet test
 ```
-*Kết quả:* `Passed! - Failed: 0` — `Protocol.Tests` 107/107 PASS, `Agent.Tests` 34/34 PASS (16 cases A-003 + 18 cases A-004).
+*Kết quả:* `Passed! - Failed: 0` — Tổng cộng **165 tests PASS** trên môi trường cục bộ:
+- `LabGuard.Protocol.Tests`: 107/107 PASS
+- `LabGuard.Central.Tests`: 9/9 PASS
+- `LabGuard.Agent.Tests`: 34/34 PASS
+- `LabGuard.MockHarness.Tests`: 15/15 PASS
+*(Lưu ý: Đây là số liệu kiểm thử cục bộ trước khi merge; hệ thống CI tự động trên GitHub chưa được thiết lập).*
 
 #### 2. Chạy công cụ độc lập kiểm tra đóng khung tin TCP 4 byte (A-002)
 ```powershell
@@ -63,9 +79,11 @@ dotnet run --project tools/validation/test_frame_codec/test_frame_codec.csproj
 *Kết quả:* Toàn bộ 10 kịch bản kiểm tra phân mảnh và ghép khung tin TCP đều đạt chuẩn (`10/10 scenarios passed`).
 
 #### 3. Chạy thử các phân hệ dự án
-* Máy trạm Agent (A-001/A-002/A-003/A-004 đã nghiệm thu; A-005+ chưa làm): `dotnet run --project src/LabGuard.Agent/LabGuard.Agent.csproj`
-* Khung sườn máy chủ Central: `dotnet run --project src/LabGuard.Central/LabGuard.Central.csproj`
-* Khung sườn giao diện Admin: `dotnet run --project src/LabGuard.Admin/LabGuard.Admin.csproj`
+* Máy trạm Agent: `dotnet run --project src/LabGuard.Agent/LabGuard.Agent.csproj`
+* Máy chủ Central (B-001 lắng nghe port 5000): `dotnet run --project src/LabGuard.Central/LabGuard.Central.csproj`
+* Giao diện Admin (C-001 WinForms Dashboard): `dotnet run --project src/LabGuard.Admin/LabGuard.Admin.csproj`
+* Máy chủ TCP Echo (D-002): `dotnet run --project tools/TcpEcho/TcpEcho.csproj`
+* Giả lập Mock Harness: `dotnet run --project tools/mock_harness/FakeCentral/FakeCentral.csproj` / `FakeAgent.csproj`
 
 ---
 
@@ -73,5 +91,5 @@ dotnet run --project tools/validation/test_frame_codec/test_frame_codec.csproj
 
 Để bắt tay vào thực hiện nhiệm vụ của mình, hãy đọc theo đúng thứ tự 2 tài liệu sau:
 
-👉 **[START_HERE.md](START_HERE.md)**: **Bắt đầu tại đây!** Hướng dẫn nhanh cho từng bạn (A, B, C, D) — Đọc để biết bạn phụ trách việc gì, bắt đầu từ file nào, cách thử và làm sao biết mình chạy đúng.  
+👉 **[START_HERE.md](START_HERE.md)**: **Bắt đầu tại đây!** Hướng dẫn nhanh cho từng bạn (A, B, C, D) — Đọc để biết bạn phụ trách việc gì, bắt đầu từ file nào, cách thử và làm sao biết mình chạy đúng.
 👉 **[FILE_MAP.md](FILE_MAP.md)**: Bản đồ toàn bộ file trong project — Giải thích vai trò của từng file trong mã nguồn hiện tại.
