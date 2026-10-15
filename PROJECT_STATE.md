@@ -1,34 +1,46 @@
 # LABGUARD — BÁO CÁO HIỆN TRẠNG DỰ ÁN (PROJECT STATE)
 
-**Dự án:** LABGUARD — Hệ thống giám sát phòng máy tính tập trung thời gian thực  
-**Môn học:** NT106 — Lập trình mạng căn bản (Khoa MMT&TT, UIT)  
-**Thời điểm cập nhật:** 27/09/2026  
-**Chế độ làm việc:** Team Takeover Mode (Nhóm 4 sinh viên A, B, C, D trực tiếp lập trình, AI hỗ trợ Mentor/Review/Debug)  
-**Tài liệu nhập môn cho nhóm:** [START_HERE.md](START_HERE.md) & [FILE_MAP.md](FILE_MAP.md) (Tài liệu kỹ thuật nội bộ lưu trữ tại `docs/internal/`)  
+**Dự án:** LABGUARD — Hệ thống giám sát phòng máy tính tập trung thời gian thực
+**Môn học:** NT106 — Lập trình mạng căn bản (Khoa MMT&TT, UIT)
+**Thời điểm cập nhật:** 15/10/2026
+**Chế độ làm việc:** Team Takeover Mode (Nhóm 4 sinh viên A, B, C, D trực tiếp lập trình, AI hỗ trợ Mentor/Review/Debug)
+**Tài liệu nhập môn cho nhóm:** [START_HERE.md](START_HERE.md) & [FILE_MAP.md](FILE_MAP.md) (Tài liệu kỹ thuật nội bộ lưu trữ tại `docs/internal/`)
 
 ---
 
 ## 1. TỔNG QUAN TÌNH TRẠNG SẢN PHẨM (CURRENT PRODUCT STATE)
 
 > [!IMPORTANT]
-> **Hiện trạng thực tế của mã nguồn:**  
-> - **ĐÃ HOÀN THÀNH & NGHIỆM THU (DONE / ACCEPTED):** Toàn bộ các nhiệm vụ **LG-A-001** (Wire Contract & 16 Fixtures), **LG-A-002** (`FrameCodec.cs` & xử lý phân mảnh TCP), **LG-A-003** (`AgentSocketClient.cs` & hàng đợi Single-Writer 256) và **LG-A-004** (`MetricsCollector.cs`, `MetricsService.cs`, `HeartbeatService.cs` — 18/18 xUnit cases PASS, đối soát tham chiếu Windows Reference 10/10 PASS). Tổng kiểm thử tự động toàn dự án: **141/141 tests PASS** (Protocol 107, Agent 34).
-> - **CÁC PHÂN HỆ CHƯA TRIỂN KHAI:** `src/LabGuard.Central/`, `src/LabGuard.Admin/`, `src/LabGuard.Simulator/` chỉ chứa khung sườn tối thiểu (`Program.cs`, `DashboardForm.cs`). Sinh viên B/C/D sẽ tự tay lập trình từng tính năng.
-> - **CÁC THÀNH VIÊN SẼ TỰ TAY LẬP TRÌNH TỪNG TÍNH NĂNG:** Sinh viên sẽ trực tiếp tạo mới và lập trình các file tính năng theo đúng nhiệm vụ được phân công trong bảng theo dõi `LabGuard_Task_Tracker.xlsx`.
+> **Hiện trạng thực tế của mã nguồn (sau khi merge PR #4, #5, #7, #8, #9):**
+> - **ĐÃ HOÀN THÀNH & NGHIỆM THU (DONE / ACCEPTED):**
+>   - **A-001..A-004:** Wire Contract (`WireEnvelope.cs`, 16 Fixtures), `FrameCodec.cs`, `AgentSocketClient.cs` (hàng đợi Single-Writer 256), `MetricsCollector.cs` (Win32 P/Invoke CPU/RAM/Uptime), `MetricsService.cs`, `HeartbeatService.cs`. Toàn bộ 141 tests PASS (Protocol 107, Agent 34), đối soát Windows Reference 10/10 PASS.
+>   - **B-001 (Central Server):** `CentralServer.cs` mở TcpListener port 5000, xử lý đa client, FrameCodec, 9/9 `Central.Tests` PASS (Merged qua PR #7).
+>   - **D-002 (TCP Echo):** `tools/TcpEcho/Program.cs` TCP Echo Server đa client, shutdown an toàn (Merged qua PR #8).
+>   - **Mock Harness (Tooling):** `tools/mock_harness/FakeAgent`, `FakeCentral` và `tests/LabGuard.MockHarness.Tests` (15/15 tests PASS, merged qua PR #9; công cụ kiểm thử bổ trợ).
+>   - **Tổng kiểm thử tự động toàn dự án (Local baseline):** **165/165 tests PASS** (Protocol 107, Central 9, Agent 34, MockHarness 15).
+> - **ĐANG LÀM / NGHIỆM THU TỪNG PHẦN:**
+>   - **B-005 (Database SQL Server):** DDL `database/schema.sql` đã merge qua PR #5 (tạo bảng `ProcessedBatches`, `MetricSamples`, `Incidents`). Phần C# persistence trong `DatabaseRepository.cs` và kiểm thử lưu trữ SQL Server chưa nghiệm thu.
+>   - **C-001 (Admin WinForms UI):** Layout 0.1 đã merge qua PR #4 (`DashboardForm.cs`, ảnh `docs/evidence/admin_dashboard_c001.png`). Nghiệm thu toàn diện UI & data binding đang chờ thực hiện.
+> - **CHƯA LÀM / TIẾP THEO:**
+>   - **Sinh viên A:** Tiếp theo là `A-005` (Tự động kết nối lại khi rớt mạng với Exponential Backoff + Jitter).
+>   - **Sinh viên B:** Tiếp theo là `B-002` (Bắt tay HELLO/AUTH) và hoàn thiện `B-005`.
+>   - **Sinh viên C:** Tiếp theo là `C-002` (AdminClient kết nối Socket Central).
+>   - **Sinh viên D:** `D-001` (chưa có báo cáo); tiếp theo là `D-003` (TCP Relay). Các module `Gateway`, `Collector`, `Simulator` (`D-004..D-006`) là dự kiến mở rộng sau.
 
 - **Chi tiết hiện trạng từng phân hệ:**
   - `src/LabGuard.Protocol/`: **HOÀN THÀNH 100% (DONE / ACCEPTED)**. Gồm `FrameCodec.cs`, `WireEnvelope.cs`, `EnvelopeValidator.cs`, `MessageTypes.cs`, `ErrorCodes.cs`, các DTOs và `ProtocolSerializer.cs`. Đã đóng băng giao ước.
-  - `src/LabGuard.Agent/`: **A-001 ĐẾN A-004 ĐÃ NGHIỆM THU CHÍNH THỨC (DONE / ACCEPTED)**. Có `AgentSocketClient.cs` (BoundedChannel 256, Single-Writer), `MetricsCollector.cs` (Win32 P/Invoke CPU/RAM/Uptime), `MetricsService.cs` (định kỳ 5s METRIC_BATCH), `HeartbeatService.cs` (định kỳ 5s HEARTBEAT). 34/34 Agent tests PASS (16 cases A-003 + 18 cases A-004). Đối soát tham chiếu Windows Reference 10/10 PASS. Từ A-005 trở đi là **CHƯA LÀM** (tiếp theo: A-005 Reconnect).
-  - `src/LabGuard.Central/`: **KHUNG SƯỜN CHỜ TRIỂN KHAI**. Chưa có TCP listener, chưa có bắt tay xác thực, chưa có liveness monitor, chưa có rule engine hay database repository. Sinh viên B sẽ bắt đầu từ B-001 (`CentralServer.cs`).
-  - `src/LabGuard.Admin/`: **KHUNG SƯỜN GIAO DIỆN CHỜ TRIỂN KHAI**. Đã có form rỗng `DashboardForm.cs`. Chưa có kết nối mạng `AdminClient.cs`, chưa có bảng DataGridView và các nút điều khiển. Sinh viên C sẽ bắt đầu từ C-001 và C-002.
-  - `src/LabGuard.Gateway/` & `src/LabGuard.Collector/`: **CHƯA TỒN TẠI TRONG SRC**. Là phân hệ mở rộng dự kiến cho Thành viên D sau khi hệ thống cốt lõi của A, B, C ổn định. D hiện thực hành socket trong `tools/`.
-  - `database/`: **KHUNG CHỜ (PLACEHOLDER)**. `schema.sql` và `seed.sql` hiện là khung chờ; Sinh viên B sẽ tự tay hoàn thiện trong B-005.
+  - `src/LabGuard.Agent/`: **A-001 ĐẾN A-004 ĐÃ NGHIỆM THU CHÍNH THỨC (DONE / ACCEPTED)**. Có `AgentSocketClient.cs` (BoundedChannel 256, Single-Writer), `MetricsCollector.cs` (Win32 P/Invoke CPU/RAM/Uptime), `MetricsService.cs` (định kỳ 5s METRIC_BATCH), `HeartbeatService.cs` (định kỳ 5s HEARTBEAT). 34/34 Agent tests PASS. Đối soát tham chiếu Windows Reference 10/10 PASS. Từ A-005 trở đi là **CHƯA LÀM** (tiếp theo: A-005 Reconnect).
+  - `src/LabGuard.Central/`: **B-001 ĐÃ HOÀN THÀNH (DONE / ACCEPTED — PR #7)**. Có `CentralServer.cs` mở TcpListener cổng 5000, xử lý đa client, 9/9 `Central.Tests` PASS. Tiếp theo: B-002 (Bắt tay HELLO/AUTH) và B-005 (DatabaseRepository).
+  - `src/LabGuard.Admin/`: **C-001 ĐANG LÀM (IN PROGRESS — PR #4)**. Đã có `DashboardForm.cs` layout 0.1 (2 DataGridView, cụm nút bấm, DoubleBuffered). Tiếp theo: C-002 (`AdminClient.cs` kết nối socket Central).
+  - `src/LabGuard.Gateway/` & `src/LabGuard.Collector/`: **CHƯA TỒN TẠI TRONG SRC**. Là phân hệ mở rộng dự kiến cho Thành viên D sau khi hệ thống cốt lõi của A, B, C ổn định.
+  - `database/`: **B-005 ĐANG LÀM (IN PROGRESS — PR #5)**. `schema.sql` đã merge tạo 3 bảng `ProcessedBatches`, `MetricSamples`, `Incidents`. C# persistence và kiểm thử SQL Server đang chờ hoàn thiện.
+  - `tools/`: Có `tools/TcpEcho/Program.cs` (D-002 XONG qua PR #8), `tools/mock_harness/` (`FakeAgent`, `FakeCentral` qua PR #9), `tools/validation/test_frame_codec/` (A-002).
 
 - **Hiện trạng nhiệm vụ chính thức của các thành viên (Authoritative Team Status):**
-  - **Sinh viên A (Agent & Protocol):** Đã nghiệm thu **A-001**, **A-002**, **A-003**, **A-004** (`DONE / ACCEPTED / CLOSED`). Nhiệm vụ **A-004** đã được nghiệm thu chính thức (18/18 A-004 tests PASS, 10/10 mẫu đối soát Windows Reference PASS). Từ **A-005 trở đi là CHƯA LÀM** (Tiếp theo: A-005 — Tự động kết nối lại khi rớt mạng với Exponential Backoff + Jitter trong `AgentSocketClient.cs`).
-  - **Sinh viên B (Central & CSDL):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với B-001: `CentralServer.cs` mở cổng TCP 5000).
-  - **Sinh viên C (Admin UI):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với C-001 thiết kế WinForms và C-002 tạo `AdminClient.cs`).
-  - **Sinh viên D (Gateway & Collector):** **100% nhiệm vụ là CHƯA LÀM** (Bắt đầu với D-001 đọc hiểu giao thức và D-002 viết TCP Echo trong `tools/`).
+  - **Sinh viên A (Agent & Protocol):** Đã nghiệm thu **A-001**, **A-002**, **A-003**, **A-004** (`DONE / ACCEPTED / CLOSED`). Từ **A-005 trở đi là CHƯA LÀM** (Tiếp theo: A-005 — Tự động kết nối lại khi rớt mạng trong `AgentSocketClient.cs`).
+  - **Sinh viên B (Central & CSDL):** Đã nghiệm thu **B-001** qua PR #7 (`CentralServer.cs` mở cổng TCP 5000). Đang làm **B-005** (`database/schema.sql` DDL đã merge qua PR #5). Tiếp theo: **B-002** (Bắt tay HELLO/AUTH) và hoàn thiện B-005 persistence.
+  - **Sinh viên C (Admin UI):** Đang làm **C-001** (`DashboardForm.cs` layout 0.1 đã merge qua PR #4). Tiếp theo: **C-002** (`AdminClient.cs` mở socket kết nối tới Central).
+  - **Sinh viên D (Gateway & Collector):** Đã nghiệm thu **D-002** qua PR #8 (`tools/TcpEcho/Program.cs`). Đã merge Mock Harness qua PR #9 (`tools/mock_harness/`). **D-001** chưa có báo cáo nghiệm thu; tiếp theo: **D-003** (Thử nghiệm TCP Relay trong `tools/TcpRelay/`).
 
 ---
 
@@ -87,17 +99,24 @@
 
 ## 2. KẾT QUẢ KIỂM THỬ HIỆN TẠI (AUTOMATED TEST COUNT)
 
-**Tổng số kiểm thử tự động hiện tại:** **141 / 141 tests PASSED (100%)**
+**Tổng số kiểm thử tự động hiện tại (Đường cơ sở cục bộ):** **165 / 165 tests PASSED (100%)**
 - `LabGuard.Protocol.Tests`: **107 / 107 passed** (Kiểm thử FrameCodec, ReadExactlyBytesAsync, chunking 1-byte header/payload, coalescing 3 frames, boundary 262,144 bytes, WireEnvelope, raw JSON validation, 8 yêu cầu wire contract, 16 canonical fixtures minified/no-BOM/DTO deserialization, strict casing, duplicate keys, non-object payloads, strict uppercase 'Z'/'+00:00' UTC designator, ReadEnvelopeAsync strictness).
-- `LabGuard.Agent.Tests`: **34 / 34 passed** (Kiểm thử AgentSocketClient 16 tests và Metrics/Heartbeat/Win32 PInvoke 18 tests).
-- `LabGuard.Central.Tests`: **0 tests** (Chờ Thành viên B triển khai Central Server từ B-001 trở đi).
+- `LabGuard.Agent.Tests`: **34 / 34 passed** (Kiểm thử AgentSocketClient 16 tests và Metrics/Heartbeat/Win32 PInvoke 18 tests; đối soát Windows Reference 10/10 PASS).
+- `LabGuard.Central.Tests`: **9 / 9 passed** (Kiểm thử CentralServer B-001: mở cổng 5000, nhiều client kết nối đồng thời, framing, đóng socket an toàn).
+- `LabGuard.MockHarness.Tests`: **15 / 15 passed** (Kiểm thử MockHarnessTests: HEARTBEAT/HEARTBEAT_ACK, sequence correlation, malformed ACK rejection, framing coalescing/fragmentation, concurrent clients, safe shutdown).
+*(Lưu ý: 165/165 tests là số liệu kiểm thử cục bộ trước khi merge; hệ thống CI tự động trên GitHub chưa được thiết lập).*
 
 ---
 
 ## 2.1. CHECKPOINT AN TOÀN & HÀNH ĐỘNG TIẾP THEO (CHECKPOINT & NEXT ACTION)
 
-- **Last Safe Checkpoint:** `LG-A-004 ACCEPTED / CLOSED` (141/141 automated tests pass, đối soát Windows Reference 10/10 pass, zero regressions, zero warnings). Branch: `feat/lg-a-004-system-metrics`.
-- **Exact Next Action:** Sinh viên A triển khai tiếp **`LG-A-005 [CHƯA LÀM — TIẾP THEO]` — Tự động kết nối lại khi rớt mạng** (`AgentSocketClient.cs` với Exponential Backoff + Jitter).
+- **Last Safe Checkpoint (Đồng bộ sau PR #4, #5, #7, #8, #9):** 165/165 automated tests pass, zero warnings, zero errors. Branch: `docs/progress-sync-20261015`.
+  - *[Lịch sử]* `LG-A-004 ACCEPTED / CLOSED` (141/141 automated tests pass, đối soát Windows Reference 10/10 pass, branch `feat/lg-a-004-system-metrics`).
+- **Exact Next Actions:**
+  - Sinh viên A: Triển khai tiếp **`LG-A-005 [CHƯA LÀM — TIẾP THEO]` — Tự động kết nối lại khi rớt mạng** (`AgentSocketClient.cs` với Exponential Backoff + Jitter).
+  - Sinh viên B: Triển khai tiếp **`LG-B-002 [CHƯA LÀM — TIẾP THEO]` — Bắt tay HELLO/AUTH** và hoàn thiện C# persistence cho `LG-B-005`.
+  - Sinh viên C: Triển khai tiếp **`LG-C-002 [CHƯA LÀM — TIẾP THEO]` — Kết nối socket Central** và hoàn tất nghiệm thu UI `LG-C-001`.
+  - Sinh viên D: Triển khai tiếp **`LG-D-003 [CHƯA LÀM — TIẾP THEO]` — Thử nghiệm TCP Relay** trong `tools/TcpRelay/`.
 
 ---
 
@@ -117,19 +136,19 @@ Toàn bộ dự án được tổ chức theo kế hoạch chuẩn hóa 34 nhi�
   - A-009 [CHƯA LÀM]: Thử nghiệm kiểm tra dịch vụ mạng trên máy ảo Ubuntu / môi trường thực tế.
 
 - **Thành viên B (Máy chủ Central & CSDL):** 9 nhiệm vụ (`B-001` đến `B-009`)
-  - B-001 [BẮT ĐẦU LÀM]: Mở cổng Socket TCP 5000 đón nhận kết nối (`CentralServer.cs`).
-  - B-002 [CHƯA LÀM]: Bắt tay và xác thực máy con qua `HELLO` và `AUTH` (`ClientConnection.cs`).
+  - B-001 [XONG / ACCEPTED — PR #7]: Mở cổng Socket TCP 5000 đón nhận kết nối (`CentralServer.cs`, 9/9 `Central.Tests` PASS).
+  - B-002 [CHƯA LÀM — TIẾP THEO]: Bắt tay và xác thực máy con qua `HELLO` và `AUTH` (`ClientConnection.cs`).
   - B-003 [CHƯA LÀM]: Tiếp nhận nhịp tim và theo dõi trạng thái sống (`LivenessMonitor.cs`, deadline 20s).
   - B-004 [CHƯA LÀM]: Phân quyền tài khoản máy chủ RBAC (`ClientConnection.cs` / `AuthService.cs`).
-  - B-005 [CHƯA LÀM]: Lập trình CSDL & lưu số liệu máy vào SQL Server (`DatabaseRepository.cs`, `schema.sql`).
+  - B-005 [ĐANG LÀM — PR #5]: Lập trình CSDL & lưu số liệu máy vào SQL Server (`DatabaseRepository.cs`, `database/schema.sql` DDL đã merge tạo 3 bảng `ProcessedBatches`, `MetricSamples`, `Incidents`; C# persistence và kiểm thử SQL Server đang chờ hoàn thiện).
   - B-006 [CHƯA LÀM]: Bộ quy tắc phát hiện sự cố (`RuleEngine.cs` với Hysteresis, CPU >= 90%, RAM >= 85%).
   - B-007 [CHƯA LÀM]: Vòng đời sự cố và chống sửa đè OCC bằng `RowVersion` (`DatabaseRepository.cs`).
   - B-008 [CHƯA LÀM]: Tách riêng CSDL kiểm thử `LabGuardTestDb` khỏi `LabGuardDb`.
   - B-009 [CHƯA LÀM]: Ghi nhận UserId kỹ thuật viên xử lý vào bảng sự cố (`dbo.Incidents`, `dbo.IncidentHistory`).
 
 - **Thành viên C (Giao diện quản trị Admin WinForms):** 10 nhiệm vụ (`C-001` đến `C-008`, `C-010`, `C-011`; nhiệm vụ `C-009` được thu hồi/dự phòng)
-  - C-001 [BẮT ĐẦU LÀM]: Thiết kế màn hình chính WinForms (`DashboardForm.cs`).
-  - C-002 [BẮT ĐẦU LÀM]: Kết nối ngầm tới máy chủ Central (`AdminClient.cs`).
+  - C-001 [ĐANG LÀM — PR #4]: Thiết kế màn hình chính WinForms (`DashboardForm.cs` layout 0.1 đã merge, ảnh `docs/evidence/admin_dashboard_c001.png`; nghiệm thu toàn diện UI & data binding đang chờ thực hiện).
+  - C-002 [CHƯA LÀM — TIẾP THEO]: Kết nối ngầm tới máy chủ Central (`AdminClient.cs`).
   - C-003 [CHƯA LÀM]: Bảng danh sách thiết bị DataGridView (`DashboardForm.cs`).
   - C-004 [CHƯA LÀM]: Bảng danh sách sự cố DataGridView (`DashboardForm.cs`).
   - C-005 [CHƯA LÀM]: Nút bấm tiếp nhận sự cố ACK (`DashboardForm.cs`).
@@ -140,9 +159,9 @@ Toàn bộ dự án được tổ chức theo kế hoạch chuẩn hóa 34 nhi�
   - C-011 [CHƯA LÀM]: Hiển thị thông báo lỗi thân thiện khi máy chủ từ chối thao tác (`DashboardForm.cs`).
 
 - **Thành viên D (Tầng mở rộng Gateway & Collector):** 6 nhiệm vụ (`D-001` đến `D-006`)
-  - D-001 [BẮT ĐẦU LÀM]: Chạy bộ kiểm thử giao thức (`dotnet test`), đọc hiểu `FrameCodec.cs`, xem xét 16 tệp mẫu JSON trong fixtures, nắm vững phong bì 6 trường và đóng khung TCP 4 byte.
-  - D-002 [BẮT ĐẦU LÀM]: Viết chương trình Console TCP Echo trong thư mục `tools/` để làm quen socket.
-  - D-003 [CHƯA LÀM]: Thử nghiệm chuyển tiếp gói tin TCP Relay (`tools/`, `BoundedChannelOptions(100)`, `FullMode.Wait`).
+  - D-001 [CHƯA LÀM]: Chạy bộ kiểm thử giao thức (`dotnet test`), đọc hiểu `FrameCodec.cs`, xem xét 16 tệp mẫu JSON trong fixtures, nắm vững phong bì 6 trường và đóng khung TCP 4 byte *(Chưa có báo cáo tìm hiểu)*.
+  - D-002 [XONG / ACCEPTED — PR #8]: Viết chương trình Console TCP Echo trong thư mục `tools/TcpEcho/Program.cs` (đa client, safe shutdown).
+  - D-003 [CHƯA LÀM — TIẾP THEO]: Thử nghiệm chuyển tiếp gói tin TCP Relay (`tools/TcpRelay/`, `BoundedChannelOptions(100)`, `FullMode.Wait`). *(Lưu ý: Mock Harness trong `tools/mock_harness/` đã merge qua PR #9 là công cụ bổ trợ, không phải D-003)*.
   - D-004 [CHƯA LÀM / DỰ KIẾN]: Tạo dự án `LabGuard.Gateway` (bộ cân bằng tải L4 TCP).
   - D-005 [CHƯA LÀM / DỰ KIẾN]: Tạo dự án `LabGuard.Collector` (trạm gom dữ liệu phân tán).
   - D-006 [CHƯA LÀM / DỰ KIẾN]: Viết logic sinh tải 20–50 máy trạm cho `LabGuard.Simulator`.

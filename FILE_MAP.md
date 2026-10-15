@@ -1,25 +1,35 @@
 # BẢN ĐỒ TOÀN BỘ TẬP TIN DỰ ÁN (FILE MAP)
 
-> **Tài liệu tra cứu cấu trúc mã nguồn thực tế của dự án LabGuard.**  
-> Hiện tại, dự án đang ở giai đoạn bắt đầu phân công cho 4 sinh viên thực hiện.  
-> **Đã nghiệm thu chính thức (`DONE / ACCEPTED / CLOSED`): thư viện giao thức (`LabGuard.Protocol` — A-001, A-002), kết nối TCP Agent (`LabGuard.Agent` — A-003), và thu thập CPU/RAM/Uptime & dịch vụ định kỳ (`LabGuard.Agent` — A-004, đối soát Windows Reference 10/10 PASS).**
-> Các phân hệ Central, Admin, Database hiện tại chỉ giữ lại khung sườn tối thiểu (skeleton). Nhiệm vụ tiếp theo của Agent là A-005 (Reconnect).
+> **Tài liệu tra cứu cấu trúc mã nguồn thực tế của dự án LabGuard.**
+> Hiện tại, các phân hệ đã bắt đầu được hiện thực và merge theo các Pull Request chính thức.
+> **Đã nghiệm thu chính thức (`DONE / ACCEPTED / CLOSED`):**
+> - Thư viện giao thức (`LabGuard.Protocol` — A-001, A-002: 107 tests PASS).
+> - Kết nối TCP Agent và hàng đợi (`LabGuard.Agent` — A-003: 16 tests PASS).
+> - Thu thập CPU/RAM/Uptime & dịch vụ định kỳ (`LabGuard.Agent` — A-004: 18 tests PASS, đối soát Windows Reference 10/10 PASS).
+> - Máy chủ TCP Server (`LabGuard.Central` — B-001 qua PR #7: `CentralServer.cs`, 9 tests PASS).
+> - TCP Echo Server (`tools/TcpEcho/` — D-002 qua PR #8: `Program.cs`, đa client, shutdown an toàn).
+> - Bộ công cụ giả lập kiểm thử độc lập Mock Harness (`tools/mock_harness/` qua PR #9: `FakeAgent`, `FakeCentral`, `LabGuard.MockHarness.Tests` 15 tests PASS).
+>
+> **Đang làm / Nghiệm thu từng phần:**
+> - CSDL SQL Server (`database/schema.sql` — B-005 DDL đã merge qua PR #5; phần C# persistence và SQL Server chưa nghiệm thu).
+> - Giao diện WinForms (`LabGuard.Admin` — C-001 layout 0.1 đã merge qua PR #4; nghiệm thu toàn diện UI đang chờ thực hiện).
 >
 > **Ký hiệu hiện trạng:**
-> - ✅ **ĐÃ XONG & NGHIỆM THU (`DONE / ACCEPTED / CLOSED`):** Mã nguồn chính thức đã hoàn thành và nghiệm thu (A-001, A-002, A-003, A-004).
-> - ⚪ **CHƯA LÀM (KHUNG SƯỜN TỐI THIỂU):** Khung dự án chờ sinh viên tự tay lập trình theo nhiệm vụ được giao (A-005+ và Central/Admin).
+> - ✅ **ĐÃ XONG & NGHIỆM THU (`DONE / ACCEPTED / CLOSED`):** Mã nguồn chính thức đã hoàn thành và nghiệm thu (A-001..A-004, B-001, D-002; Mock Harness).
+> - 🟡 **ĐANG LÀM / NGHIỆM THU TỪNG PHẦN:** B-005 (`schema.sql` DDL đã có), C-001 (khung UI 0.1 đã có).
+> - ⚪ **CHƯA LÀM:** Các nhiệm vụ tiếp theo (A-005+, B-002+, C-002+, D-001, D-003+).
 
 ---
 
 ## MỤC LỤC
 
 1. [Phần 1: Thư viện giao thức dùng chung (`src/LabGuard.Protocol/`) — ĐÃ HOÀN THÀNH (A-001 & A-002)](#phần-1-thư-viện-giao-thức-dùng-chung-srclabguardprotocol--đã-hoàn-thành-a-001--a-002)
-2. [Phần 2: Ứng dụng máy trạm (`src/LabGuard.Agent/`) — Sinh viên A (A-001 đến A-004 ĐÃ XONG / NGHIỆM THU; A-005+ chưa làm)](#phần-2-ứng-dụng-máy-trạm-srclabguardagent--sinh-viên-a-a-001-đến-a-004-đã-xong--nghiệm-thu)
-3. [Phần 3: Máy chủ trung tâm (`src/LabGuard.Central/`) — Sinh viên B (Bắt đầu từ B-001)](#phần-3-máy-chủ-trung-tâm-srclabguardcentral--sinh-viên-b-bắt-đầu-từ-b-001)
-4. [Phần 4: Giao diện quản trị (`src/LabGuard.Admin/`) — Sinh viên C (Bắt đầu từ C-001)](#phần-4-giao-diện-quản-trị-srclabguardadmin--sinh-viên-c-bắt-đầu-từ-c-001)
+2. [Phần 2: Ứng dụng máy trạm (`src/LabGuard.Agent/`) — Sinh viên A (A-001 đến A-004 ĐÃ XONG; A-005 là việc tiếp theo)](#phần-2-ứng-dụng-máy-trạm-srclabguardagent--sinh-viên-a-a-001-đến-a-004-đã-xong--nghiệm-thu)
+3. [Phần 3: Máy chủ trung tâm (`src/LabGuard.Central/`) — Sinh viên B (B-001 ĐÃ XONG; B-002 là việc tiếp theo)](#phần-3-máy-chủ-trung-tâm-srclabguardcentral--sinh-viên-b-b-001-đã-xong-b-002-là-việc-tiếp-theo)
+4. [Phần 4: Giao diện quản trị (`src/LabGuard.Admin/`) — Sinh viên C (C-001 ĐANG LÀM; C-002 là việc tiếp theo)](#phần-4-giao-diện-quản-trị-srclabguardadmin--sinh-viên-c-c-001-đang-làm-c-002-là-việc-tiếp-theo)
 5. [Phần 5: Công cụ giả lập tải (`src/LabGuard.Simulator/`)](#phần-5-công-cụ-giả-lập-tải-srclabguardsimulator)
-6. [Phần 6: Cơ sở dữ liệu SQL Server (`database/`) — Sinh viên B (Task B-005)](#phần-6-cơ-sở-dữ-liệu-sql-server-database--sinh-viên-b-task-b-005)
-7. [Phần 7: Các dự án kiểm thử tự động (`tests/`) & Công cụ (`tools/`)](#phần-7-các-dự-án-kiểm-thử-tự-động-tests--công-cụ-tools)
+6. [Phần 6: Cơ sở dữ liệu SQL Server (`database/`) — Sinh viên B (B-005 ĐANG LÀM / schema.sql đã merge)](#phần-6-cơ-sở-dữ-liệu-sql-server-database--sinh-viên-b-b-005-đang-làm--schemasql-đã-merge)
+7. [Phần 7: Các dự án kiểm thử tự động (`tests/`) & Công cụ (`tools/`) — D-002 & Mock Harness](#phần-7-các-dự-án-kiểm-thử-tự-động-tests--công-cụ-tools)
 8. [Phần 8: Tài liệu đặc tả kỹ thuật & Hướng dẫn (`docs/`)](#phần-8-tài-liệu-đặc-tả-kỹ-thuật--hướng-dẫn-docs)
 
 ---
@@ -64,36 +74,36 @@ Chương trình chạy ngầm trên máy con sinh viên. Toàn bộ các nhiệm
 
 ---
 
-## PHẦN 3: MÁY CHỦ TRUNG TÂM (`src/LabGuard.Central/`) — SINH VIÊN B (BẮT ĐẦU TỪ B-001)
+## PHẦN 3: MÁY CHỦ TRUNG TÂM (`src/LabGuard.Central/`) — SINH VIÊN B (B-001 ĐÃ XONG; B-002 LÀ VIỆC TIẾP THEO)
 
-Máy chủ trung tâm điều hành toàn bộ hệ thống. Toàn bộ logic mở socket lắng nghe, phân quyền, xử lý CSDL và quy tắc sự cố sẽ do **Sinh viên B tự tay viết**.
+Máy chủ trung tâm điều hành toàn bộ hệ thống. Nhiệm vụ B-001 đã hoàn thành và nghiệm thu qua PR #7. Sinh viên B sẽ tiếp tục phát triển các tính năng tiếp theo.
 
 | File | Nói đơn giản nó làm gì | Ai cần file này | Hiện trạng thực tế |
 | :--- | :--- | :--- | :--- |
-| [`Program.cs`](src/LabGuard.Central/Program.cs) | Khung chương trình Console tối thiểu: in thông báo chờ Sinh viên B bắt đầu thực hiện nhiệm vụ B-001 | Sinh viên B | ⚪ **KHUNG SƯỜN TỐI THIỂU:** B sẽ bắt đầu từ file này để mở cổng TCP Socket lắng nghe. |
+| [`CentralServer.cs`](src/LabGuard.Central/CentralServer.cs) | Khởi tạo TcpListener cổng 5000, đón nhận đa client bất đồng bộ, đọc gói tin qua FrameCodec, xử lý lỗi/ngắt kết nối an toàn | Sinh viên B | ✅ **B-001 ĐÃ XONG (PR #7):** 9/9 tests PASS trong `Central.Tests`. |
+| [`Program.cs`](src/LabGuard.Central/Program.cs) | Điểm khởi đầu chương trình Console máy chủ Central, tích hợp CentralServer và xử lý Ctrl+C | Sinh viên B | ✅ **ĐÃ CẬP NHẬT (PR #7):** Chạy máy chủ lắng nghe cổng 5000. |
 | [`LabGuard.Central.csproj`](src/LabGuard.Central/LabGuard.Central.csproj) | Cấu hình dự án Central Server, tham chiếu `LabGuard.Protocol` và `Microsoft.Data.SqlClient` | .NET SDK | Giữ nguyên để toàn bộ Solution biên dịch thành công. |
 
-> **Các file Sinh viên B sẽ tự tay tạo mới khi làm việc:**  
-> - `CentralServer.cs` (Task B-001: Mở cổng TCP 5000 lắng nghe kết nối)  
-> - `ClientConnection.cs` (Task B-002: Bắt tay HELLO/AUTH; Task B-004: Phân quyền RBAC)  
-> - `LivenessMonitor.cs` & `MonotonicLivenessRegistry.cs` (Task B-003: Theo dõi nhịp tim và báo OFFLINE sau 20s)  
-> - `DatabaseRepository.cs` (Task B-005: Lưu số liệu máy; Task B-007: Vòng đời sự cố và chống sửa đè OCC)  
-> - `RuleEngine.cs` (Task B-006: Bộ quy tắc phát hiện quá tải CPU/RAM)  
+> **Các file Sinh viên B sẽ tự tay tạo mới / hoàn thiện khi làm việc tiếp theo:**
+> - `ClientConnection.cs` (Task B-002 [CHƯA LÀM — TIẾP THEO]: Bắt tay HELLO/AUTH; Task B-004: Phân quyền RBAC)
+> - `LivenessMonitor.cs` & `MonotonicLivenessRegistry.cs` (Task B-003: Theo dõi nhịp tim và báo OFFLINE sau 20s)
+> - `DatabaseRepository.cs` (Task B-005 [ĐANG LÀM]: Lưu số liệu máy vào SQL Server; Task B-007: Vòng đời sự cố và chống sửa đè OCC)
+> - `RuleEngine.cs` (Task B-006: Bộ quy tắc phát hiện quá tải CPU/RAM)
 
 ---
 
-## PHẦN 4: GIAO DIỆN QUẢN TRỊ (`src/LabGuard.Admin/`) — SINH VIÊN C (BẮT ĐẦU TỪ C-001)
+## PHẦN 4: GIAO DIỆN QUẢN TRỊ (`src/LabGuard.Admin/`) — SINH VIÊN C (C-001 ĐANG LÀM; C-002 LÀ VIỆC TIẾP THEO)
 
-Ứng dụng Windows Forms dành cho người trực phòng máy. Toàn bộ giao diện và kết nối mạng sẽ do **Sinh viên C tự tay xây dựng**.
+Ứng dụng Windows Forms dành cho người trực phòng máy. Nhiệm vụ C-001 layout 0.1 đã merge qua PR #4. Sinh viên C sẽ tiếp tục hoàn thiện giao diện và kết nối mạng.
 
 | File | Nói đơn giản nó làm gì | Ai cần file này | Hiện trạng thực tế |
 | :--- | :--- | :--- | :--- |
-| [`Program.cs`](src/LabGuard.Admin/Program.cs) | Điểm khởi đầu chuẩn của Windows Forms: khởi tạo và mở `DashboardForm` | Sinh viên C | ⚪ **KHUNG SƯỜN TỐI THIỂU** |
-| [`DashboardForm.cs`](src/LabGuard.Admin/DashboardForm.cs) | Cửa sổ Windows Forms trống chứa nhãn thông báo đang chờ Sinh viên C bắt đầu thiết kế | Sinh viên C | ⚪ **KHUNG SƯỜN TỐI THIỂU:** C sẽ tự tay thiết kế bảng thiết bị, bảng sự cố và các nút bấm trong C-001. |
+| [`DashboardForm.cs`](src/LabGuard.Admin/DashboardForm.cs) | Khung giao diện WinForms 0.1: 2 bảng DataGridView (danh sách máy, sự cố), cụm nút bấm tác vụ, DoubleBuffered | Sinh viên C | 🟡 **C-001 ĐANG LÀM (PR #4):** Layout 0.1 đã merge (`docs/evidence/admin_dashboard_c001.png`), đang chờ nghiệm thu toàn diện UI & data binding. |
+| [`Program.cs`](src/LabGuard.Admin/Program.cs) | Điểm khởi đầu chuẩn của Windows Forms: cấu hình DPI, ApplicationConfiguration và mở `DashboardForm` | Sinh viên C | ✅ **ĐÃ CẬP NHẬT (PR #4):** Khởi chạy DashboardForm chuẩn mực. |
 | [`LabGuard.Admin.csproj`](src/LabGuard.Admin/LabGuard.Admin.csproj) | Cấu hình dự án Windows Forms, tham chiếu `LabGuard.Protocol` | .NET SDK | Giữ nguyên để toàn bộ Solution biên dịch thành công. |
 
-> **Các file Sinh viên C sẽ tự tay tạo mới khi làm việc:**  
-> - `AdminClient.cs` (Task C-002: Kết nối ngầm tới máy chủ Central, đăng nhập và nhận thông báo)  
+> **Các file Sinh viên C sẽ tự tay tạo mới khi làm việc tiếp theo:**
+> - `AdminClient.cs` (Task C-002 [CHƯA LÀM — TIẾP THEO]: Kết nối ngầm tới máy chủ Central, đăng nhập và nhận thông báo)
 
 ---
 
@@ -101,17 +111,17 @@ Máy chủ trung tâm điều hành toàn bộ hệ thống. Toàn bộ logic m�
 
 | File | Nói đơn giản nó làm gì | Hiện trạng thực tế |
 | :--- | :--- | :--- |
-| [`Program.cs`](src/LabGuard.Simulator/Program.cs) | Khung Console mẫu in thông báo chưa hiện thực | ⚪ **KHUNG SƯỜN TỐI THIỂU:** Chưa có logic sinh tải. |
+| [`Program.cs`](src/LabGuard.Simulator/Program.cs) | Khung Console mẫu in thông báo chưa hiện thực | ⚪ **KHUNG SƯỜN TỐI THIỂU:** Chưa có logic sinh tải (kế hoạch D-006 dự kiến). |
 | [`LabGuard.Simulator.csproj`](src/LabGuard.Simulator/LabGuard.Simulator.csproj) | Cấu hình dự án giả lập | Giữ nguyên để Solution biên dịch. |
 
 ---
 
-## PHẦN 6: CƠ SỞ DỮ LIỆU SQL SERVER (`database/`) — SINH VIÊN B (TASK B-005)
+## PHẦN 6: CƠ SỞ DỮ LIỆU SQL SERVER (`database/`) — SINH VIÊN B (B-005 ĐANG LÀM / SCHEMA.SQL ĐÃ MERGE)
 
 | File | Nói đơn giản nó làm gì | Hiện trạng thực tế |
 | :--- | :--- | :--- |
-| [`schema.sql`](database/schema.sql) | Kịch bản tạo CSDL và các bảng trong SQL Server | ⚪ **KHUNG CHỜ (PLACEHOLDER):** Sinh viên B sẽ tự tay viết kịch bản này khi thực hiện Task B-005. |
-| [`seed.sql`](database/seed.sql) | Kịch bản nạp tài khoản mẫu ban đầu | ⚪ **KHUNG CHỜ (PLACEHOLDER):** Sinh viên B sẽ tự tay viết kịch bản này khi thực hiện Task B-005. |
+| [`schema.sql`](database/schema.sql) | Kịch bản DDL tạo CSDL và các bảng ProcessedBatches, MetricSamples, Incidents | 🟡 **B-005 ĐANG LÀM (PR #5):** Kịch bản DDL đã merge vào repository; phần code C# persistence và kiểm thử SQL Server chưa nghiệm thu. |
+| [`seed.sql`](database/seed.sql) | Kịch bản nạp tài khoản mẫu ban đầu | ⚪ **KHUNG CHỜ (PLACEHOLDER):** Sinh viên B sẽ hoàn thiện khi làm phần xác thực người dùng. |
 
 ---
 
@@ -119,10 +129,13 @@ Máy chủ trung tâm điều hành toàn bộ hệ thống. Toàn bộ logic m�
 
 | Thư mục / File | Nói đơn giản nó làm gì | Hiện trạng thực tế |
 | :--- | :--- | :--- |
-| `tests/LabGuard.Protocol.Tests/` | Các bài kiểm tra tự động xác thực việc cắt khung tin 4 byte (`FrameCodecTests.cs`) và 16 bản tin mẫu canonical (`WireContractAndFixturesTests.cs`, `ProtocolSpecificationTests.cs`). 16 tệp JSON trong `Fixtures/` là bộ fixture quy chuẩn của nhiệm vụ A-001. | ✅ **Protocol tests PASS:** Kiểm thử chính thức của 2 nhiệm vụ đã hoàn thành (A-001 & A-002). |
-| `tests/LabGuard.Agent.Tests/` | Bộ kiểm thử Agent: `AgentSocketClientTests.cs` (16 tests A-003), `MetricsCollectorTests.cs`, `MetricsServiceTests.cs`, `HeartbeatServiceTests.cs` (18 tests A-004), và `FakeTcpServer.cs`. | ✅ **Agent tests PASS:** 34/34 tests đạt 100% (kết nối socket, hàng đợi, CPU delta, RAM, Uptime, FakeServer, Concurrency, Latency < 100ms). |
-| `tests/LabGuard.Central.Tests/` | Dự án kiểm thử cho Central | ⚪ **KHUNG CHỜ (SKELETON):** Sinh viên B sẽ viết các bài test khi thực hiện B-001+. |
-| `tools/validation/test_frame_codec/` | Công cụ console độc lập giúp kiểm tra nhanh khung tin TCP của A-002 | ✅ **ĐÃ CÓ:** Phục vụ kiểm tra độc lập việc đóng/mở khung tin 4 byte. |
+| `tests/LabGuard.Protocol.Tests/` | Các bài kiểm tra tự động xác thực việc cắt khung tin 4 byte (`FrameCodecTests.cs`) và 16 bản tin mẫu canonical (`WireContractAndFixturesTests.cs`, `ProtocolSpecificationTests.cs`). 16 tệp JSON trong `Fixtures/` là bộ fixture quy chuẩn của nhiệm vụ A-001. | ✅ **Protocol tests PASS:** 107/107 tests đạt 100% (A-001 & A-002). |
+| `tests/LabGuard.Agent.Tests/` | Bộ kiểm thử Agent: `AgentSocketClientTests.cs` (16 tests A-003), `MetricsCollectorTests.cs`, `MetricsServiceTests.cs`, `HeartbeatServiceTests.cs` (18 tests A-004), và `FakeTcpServer.cs`. | ✅ **Agent tests PASS:** 34/34 tests đạt 100% (A-003 & A-004; đối soát Windows Reference 10/10 PASS). |
+| `tests/LabGuard.Central.Tests/` | Bộ kiểm thử máy chủ Central: kiểm tra mở cổng 5000, nhiều client kết nối đồng thời, phân mảnh/ghép khung tin, đóng socket an toàn (`CentralServerTests.cs`). | ✅ **Central tests PASS:** 9/9 tests đạt 100% (PR #7, B-001). |
+| `tests/LabGuard.MockHarness.Tests/` | Bộ kiểm thử công cụ giả lập (`MockHarnessTests.cs`): kiểm tra HEARTBEAT / HEARTBEAT_ACK, sequence correlation, từ chối ACK sai cấu trúc/thiếu trường, phân mảnh/ghép khung TCP, đa client đồng thời, ngắt kết nối và shutdown an toàn. | ✅ **MockHarness tests PASS:** 15/15 tests đạt 100% (PR #9). |
+| `tools/TcpEcho/` | Chương trình Console TCP Echo Server đơn giản thử nghiệm socket TCP (Task D-002: đa client, shutdown an toàn). | ✅ **D-002 ĐÃ XONG (PR #8):** Đã nghiệm thu chính thức (`docs/evidence/D002_TCP_ECHO_VERIFICATION.md`). |
+| `tools/mock_harness/` | Bộ công cụ giả lập kiểm thử độc lập gồm `FakeAgent` (máy con giả lập) và `FakeCentral` (máy chủ giả lập phản hồi ACK). | ✅ **ĐÃ CÓ (PR #9):** Công cụ bổ trợ kiểm thử giao thức độc lập, không thay thế nhiệm vụ D-003. |
+| `tools/validation/test_frame_codec/` | Công cụ console độc lập giúp kiểm tra nhanh khung tin TCP của A-002 | ✅ **ĐÃ CÓ:** Phục vụ kiểm tra độc lập việc đóng/mở khung tin 4 byte (10/10 scenarios passed). |
 
 ---
 
