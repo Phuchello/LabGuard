@@ -1,4 +1,4 @@
-﻿namespace LabGuard.Admin
+namespace LabGuard.Admin
 {
     partial class DashboardForm
     {
@@ -93,6 +93,7 @@
             // 
             // label1
             // 
+            label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label1.Font = new Font("Century Gothic", 35F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label1.ForeColor = Color.FromArgb(233, 212, 195);
             label1.Location = new Point(354, 13);
@@ -105,8 +106,9 @@
             // 
             // btDangNhap
             // 
+            btDangNhap.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btDangNhap.BackColor = Color.FromArgb(185, 81, 24);
-            btDangNhap.Cursor = Cursors.WaitCursor;
+            btDangNhap.Cursor = Cursors.Hand;
             btDangNhap.FlatAppearance.BorderColor = Color.FromArgb(233, 212, 195);
             btDangNhap.FlatStyle = FlatStyle.Flat;
             btDangNhap.Font = new Font("Century Gothic", 9.5F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
@@ -170,6 +172,7 @@
             // 
             // pictureBox2
             // 
+            pictureBox2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             pictureBox2.BackgroundImageLayout = ImageLayout.None;
             pictureBox2.Image = Properties.Resources.wrench2;
             pictureBox2.Location = new Point(777, 9);
@@ -181,6 +184,7 @@
             // 
             // button3
             // 
+            button3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button3.BackColor = Color.FromArgb(19, 39, 63);
             button3.FlatStyle = FlatStyle.Flat;
             button3.Font = new Font("Segoe UI Semibold", 10F);
@@ -195,6 +199,7 @@
             // 
             // button2
             // 
+            button2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button2.BackColor = Color.FromArgb(54, 73, 46);
             button2.FlatStyle = FlatStyle.Flat;
             button2.Font = new Font("Segoe UI Semibold", 10F);
@@ -209,6 +214,7 @@
             // 
             // button1
             // 
+            button1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button1.BackColor = Color.FromArgb(79, 0, 5);
             button1.FlatStyle = FlatStyle.Flat;
             button1.Font = new Font("Segoe UI Semibold", 10F);
@@ -305,7 +311,7 @@
             dgvSuCo.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle6;
             dgvSuCo.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvSuCo.Columns.AddRange(new DataGridViewColumn[] { CotThoiGian, CotTenMaySuCo, CotChiTietSuCo });
-            dgvSuCo.Dock = DockStyle.Left;
+            dgvSuCo.Dock = DockStyle.Fill;
             dgvSuCo.Location = new Point(0, 0);
             dgvSuCo.Name = "dgvSuCo";
             dgvSuCo.RowHeadersVisible = false;
@@ -322,7 +328,7 @@
             CotThoiGian.HeaderText = "Time";
             CotThoiGian.MinimumWidth = 6;
             CotThoiGian.Name = "CotThoiGian";
-            CotThoiGian.Width = 125;
+            CotThoiGian.Width = 90;
             // 
             // CotTenMaySuCo
             // 
@@ -330,7 +336,7 @@
             CotTenMaySuCo.HeaderText = "Computer";
             CotTenMaySuCo.MinimumWidth = 6;
             CotTenMaySuCo.Name = "CotTenMaySuCo";
-            CotTenMaySuCo.Width = 120;
+            CotTenMaySuCo.Width = 105;
             // 
             // CotChiTietSuCo
             // 
@@ -343,9 +349,9 @@
             // 
             panel3.Controls.Add(dgvSuCo);
             panel3.Dock = DockStyle.Right;
-            panel3.Location = new Point(964, 100);
+            panel3.Location = new Point(913, 100);
             panel3.Name = "panel3";
-            panel3.Size = new Size(399, 529);
+            panel3.Size = new Size(450, 529);
             panel3.TabIndex = 2;
             // 
             // LabGuard
