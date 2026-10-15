@@ -2,22 +2,25 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LabGuard.Central
-{
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
-            Console.WriteLine("=== LABGUARD CENTRAL SERVER ===");
-            using var cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (sender, e) =>
-            {
-                e.Cancel = true;
-                cts.Cancel();
-            };
+namespace LabGuard.Central;
 
-            var server = new CentralServer();
-            await server.StartAsync(cts.Token);
-        }
+internal class Program
+{
+    static async Task Main(string[] args)
+    {
+        Console.WriteLine("==================================================");
+        Console.WriteLine("LabGuard Central Server — Máy chủ trung tâm (B-001)");
+        Console.WriteLine("==================================================");
+
+        using var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (sender, e) =>
+        {
+            e.Cancel = true;
+            Console.WriteLine("\n[Central] Nhan tin hieu dung (Ctrl+C). Dang dung may chu...");
+            cts.Cancel();
+        };
+
+        var server = new CentralServer(5000);
+        await server.StartAsync(cts.Token);
     }
 }
