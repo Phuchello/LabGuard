@@ -1,5 +1,7 @@
 -- ============================================================================
--- LABGUARD DATABASE SEED SCRIPT (CHƯA HIỆN THỰC)
--- CSDL chưa được hiện thực. Dữ liệu mẫu sẽ do Thành viên B xây dựng
--- sau khi hoàn thành thiết kế schema.
+-- LABGUARD DATABASE SEED SCRIPT — PLACEHOLDER, CHƯA CÓ DỮ LIỆU SEED
+-- database/schema.sql đã có DDL ba bảng và đã merge qua PR #5.
+-- Seed và C# persistence/tích hợp SQL là phần việc còn lại của Nguyễn Bá Quang.
+-- File này không tạo tài khoản, mật khẩu hoặc dữ liệu mẫu; không chứng minh
+-- Agent -> Central -> SQL đã hoạt động. Không thay đổi schema/giao thức.
 -- ============================================================================

@@ -1,10 +1,12 @@
 # Validation evidence — 18/10/2026
 
+Hồ sơ kiểm tra của PR #11, đã merge vào main `70481fa`. Giữ các mốc nguồn và kết quả thực chạy trước merge dưới đây; xem [PROJECT_STATE.md](../../PROJECT_STATE.md) cho housekeeping/phân công hiện hành.
+
 **Kết luận:** launcher/configuration/local collection/TCP probe đã chạy trên Windows phát triển. Chưa có monitoring toàn tuyến. TCP connect/HELLO không chứng minh AUTH, telemetry đã lưu SQL hoặc application ACK.
 
 ## Phạm vi và nguồn
 
-Nhánh `review/agent-deployment-readiness-20261018` bắt đầu từ main `260759b23d960994f75c7b15455915b68d0c5f8d`, đã fetch lại trước khi tạo worktree riêng. Checkout gốc và thay đổi chưa commit của các phần việc khác được giữ nguyên. Người điều phối đã cho phép commit/push và Draft PR; chưa merge.
+Nhánh `review/agent-deployment-readiness-20261018` bắt đầu từ main `260759b23d960994f75c7b15455915b68d0c5f8d`, đã fetch lại trước khi tạo worktree riêng. Checkout gốc và thay đổi chưa commit của các phần việc khác được giữ nguyên trong lượt đó. PR #11 sau đó được merge thành `70481fa`; trạng thái task chưa hoàn tất không đổi theo việc merge launcher.
 
 Tám file Agent/test: Program.cs, AgentSettings.cs, AgentConsoleApplication.cs, AgentLog.cs, agentsettings.example.json, LabGuard.Agent.csproj; AgentStartupTests.cs và LabGuard.Agent.Tests.csproj. Có 30 test cases mới; test reference Central chỉ để kiểm tra listener thật. Không đổi AgentSocketClient, collector/services, Central, schema, protocol, WBS hoặc báo cáo/PPTX GK.
 

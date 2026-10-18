@@ -69,7 +69,7 @@ Bạn là người tạo ra "bộ mặt" trực quan của hệ thống: ứng d
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
   \item Bạn \textbf{không cần} lo việc lấy số liệu phần cứng từ hệ điều hành máy sinh viên (việc của \textbf{Thành viên A}).
   \item Bạn \textbf{không cần} lo viết câu lệnh SQL lưu trữ dữ liệu hay tự tính toán nhịp tim sống chết (việc của \textbf{Thành viên B}).
-  \item Bạn \textbf{không cần} lo phần Gateway/Collector và công cụ thử tải của D.
+  \item Vy giữ host Admin và workflow; phối hợp Ngọc nhúng logic Assistant. Gateway/Collector của kế hoạch cũ chỉ là tùy chọn.
 \end{itemize}
 \end{tcolorbox}
 \vspace{2mm}
@@ -86,9 +86,9 @@ Mở dự án \texttt{src/LabGuard.Admin/} trong Visual Studio, chạy thử fil
 \vspace{1mm}
 \begin{enumerate}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
   \item \texttt{START\_HERE.md}: Hướng dẫn chạy nhanh cả hệ thống.
-  \item \texttt{src/LabGuard.Admin/DashboardForm.cs}: Màn hình quản trị chính nơi hiển thị bảng số liệu.
-  \item \texttt{src/LabGuard.Admin/Program.cs}: Nơi khởi động ứng dụng giao diện.
-  \item \texttt{src/LabGuard.Protocol/MessageTypes.cs}: Danh mục các loại thông điệp giữa Admin và Central.
+  \item \path{src/LabGuard.Admin/DashboardForm.cs}: Màn hình quản trị chính nơi hiển thị bảng số liệu.
+  \item \path{src/LabGuard.Admin/Program.cs}: Nơi khởi động ứng dụng giao diện.
+  \item \path{src/LabGuard.Protocol/MessageTypes.cs}: Danh mục các loại thông điệp giữa Admin và Central.
 \end{enumerate}
 \end{tcolorbox}
 
@@ -107,11 +107,16 @@ Mở dự án \texttt{src/LabGuard.Admin/} trong Visual Studio, chạy thử fil
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
+\input{sync_status.tex}
 
 % ==============================================================================
 % PHAN 1: TONG QUAN VAI TRO THANH VIEN C
 % ==============================================================================
 \section{Tổng quan vai trò của Thành viên C}
+
+\subsection*{C-012: Assistant nằm trong quy trình xử lý sự cố}
+Ngọc phụ trách logic giải thích/gợi ý, Vy nhúng vào chi tiết sự cố của máy đang chọn, Quang cung cấp dữ liệu có thẩm quyền qua Central. Bốn vùng đọc là Bằng chứng, Nhận định, Hướng kiểm tra, Thao tác xử lý. Giữ quyền, expected RowVersion/affected-row check và phản hồi Central; không tự ACK/Resolve hoặc sửa máy. Tách kết nối ONLINE/OFFLINE, điều kiện cảnh báo và workflow OPEN/ACKNOWLEDGED/IN\_PROGRESS/RESOLVED. Ba giờ ghép C-012 chỉ tính sau core Admin ready; code networking/workflow còn thiếu tính riêng.
+
 
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -134,7 +139,7 @@ Trong toàn bộ đồ án LabGuard, bạn là người chịu trách nhiệm v�
 \end{enumerate}
 \end{conceptbox}
 
-Hình này chỉ cần nhìn vào hai hộp bên trên và chiếc cầu nối bên dưới: luồng giao diện và luồng mạng trao đổi an toàn qua lệnh \texttt{BeginInvoke}.
+Hình này mô tả hai luồng và cách chuyển dữ liệu về luồng giao diện: luồng giao diện và luồng mạng trao đổi an toàn qua lệnh \texttt{BeginInvoke}.
 
 \begin{figure}[H]
   \centering
@@ -157,7 +162,7 @@ Hình này chỉ cần nhìn vào hai hộp bên trên và chiếc cầu nối b
 
 \begin{importantbox}
 \textbf{Hiện trạng mã nguồn thực tế:}
-Toàn bộ phần việc của Thành viên C đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN}. Thư mục \texttt{src/LabGuard.Admin/} hiện chỉ có file \texttt{Program.cs} và form giao diện rỗng. Bạn sẽ tự tay thiết kế và lập trình theo lộ trình 6 chặng dưới đây.
+C-001 đang làm: layout 0.1 đã merge PR \#4 trong DashboardForm. C-002 và binding/quy trình xử lý sự cố chưa nghiệm thu. Các chặng dưới đây là kế hoạch hiện thực tiếp theo; không coi ảnh giao diện là bằng chứng backend đã chạy.
 \end{importantbox}
 
 \begin{takeawaybox}
@@ -199,7 +204,7 @@ Bố trí 4 khu vực giao diện rõ ràng bằng các Control chuẩn WinForms
 \end{enumerate}
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Sửa file: \texttt{src/LabGuard.Admin/DashboardForm.cs} và \texttt{DashboardForm.Designer.cs}.
+Sửa file: \path{src/LabGuard.Admin/DashboardForm.cs} và \path{DashboardForm.Designer.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -239,10 +244,10 @@ Bấm phím \texttt{F5} trong Visual Studio: cửa sổ Dashboard xuất hiện 
 Dashboard không thể tự sinh ra dữ liệu. Nó phải mở một luồng socket TCP kết nối tới Central Server trên cổng 5000 để nhận danh sách máy tính và hứng các thông báo sự cố phát sinh.
 
 \subsubsection{Khi chạy, chuyện gì xảy ra?}
-Khi bấm "Kết nối", Admin mở \texttt{TcpClient} kết nối tới Central cổng 5000, sau đó chạy vòng lặp ngầm đọc từng khung tin bằng \texttt{FrameCodec.ReadFrameAsync} và phát sự kiện \texttt{OnMessageReceived}.
+Khi bấm "Kết nối", Admin mở \texttt{TcpClient} kết nối tới Central cổng 5000, sau đó chạy vòng lặp ngầm đọc từng khung tin bằng \path{FrameCodec.ReadFrameAsync} và phát sự kiện \texttt{OnMessageReceived}.
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới file: \texttt{src/LabGuard.Admin/AdminNetworkService.cs}.
+Tạo mới file: \path{src/LabGuard.Admin/AdminNetworkService.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -286,7 +291,7 @@ Không phải ai mở Dashboard lên cũng được phép bấm nút khởi đ�
 Admin nhập tài khoản mật khẩu vào \texttt{LoginForm.cs}. Giao diện gửi gói \texttt{LOGIN} lên cổng 5000. Central trả về \texttt{LOGIN\_RESULT} chứa vai trò (\texttt{Role}). Nếu là \texttt{Viewer}, các nút bấm thao tác nguy hiểm sẽ bị mờ đi (\texttt{Enabled = false}).
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới file: \texttt{src/LabGuard.Admin/LoginForm.cs}.
+Tạo mới file: \path{src/LabGuard.Admin/LoginForm.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -327,7 +332,7 @@ private void ApplyRolePermissions(string role)
 Mọi Control trong WinForms chỉ được phép truy cập từ luồng tạo ra nó (UI Thread). Để chuyển dữ liệu từ luồng socket sang UI Thread an toàn, bạn kiểm tra \texttt{InvokeRequired} và gọi \texttt{BeginInvoke}:
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Sửa file: \texttt{src/LabGuard.Admin/DashboardForm.cs}.
+Sửa file: \path{src/LabGuard.Admin/DashboardForm.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -375,7 +380,7 @@ Khi bấm nút "Tiếp nhận sự cố", Dashboard gửi kèm \texttt{ExpectedR
 \end{itemize}
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Sửa file: \texttt{src/LabGuard.Admin/DashboardForm.cs}.
+Sửa file: \path{src/LabGuard.Admin/DashboardForm.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]

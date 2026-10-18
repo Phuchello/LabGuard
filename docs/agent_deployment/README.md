@@ -1,5 +1,7 @@
 # Agent deployment readiness — review 18/10/2026
 
+Phần Agent của bộ hồ sơ này đã merge qua [PR #11](https://github.com/Phuchello/LabGuard/pull/11), main `70481fa`. Các mốc audit/test bên dưới ghi nhận lượt đó; trạng thái dự án hiện hành ở [PROJECT_STATE.md](../../PROJECT_STATE.md).
+
 Launcher Console đã thay màn hình status cũ: cấu hình JSON strict, DeviceId tạo một lần, collector Windows tại máy, TCP/HELLO probe qua core hiện có, cancellation và log giới hạn. **Chưa phải Agent monitoring hoàn chỉnh:** mặc định dừng exit 5; chưa TLS/session/AUTH, reconnect, telemetry→SQL hoặc ACK.
 
 - [Audit main và giới hạn thực tế](SOURCE_READINESS_AUDIT.md).
@@ -39,6 +41,6 @@ Log file tùy chọn là đường dẫn tương đối với thư mục config 
 
 ## Ranh giới PR
 
-Phúc/Agent và tests liên quan; reference Central chỉ trong test để dùng listener thật. Không sửa Central, Admin, protocol, schema, WBS hoặc tài liệu GK. Những thay đổi phân công/WBS và báo cáo SQL có sẵn ở checkout gốc được giữ ngoài PR. Người điều phối cho phép nhánh review và Draft PR; chưa merge.
+PR #11 chỉ chứa Phúc/Agent và tests liên quan; reference Central chỉ trong test để dùng listener thật. PR đó không sửa Central, Admin, protocol, schema, WBS hoặc tài liệu GK. Các thay đổi phân công/WBS được giữ ngoài PR #11, nay được đối chiếu riêng trong housekeeping; báo cáo SQL local vẫn ngoài phạm vi. Không suy việc đã merge launcher thành nghiệm thu monitoring.
 
 Logs/TRX gốc, snapshot nguồn, checksums GK, package cũ và bằng chứng terminal được giữ local ở checkout gốc `docs/agent_deployment/evidence/` và `deliverables/`; không bị xóa để làm gọn PR. Review trên GitHub dùng diff, test source, kết quả tóm tắt và script tái tạo, không cần artifacts lớn hay đường dẫn cá nhân.

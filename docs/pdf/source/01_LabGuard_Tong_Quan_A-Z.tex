@@ -46,6 +46,7 @@
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
+\input{sync_status.tex}
 
 % ==============================================================================
 % CHUONG 1: LABGUARD GIAI QUYET VAN DE GI?
@@ -76,7 +77,8 @@ Hình này chỉ cần nhìn luồng thông tin từ trái sang phải: các má
 
 \begin{figure}[H]
   \centering
-  \begin{tikzpicture}[
+  \scalebox{0.95}{%
+\begin{tikzpicture}[
     agent/.style={rectangle, draw=lgForestGreen, fill=lgLightGreen, rounded corners=1.5mm, thick, align=center, font=\footnotesize\bfseries, minimum width=34mm, minimum height=9mm},
     alertagent/.style={rectangle, draw=lgCrimson, fill=lgLightRed, rounded corners=1.5mm, thick, align=center, font=\footnotesize\bfseries, minimum width=34mm, minimum height=9mm},
     central/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=2mm, thick, align=center, font=\small\bfseries, minimum width=38mm, minimum height=14mm},
@@ -113,6 +115,7 @@ Hình này chỉ cần nhìn luồng thông tin từ trái sang phải: các má
       $\bullet$ \textbf{Central $\rightarrow$ Admin:} \texttt{DEVICE\_UPDATE} (trạng thái máy), \texttt{INCIDENT\_OPEN} (báo động sự cố)
     };
   \end{tikzpicture}
+}
   \caption{Mô hình tổng quan bài toán giám sát phòng máy thực hành UIT}
   \label{fig:labguard_overview_problem}
 \end{figure}
@@ -235,7 +238,7 @@ Hình này chỉ cần nhìn đối chiếu từng cặp tầng: bên trái là 
   \item \textbf{Tầng 1 \& 2 (Physical \& Data Link):} Các máy tính trong phòng thực hành kết nối với nhau qua cáp mạng RJ45 và Switch 1 Gbps.
   \item \textbf{Tầng 3 (Network):} Mỗi máy trạm nhận một địa chỉ IPv4 nội bộ (\texttt{192.168.1.x}). Máy chủ Central duy trì IP tĩnh cố định để các máy con tìm đến.
   \item \textbf{Tầng 4 (Transport):} LabGuard dùng TCP tin cậy trên cổng 5000 duy nhất. Bộ đóng khung nhị phân \texttt{FrameCodec} nằm ở ranh giới giữa tầng 4 và tầng 5, giúp biến dòng byte vô tận của TCP thành các bức thông điệp độc lập.
-  \item \textbf{Tầng 5 (Session):} Central Server duy trì danh mục các kết nối đang mở qua \texttt{ConcurrentDictionary}. Luồng quét \texttt{LivenessMonitor} định kỳ kiểm tra phiên kết nối.
+  \item \textbf{Tầng 5 (Session):} Central Server duy trì danh mục các kết nối đang mở qua \texttt{Concurrent\allowbreak{}Dictionary}. Luồng quét \texttt{LivenessMonitor} định kỳ kiểm tra phiên kết nối.
   \item \textbf{Tầng 6 (Presentation):} Dữ liệu C\# được chuyển đổi thành chuỗi JSON UTF-8. Độ dài khung tin được ghi bằng 4 byte số nguyên chuẩn Big-Endian.
   \item \textbf{Tầng 7 (Application):} Cấu trúc phong bì \texttt{WireEnvelope} và danh mục thông điệp \texttt{MessageTypes.cs} quy định hành vi trao đổi thông tin của toàn hệ thống.
 \end{enumerate}
@@ -305,9 +308,9 @@ Hình này chỉ cần nhìn theo các đường kết nối: Agent và Admin k�
 
 \subsection{LabGuard.Central (Máy chủ trung tâm)}
 \begin{itemize}
-  \item \textbf{Bản chất:} Trái tim và bộ não điều phối của toàn bộ hệ thống phòng máy.
+  \item \textbf{Bản chất:} Máy chủ tiếp nhận, kiểm tra và xử lý dữ liệu của toàn bộ phòng máy.
   \item \textbf{Cơ chế hoạt động:} Là TCP Server lắng nghe trên cổng 5000 duy nhất, tiếp nhận đồng thời cả Agent và Admin.
-  \item \textbf{Nhiệm vụ chính:} Lưu dữ liệu vào SQL Server, chạy động cơ kiểm tra sống còn (\texttt{LivenessMonitor}) và động cơ quy tắc (\texttt{RuleEngine}) để phát hiện máy hỏng.
+  \item \textbf{Nhiệm vụ chính:} Lưu dữ liệu vào SQL Server, chạy động cơ kiểm tra sống còn (\texttt{LivenessMonitor}) và bộ xử lý quy tắc (\texttt{RuleEngine}) để phát hiện máy hỏng.
 \end{itemize}
 
 \subsection{LabGuard.Admin (Màn hình quản trị WinForms)}
@@ -527,7 +530,7 @@ Hình này chỉ cần nhìn vào hai phần của khung tin: 4 byte tiêu đề
 Ý chính: Nhờ có 4 byte đầu tiên này, phía nhận luôn biết chính xác cần đọc bao nhiêu byte nữa thì trọn vẹn một gói tin.
 
 \subsection{Truyền dòng byte qua Socket TCP tới Cổng 5000}
-Mảng 189 byte được ghi vào \texttt{NetworkStream.WriteAsync()} gửi sang Central Server trên cổng 5000.
+Mảng 189 byte được ghi vào \path{NetworkStream.WriteAsync()} gửi sang Central Server trên cổng 5000.
 
 \subsection{Tiếp nhận và giải mã tại Central Server}
 Tại Central Server, phương thức \texttt{ReadExactlyBytesAsync} đọc đúng 4 byte đầu tiên để biết độ dài là 185, kiểm tra an toàn ($185 \le 256\text{ KiB}$) rồi đọc tiếp đúng 185 byte JSON.
@@ -560,7 +563,7 @@ Tại Central Server, phương thức \texttt{ReadExactlyBytesAsync} đọc đú
 \end{summarybox}
 
 \subsection{Cấu trúc vỏ bọc dữ liệu chuẩn (WireEnvelope)}
-Tệp \texttt{src/LabGuard.Protocol/WireEnvelope.cs} định nghĩa lớp phong bì dữ liệu chứa đúng 6 trường bắt buộc:
+Tệp \path{src/LabGuard.Protocol/WireEnvelope.cs} định nghĩa lớp phong bì dữ liệu chứa đúng 6 trường bắt buộc:
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -586,14 +589,14 @@ public class WireEnvelope<T>
 \end{lstlisting}
 
 \subsection{Bộ kiểm tra tính hợp lệ của bản tin (EnvelopeValidator)}
-Tệp \texttt{src/LabGuard.Protocol/EnvelopeValidator.cs} kiểm tra nghiêm ngặt: phiên bản phải bằng 1, tên thông điệp thuộc 69 loại chuẩn, RequestId là chuỗi GUID hợp lệ, DeviceId không rỗng, và thời gian có hậu tố UTC.
+Tệp \path{src/LabGuard.Protocol/EnvelopeValidator.cs} kiểm tra nghiêm ngặt: phiên bản phải bằng 1, tên thông điệp thuộc 69 loại chuẩn, RequestId là chuỗi GUID hợp lệ, DeviceId không rỗng, và thời gian có hậu tố UTC.
 
 \subsection{Bộ đóng khung nhị phân (FrameCodec)}
-Tệp \texttt{src/LabGuard.Protocol/FrameCodec.cs} bổ sung 4 byte độ dài Big-Endian với hạn mức tối đa 256 KiB:
+Tệp \path{src/LabGuard.Protocol/FrameCodec.cs} bổ sung 4 byte độ dài Big-Endian với hạn mức tối đa 256 KiB:
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item \texttt{BinaryPrimitives.WriteUInt32BigEndian} bảo đảm thứ tự byte mạng chuẩn mực.
+  \item \path{BinaryPrimitives.WriteUInt32BigEndian} bảo đảm thứ tự byte mạng chuẩn mực.
   \item Giới hạn \texttt{MaxPayloadSize = 262\_144} (256 KiB) phòng chống tấn công tràn RAM.
 \end{itemize}
 \end{orientationbox}
@@ -610,7 +613,7 @@ public static class FrameCodec
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item \texttt{BinaryPrimitives.WriteUInt32BigEndian} ghi đúng thứ tự byte mạng chuẩn mực.
+  \item \path{BinaryPrimitives.WriteUInt32BigEndian} ghi đúng thứ tự byte mạng chuẩn mực.
   \item Nối liền 4 byte độ dài với mảng byte nội dung JSON phía sau.
 \end{itemize}
 \end{orientationbox}
@@ -718,8 +721,8 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Thư viện \texttt{Protocol} (A-001 \& A-002) đã hoàn thành 100\% (toàn bộ kiểm thử tự động đã PASS).
-  \item Phân hệ Agent đã hoàn thành A-001 đến A-004 (\texttt{AgentSocketClient.cs}, \texttt{MetricsCollector.cs}, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests PASS, Windows reference 10/10 PASS); chặng A-005+ (Reconnect, ReplayBuffer) là việc tiếp theo chưa triển khai.
-  \item Các phân hệ Central, Admin hiện là khung sườn tối thiểu để sinh viên B, C tự tay lập trình.
+  \item Phân hệ Agent đã hoàn thành A-001 đến A-004 (\texttt{AgentSocketClient.cs}, \texttt{MetricsCollector.cs}, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests ở mốc A-004 (lịch sử), Windows reference 10/10 PASS); chặng A-005+ (Reconnect, ReplayBuffer) là việc tiếp theo chưa triển khai.
+  \item Central đã có B-001 listener đa client; Admin đã có layout 0.1 của C-001. Session/AUTH, persistence và quy trình xử lý sự cố vẫn chưa hoàn tất.
 \end{itemize}
 \end{summarybox}
 
@@ -728,23 +731,17 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
   \caption{Bảng hiện trạng mã nguồn thực tế của dự án LabGuard}
   \label{tab:source_status_detailed}
   \small
-  \begin{tabularx}{\textwidth}{|l|l|X|}
-    \hline
-    \rowcolor{lgDeepBlue}
-    \color{white}\textbf{Phân hệ / Thư mục} & \color{white}\textbf{Hiện trạng thực tế} & \color{white}\textbf{Mô tả chi tiết và phân công} \\
-    \hline
-    \textbf{src/LabGuard.Protocol/} & \textbf{ĐÃ HOÀN THÀNH (100\%)} & Chứa \texttt{WireEnvelope}, \texttt{FrameCodec}, \texttt{EnvelopeValidator}, các DTO và bộ kiểm thử giao thức đã PASS. \\
-    \hline
-    \textbf{src/LabGuard.Agent/} & \textbf{A-001--A-004 ĐÃ XONG} & Chứa \texttt{AgentSocketClient.cs} (BoundedChannel 256, Single-Writer Loop), \texttt{MetricsCollector.cs} (đo CPU/RAM/Uptime qua Win32 API), \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}. Đã nghiệm thu (34/34 tests PASS, đối soát Windows 10/10 PASS). Chặng A-005+ (Reconnect) là bước tiếp theo. \\
-    \hline
-    \textbf{src/LabGuard.Central/} & \textbf{CHƯA LÀM / DỰ KIẾN} & Hiện chỉ chứa file \texttt{Program.cs} giữ chỗ. Bạn B sẽ tự tay viết server TCP, CSDL và RuleEngine. \\
-    \hline
-    \textbf{src/LabGuard.Admin/} & \textbf{CHƯA LÀM / DỰ KIẾN} & Hiện chỉ chứa file \texttt{Program.cs} và form rỗng. Bạn C sẽ tự tay thiết kế bảng điều khiển WinForms. \\
-    \hline
-    \textbf{src/LabGuard.Simulator/} & \textbf{CHƯA LÀM / DỰ KIẾN} & Hiện chỉ chứa file \texttt{Program.cs} rỗng. Bạn D sẽ viết công cụ tạo máy ảo thử tải và bắt gói Wireshark. \\
-    \hline
-    \textbf{tests/LabGuard.Protocol.Tests/} & \textbf{ĐÃ HOÀN THÀNH (100\%)} & Bộ kiểm thử tự động giao thức đã PASS toàn diện. \\
-    \hline
+  \begin{tabularx}{\textwidth}{@{}p{22mm}p{34mm}X@{}}
+    \toprule
+    \textbf{Phân hệ} & \textbf{Hiện trạng} & \textbf{Giới hạn và phần tiếp theo} \\
+    \midrule
+    Protocol & A-001/A-002 XONG & Envelope, FrameCodec, DTO/fixtures đã có; hợp đồng đóng băng. \\
+    Agent & Component và startup đã có & PR \#11: launcher/config/DeviceId/local collect/probe. Monitoring chờ TLS/session/AUTH; A-005/A-006 chưa làm. \\
+    Central & B-001 XONG & Listener đã merge; auth, liveness, rules, SQL persistence và ACK chưa hoàn tất. \\
+    Admin & C-001 ĐANG LÀM & Layout 0.1 đã merge; data binding, Central client và workflow chưa nghiệm thu. \\
+    Simulator & Placeholder & Giữ source tối thiểu, chỉ xét sinh tải sau khi phần cốt lõi ổn định. \\
+    Tests & 195 local Windows & Báo cáo từ PR \#11, không phải CI hoặc nghiệm thu toàn tuyến. \\
+    \bottomrule
   \end{tabularx}
 \end{table}
 
@@ -764,7 +761,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item File khởi đầu nhanh duy nhất của dự án là \texttt{START\_HERE.md}.
   \item Mã nguồn được tổ chức trong thư mục \texttt{src/} và kiểm thử trong \texttt{tests/}.
-  \item CSDL hiện chưa được hiện thực; B-005 sẽ chốt đầy đủ schema. Các quyết định đã đóng băng yêu cầu tối thiểu \texttt{MetricSamples}, \texttt{ProcessedBatches} và cột \texttt{RowVersion} cho sự cố.
+  \item DDL ba bảng \texttt{ProcessedBatches}, \texttt{MetricSamples}, \texttt{Incidents} đã có và đóng băng trong schema.sql. B-005 còn persistence/tích hợp SQL; seed chưa có dữ liệu. Không tự thêm bảng/cột để đáp ứng kế hoạch cũ.
 \end{itemize}
 \end{summarybox}
 
@@ -779,16 +776,16 @@ LabGuard/
 |-- START_HERE.md             # Huong dan nhap mon danh cho thanh vien
 |-- FILE_MAP.md               # Tra cuu muc dich cua tung file trong repo
 |-- database/
-|   |-- schema.sql            # Vi tri script CSDL (placeholder)
+|   |-- schema.sql            # DDL 3 bang da merge, contract frozen
 |   |-- seed.sql              # Vi tri du lieu mau (placeholder)
 |-- docs/
 |   |-- pdf/                  # 5 cuon so tay huong dan PDF
 |   `-- spec/                 # Dac ta giao thuc va quyet dinh kien truc
 |-- src/
 |   |-- LabGuard.Protocol/    # [DA HOAN THANH - 100%]
-|   |-- LabGuard.Agent/       # [CHUA LAM / DU KIEN - Thanh vien A]
-|   |-- LabGuard.Central/     # [CHUA LAM / DU KIEN - Thanh vien B]
-|   |-- LabGuard.Admin/       # [CHUA LAM / DU KIEN - Thanh vien C]
+|   |-- LabGuard.Agent/       # Core/startup da co; monitoring cho AUTH
+|   |-- LabGuard.Central/     # B-001 listener da co; nghiep vu chua xong
+|   |-- LabGuard.Admin/       # C-001 layout 0.1 dang lam
 |   `-- LabGuard.Simulator/   # [CHUA LAM / DU KIEN - Thanh vien D]
 `-- tests/
     `-- LabGuard.Protocol.Tests/ # [DA HOAN THANH - Protocol tests PASS]
@@ -853,7 +850,7 @@ Khi bạn mở một tệp mã nguồn C\# trong đồ án LabGuard, hãy áp d�
   \item \textbf{Thành viên A (Protocol \& Agent):} Xây dựng thư viện giao thức và lập trình Agent đo CPU/RAM, gửi nhịp tim và lưu bộ đệm khi rớt mạng.
   \item \textbf{Thành viên B (Central Server \& CSDL):} Lập trình máy chủ TCP cổng 5000, kết nối SQL Server, phát hiện máy tắt ($>20$s) và quá tải ($\ge 90\%$).
   \item \textbf{Thành viên C (Admin Dashboard):} Thiết kế giao diện WinForms, đồng bộ dữ liệu an toàn đa luồng (\texttt{BeginInvoke}) và xử lý khóa lạc quan OCC.
-  \item \textbf{Thành viên D (Gateway \& Collector):} Xây dựng tầng mở rộng quy mô (trạm trung chuyển Gateway và bộ thu gom Collector), giúp hệ thống phục vụ nhiều Agent và tự phục hồi khi mất kết nối. (Ghi chú: Simulator và Wireshark là các công cụ hỗ trợ kiểm thử tải và phân tích gói tin).
+  \item \textbf{Thành viên D --- Đỗ Minh Ngọc:} Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố nhúng trong Admin, dùng dữ liệu qua Central; phối hợp Quang/Vy. Gateway/Collector chỉ là P1 tùy chọn.
 \end{itemize}
 
 \begin{takeawaybox}
@@ -922,7 +919,7 @@ Hình này chỉ cần nhìn theo các chặng từ trên xuống dưới: hoàn
 
 Để tránh xung đột mã nguồn khi 4 người cùng lập trình:
 \begin{itemize}
-  \item Mỗi thành viên tạo một nhánh riêng: ví dụ \texttt{feature/agent-socket}, \texttt{feature/central-listener}.
+  \item Mỗi thành viên tạo nhánh riêng, ví dụ \path{feature/agent-socket} hoặc \path{feature/central-listener}.
   \item Trước khi đẩy code, bắt buộc chạy lệnh kiểm thử tự động \texttt{dotnet test}.
   \item Chỉ merge vào nhánh chính khi các bài kiểm thử đều đạt $100\%$.
 \end{itemize}
@@ -997,7 +994,8 @@ Hình này chỉ cần nhìn theo thứ tự số đánh dấu 1 đến 5: từ 
 
 \begin{figure}[H]
   \centering
-  \begin{tikzpicture}[
+  \scalebox{0.95}{%
+\begin{tikzpicture}[
     font=\footnotesize,
     lifeline/.style={draw=lgSlate, dashed, thick},
     entity/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=1.5mm, thick, align=center, font=\footnotesize\bfseries, minimum height=10mm, minimum width=28mm},
@@ -1023,6 +1021,7 @@ Hình này chỉ cần nhìn theo thứ tự số đánh dấu 1 đến 5: từ 
 
     \node[notebox] at (13.8, -5.8) {Cập nhật bảng hiển thị};
   \end{tikzpicture}
+}
   \caption{Biểu đồ tuần tự: Thu thập và cập nhật số liệu định kỳ}
   \label{fig:seq_telemetry}
 \end{figure}
@@ -1036,7 +1035,8 @@ Hình này chỉ cần nhìn vào ô sự cố màu đỏ ở giữa: sau hơn 2
 
 \begin{figure}[H]
   \centering
-  \begin{tikzpicture}[
+  \scalebox{0.95}{%
+\begin{tikzpicture}[
     font=\footnotesize,
     lifeline/.style={draw=lgSlate, dashed, thick},
     entity/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=1.5mm, thick, align=center, font=\footnotesize\bfseries, minimum height=10mm, minimum width=28mm},
@@ -1069,6 +1069,7 @@ Hình này chỉ cần nhìn vào ô sự cố màu đỏ ở giữa: sau hơn 2
 
     \draw[alertmsg] (4.6, -8.6) -- node[pos=0.75, above=1.0mm, font=\scriptsize\bfseries, align=center, fill=white, inner sep=1.5pt] {\texttt{INCIDENT\_OPEN}\\\texttt{(DEVICE\_OFFLINE)}} (13.8, -8.6);
   \end{tikzpicture}
+}
   \caption{Biểu đồ tuần tự: Phát hiện mất kết nối mạng khi im lặng $> 20$ giây}
   \label{fig:seq_liveness}
 \end{figure}
@@ -1076,7 +1077,7 @@ Hình này chỉ cần nhìn vào ô sự cố màu đỏ ở giữa: sau hơn 2
 Ý chính: Ngưỡng 20 giây (gấp 4 lần chu kỳ 5s) giúp triệt tiêu hoàn toàn các cảnh báo giả do chập chờn mạng nhất thời.
 
 \subsection{Phát hiện quá tải CPU và tự phục hồi (RuleEngine)}
-Khi máy \textbf{\texttt{LAB01-PC02}} duy trì CPU $\ge 90\%$ trong 3 mẫu đo liên tiếp, hệ thống kích hoạt sự cố \texttt{HIGH\_CPU}. Khi CPU hạ xuống $\le 75\%$ trong 3 mẫu liên tiếp, Central Server tự động đóng sự cố và thông báo cho người quản trị.
+Khi máy \textbf{\texttt{LAB01-PC02}} duy trì CPU $\ge 90\%$ trong 3 mẫu đo liên tiếp, hệ thống kích hoạt sự cố \texttt{HIGH\_CPU}. Khi CPU hạ xuống $\le 75\%$ trong 3 mẫu liên tiếp, Central cập nhật ConditionState thành RECOVERED và thông báo; WorkflowState không tự chuyển RESOLVED, cần thao tác được phân quyền.
 
 \subsection{Giải quyết xung đột khóa lạc quan (OCC Conflict Resolution)}
 Khi hai quản trị viên cùng thao tác trên một sự cố với cùng phiên bản ban đầu:
@@ -1085,7 +1086,8 @@ Hình này chỉ cần nhìn vào hai luồng thao tác: Admin 1 bấm trước 
 
 \begin{figure}[H]
   \centering
-  \begin{tikzpicture}[
+  \scalebox{0.95}{%
+\begin{tikzpicture}[
     font=\footnotesize,
     lifeline/.style={draw=lgSlate, dashed, thick},
     entity/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=1.5mm, thick, align=center, font=\footnotesize\bfseries, minimum height=10mm, minimum width=28mm},
@@ -1114,6 +1116,7 @@ Hình này chỉ cần nhìn vào hai luồng thao tác: Admin 1 bấm trước 
     \draw[faildmsg] (9.2, -7.3) -- node[above=1.5mm, fill=white, inner sep=1.5pt] {updated = 0 (Xung đột)} (4.6, -7.3);
     \draw[faildmsg] (4.6, -8.3) -- node[pos=0.75, above=1.0mm, font=\scriptsize\bfseries, align=center, fill=white, inner sep=1.5pt] {\texttt{COMMAND\_RESULT}\\\texttt{(409 Conflict)}} (13.8, -8.3);
   \end{tikzpicture}
+}
   \caption{Biểu đồ tuần tự: Giải quyết xung đột ghi đồng thời bằng Khóa lạc quan (OCC)}
   \label{fig:seq_occ}
 \end{figure}
@@ -1209,7 +1212,7 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
 \end{lstlisting}
     Nếu số dòng cập nhật được bằng 1 thì thành công (\texttt{200 OK}). Nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi \texttt{409 Conflict} để giao diện tải lại dữ liệu mới nhất.
   \item \textbf{Hiện tại mã nguồn của dự án đã làm được những gì?} \\
-    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} (A-001 \& A-002, 107/107 tests PASS) và các chặng A-003, A-004 của Agent (\texttt{AgentSocketClient.cs} hàng đợi Single-Writer 256, \texttt{MetricsCollector.cs} đo CPU/RAM qua Win32 P/Invoke, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests PASS, đối soát Windows reference 10/10 PASS). Tác vụ tiếp theo của Agent là A-005 (Tự động kết nối lại / Reconnect). Các phân hệ Central và Admin hiện là khung sườn tối thiểu để sinh viên B và C tự tay xây dựng.
+    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} (A-001 \& A-002, 107/107 tests PASS) và các chặng A-003, A-004 của Agent (\texttt{AgentSocketClient.cs} hàng đợi Single-Writer 256, \texttt{MetricsCollector.cs} đo CPU/RAM qua Win32 P/Invoke, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests ở mốc A-004 (lịch sử), đối soát Windows reference 10/10 PASS). Tác vụ tiếp theo của Agent là A-005 (Tự động kết nối lại / Reconnect). Central có listener B-001, Admin có layout C-001. PR \#11 thêm startup/config/probe cho Agent, tổng 195 tests Windows local; chưa có session/AUTH hoặc monitoring toàn tuyến.
   \item \textbf{Tại sao toàn bộ code mẫu viết sẵn trước đây lại bị dọn dẹp khỏi dự án?} \\
     \textit{Trả lời:} Để bảo đảm tính liêm chính học thuật, giúp 4 bạn sinh viên tự tay lập trình từng dòng lệnh, hiểu sâu môn học và chịu trách nhiệm độc lập trên phân hệ của mình.
   \item \textbf{Máy chủ Central lắng nghe trên cổng nào?} \\
@@ -1217,7 +1220,7 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
   \item \textbf{Khi mất mạng, Agent lưu trữ dữ liệu như thế nào để không bị mất?} \\
     \textit{Trả lời:} Theo thiết kế hệ thống (tác vụ A-006 dự kiến triển khai), Agent sẽ sử dụng bộ đệm ngoại tuyến (\texttt{ReplayBuffer}) lưu tối đa 50 mẻ số liệu (\texttt{METRIC\_BATCH}, tương đương 250 giây dữ liệu) theo chính sách FIFO Drop-Oldest (loại bỏ mẻ cũ nhất khi đầy để bảo vệ bộ nhớ RAM). Khi mạng phục hồi, Agent tự động gửi bù các mẻ này kèm cờ \texttt{isReplay = true}. Lưu ý rằng bản tin nhịp tim (\texttt{HEARTBEAT}) và trạng thái dịch vụ (\texttt{SERVICE\_STATUS}) không được lưu vào bộ đệm vì dữ liệu thời gian thực cũ không còn giá trị liveness.
   \item \textbf{Quy tắc cảnh báo quá tải CPU hoạt động ra sao?} \\
-    \textit{Trả lời:} Động cơ quy tắc yêu cầu mức CPU $\ge 90\%$ liên tục trong 3 mẫu đo (sau 3 chu kỳ đo liên tiếp, mỗi chu kỳ 5 giây) để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để tự động giải quyết sự cố.
+    \textit{Trả lời:} Động cơ quy tắc yêu cầu mức CPU $\ge 90\%$ liên tục trong 3 mẫu đo (sau 3 chu kỳ đo liên tiếp, mỗi chu kỳ 5 giây) để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để đánh dấu điều kiện RECOVERED; không tự chuyển workflow sang RESOLVED.
   \item \textbf{Lỗi Cross-thread trên WinForms là gì? Khắc phục thế nào?} \\
     \textit{Trả lời:} Là ngoại lệ xảy ra khi một luồng nền nhận tin TCP cố tình gán thuộc tính Control của giao diện. Khắc phục bằng cách kiểm tra \texttt{InvokeRequired} và gọi \texttt{BeginInvoke} để chuyển hành động về cho UI Thread thực hiện an toàn.
   \item \textbf{Bộ kiểm thử tự động của Protocol có bao nhiêu bài test?} \\
@@ -1225,15 +1228,15 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
   \item \textbf{Tại sao chuỗi thời gian ISO 8601 trong sentAtUtc bắt buộc phải có chỉ định UTC zero offset ('Z' hoặc '+00:00')?} \\
     \textit{Trả lời:} Chỉ định UTC zero offset tường minh ('Z' hoặc '+00:00') loại bỏ hoàn toàn nguy cơ sai lệch thời gian khi máy trạm và máy chủ đặt ở các múi giờ khác nhau. Bộ xác thực \texttt{EnvelopeValidator} bắt buộc độ lệch UTC zero và từ chối mọi chuỗi thiếu múi giờ, dùng múi giờ địa phương (như '+07:00'), dùng chữ thường ('z') hoặc '-00:00'.
   \item \textbf{Làm thế nào để sinh một RequestId chuẩn?} \\
-    \textit{Trả lời:} Sử dụng phương thức \texttt{Guid.NewGuid().ToString("D")}, sinh ra chuỗi 36 ký tự gồm chữ và số phân tách bằng 4 dấu gạch nối.
+    \textit{Trả lời:} Sử dụng phương thức \path{Guid.NewGuid().ToString("D")}, sinh ra chuỗi 36 ký tự gồm chữ và số phân tách bằng 4 dấu gạch nối.
   \item \textbf{Tại sao không dùng Dictionary thông thường để lưu kết nối trên Central?} \\
-    \textit{Trả lời:} Vì \texttt{Dictionary} thông thường không an toàn đa luồng. Central phải dùng \texttt{ConcurrentDictionary} để nhiều luồng truy cập cùng lúc không bị sập chương trình.
+    \textit{Trả lời:} Vì \texttt{Dictionary} thông thường không an toàn đa luồng. Central phải dùng \texttt{Concurrent\allowbreak{}Dictionary} để nhiều luồng truy cập cùng lúc không bị sập chương trình.
   \item \textbf{Bộ nhớ đệm FrameCodec có tối ưu được không?} \\
     \textit{Trả lời:} Có thể sử dụng \texttt{ArrayPool<byte>.Shared} để mượn và trả mảng byte, giúp giảm tải công việc dọn rác (GC) của .NET khi lưu lượng gói tin lớn.
   \item \textbf{Thuật toán Exponential Backoff được cài đặt thế nào?} \\
     \textit{Trả lời:} Khi mất kết nối, Agent chờ lần lượt 1s, 2s, 4s, 8s... tối đa 30 giây để tránh làm ngập máy chủ khi có sự cố diện rộng.
   \item \textbf{Cơ sở dữ liệu của LabGuard hiện tại đã hiện thực chưa và dự kiến gồm những gì?} \\
-    \textit{Trả lời:} CSDL chưa được hiện thực. Số bảng cuối cùng sẽ được chốt tại nhiệm vụ thiết kế schema của Bạn B. Kiến trúc hiện đã chốt các yêu cầu cốt lõi như \texttt{MetricSamples}, \texttt{ProcessedBatches} và \texttt{Incidents.RowVersion}; số bảng đầy đủ sẽ được chốt khi thực hiện B-005.
+    \textit{Trả lời:} DDL đóng băng hiện có đúng ba bảng: ProcessedBatches, MetricSamples, Incidents. Incidents có AssigneeId và RowVersion; không có IncidentHistory. B-005 persistence/SQL integration chưa hoàn tất, seed chưa có dữ liệu. Kế hoạch B-009 cũ cần Quang/nhóm đối chiếu riêng, không tự thay schema.
   \item \textbf{Làm thế nào kiểm tra xem một cổng mạng đã mở hay chưa bằng PowerShell?} \\
     \textit{Trả lời:} Sử dụng lệnh \texttt{Test-NetConnection -ComputerName 127.0.0.1 -Port 5000}.
   \item \textbf{Tại sao Agent không kết nối trực tiếp vào CSDL SQL Server?} \\
@@ -1247,7 +1250,7 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
   \item \textbf{Sự khác biệt giữa Invoke và BeginInvoke trong WinForms là gì?} \\
     \textit{Trả lời:} \texttt{Invoke} là gọi đồng bộ, luồng mạng bị chặn đứng chờ UI vẽ xong. \texttt{BeginInvoke} là gọi bất đồng bộ, đẩy tác vụ vào hàng đợi của UI rồi luồng mạng tiếp tục đọc gói tin ngay lập tức, không gây giật lag.
   \item \textbf{Làm thế nào để chống tấn công SQL Injection trong Central Server?} \\
-    \textit{Trả lời:} Luôn sử dụng truy vấn tham số hóa (Parameterized Queries) thông qua \texttt{SqlCommand.Parameters.AddWithValue}, tuyệt đối không bao giờ cộng chuỗi lệnh SQL.
+    \textit{Trả lời:} Luôn sử dụng truy vấn tham số hóa (Parameterized Queries) thông qua \path{SqlCommand.Parameters.AddWithValue}, tuyệt đối không bao giờ cộng chuỗi lệnh SQL.
   \item \textbf{Nếu máy chủ bị khởi động lại, các kết nối TCP hiện tại sẽ ra sao?} \\
     \textit{Trả lời:} Tất cả kết nối TCP cũ sẽ bị đứt. Khi máy chủ bật lại, các Agent tự động kết nối lại và gửi bản tin \texttt{HELLO\_AGENT} để tái thiết lập phiên làm việc.
   \item \textbf{Thành công lớn nhất mà sinh viên học được qua đồ án này là gì?} \\

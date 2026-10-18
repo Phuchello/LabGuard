@@ -1,95 +1,67 @@
-# LABGUARD — HỆ THỐNG GIÁM SÁT PHÒNG MÁY TẬP TRUNG
+# LabGuard — Giám sát phòng máy tập trung
 
-> **Đồ án môn học:** NT106 — Lập trình mạng căn bản
-> **Khoa Mạng máy tính & Truyền thông — Trường ĐH Công nghệ Thông tin (UIT)**
+Đồ án NT106, Nhóm 5, UIT. LabGuard dự kiến thu thập thông tin máy trạm qua Agent, xử lý tại Central và hỗ trợ quản trị trong Admin WinForms. Thiết kế tổng thể đang được hiện thực từng phần; chưa có luồng giám sát từ Agent qua Central đến Admin được nghiệm thu.
 
----
+## Hiện trạng sau PR #11
 
-## 📚 BỘ TÀI LIỆU NÊN ĐỌC (5 TẬP PDF CHÍNH THỨC)
+Mốc nguồn: [PR #11](https://github.com/Phuchello/LabGuard/pull/11), merge `70481fa`, ngày 18/10/2026. [PROJECT_STATE.md](PROJECT_STATE.md) giữ lịch sử và ranh giới nghiệm thu.
 
-Bộ sách hướng dẫn được biên soạn chuyên biệt, chuẩn hóa đồ họa và mục lục siêu liên kết:
-* 📖 **Dành cho cả nhóm:** [LabGuard_Tong_Quan_A-Z.pdf](docs/pdf/LabGuard_Tong_Quan_A-Z.pdf) — Sổ tay toàn diện đồ án (Master Book), lý thuyết mạng, luồng dữ liệu, phân công RACI và 30 câu hỏi vấn đáp.
-* 📕 **Thành viên A (Agent & Protocol):** [LabGuard_Huong_Dan_Thanh_Vien_A.pdf](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_A.pdf) — Giao ước mạng, FrameCodec, Socket Client, Replay Buffer, đo CPU/RAM và 20 câu hỏi vấn đáp.
-* 📗 **Thành viên B (Central Server & Database):** [LabGuard_Huong_Dan_Thanh_Vien_B.pdf](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_B.pdf) — TCP Server đa luồng, SQL Server, Rule Engine, Dead Man's Switch, OCC và 20 câu hỏi vấn đáp.
-* 📘 **Thành viên C (Admin Client & UI):** [LabGuard_Huong_Dan_Thanh_Vien_C.pdf](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_C.pdf) — Giao diện WinForms Dashboard, an toàn luồng Cross-Thread UI (`BeginInvoke`), tương tác sự cố OCC, RBAC và 20 câu hỏi vấn đáp.
-* 📙 **Thành viên D (Gateway & Collector):** [LabGuard_Huong_Dan_Thanh_Vien_D.pdf](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_D.pdf) — Gateway, Collector (Scale Layer), hàng đợi chống tràn bộ nhớ, kiểm thử Wireshark và 20 câu hỏi vấn đáp.
+| Phần | Đã có | Chưa hoàn tất |
+|---|---|---|
+| Protocol | Envelope, FrameCodec, DTO và fixtures dùng chung | Hợp đồng đóng băng; không sửa tùy tiện |
+| Agent | Launcher Console, JSON config, DeviceId mỗi installation, collector CPU/RAM/uptime Windows, development TCP/HELLO probe | Chế độ giám sát bị chặn có chủ đích tới khi có TLS/session/AUTH; A-005 reconnect, A-006 ReplayBuffer, ServiceMonitor và Windows Service chưa hoàn tất |
+| Central | Listener nhiều client, framing và đọc HELLO | Authentication, liveness, rules, persistence SQL và ACK sau commit |
+| SQL Server | DDL ba bảng đã merge | B-005 C# persistence/tích hợp SQL chưa nghiệm thu; seed chưa có dữ liệu |
+| Admin | Layout WinForms 0.1 | C-001 đang làm; binding, kết nối Central và quy trình xử lý sự cố còn trong kế hoạch |
+| Công cụ kiểm thử TCP | TcpEcho; mock_harness kiểm thử giao thức độc lập | Relay chưa nghiệm thu; mock không chứng minh Central nghiệp vụ đã chạy |
+| Hỗ trợ phân tích, xử lý sự cố (Troubleshooting Assistant) | Phân công chính thức và kế hoạch tích hợp | Chưa hiện thực: nằm trong quy trình xử lý sự cố Admin, dùng dữ liệu có thẩm quyền qua Central |
+| Mở rộng tùy chọn | Giữ placeholder Simulator | Gateway/Collector và sinh tải chỉ xét sau khi phần cốt lõi ổn định |
 
----
+Kết nối TCP thành công chưa chứng minh đã xác thực ứng dụng, nhận số liệu, ghi SQL hoặc nhận ACK ứng dụng. Chế độ thử trả exit 0 chỉ xác nhận lệnh kết thúc; chưa có phần đọc phản hồi/kiểm tra mất kết nối để luôn phát hiện phía bên kia đã đóng kết nối.
 
-## 1. LABGUARD LÀ GÌ?
+## Chạy kiểm tra trên Windows
 
-LabGuard là hệ thống tự động theo dõi tình trạng máy tính trong phòng thực hành mạng (đo CPU, RAM, thời gian máy bật, và kiểm tra xem máy còn liên lạc hay không). Khi một máy tính bị quá tải hoặc rớt mạng, hệ thống phát cảnh báo tức thì lên màn hình của người quản trị phòng máy.
+Cần SDK .NET 9 và PowerShell 7. Không cần cài Windows Service để thử Console. Hướng dẫn đầy đủ: [Agent deployment](docs/agent_deployment/README.md).
 
-```
-       [ Máy trạm sinh viên ]                         [ Máy giáo viên / Kỹ thuật viên ]
-       +--------------------+                         +-------------------------------+
-       |   LabGuard.Agent   | ---------\              |        LabGuard.Admin         |
-       | (Thu thập số liệu) |           \             |   (Màn hình xem máy & sự cố)  |
-       +--------------------+            \            +-------------------------------+
-                                          v                           ^
-                                +-----------------------+             |
-                                |   LabGuard.Central    | ------------/
-                                | (Máy chủ xử lý & CSDL)|
-                                +-----------------------+
-```
-
-Hệ thống phân chia thành 4 phân hệ chính cho 4 sinh viên:
-1. **`LabGuard.Agent` (Máy trạm — Sinh viên A phụ trách):** Chạy ngầm trên từng máy con, đo mức CPU thật, RAM thật, thời gian chạy, giữ hàng đợi gửi tuần tự và tự kết nối lại khi mất mạng.
-2. **`LabGuard.Central` (Máy chủ trung tâm — Sinh viên B phụ trách):** Lắng nghe kết nối mạng (port 5000), nhận số liệu máy, phân tích cảnh báo sự cố, và lưu vào CSDL SQL Server.
-3. **`LabGuard.Admin` (Giao diện quản trị — Sinh viên C phụ trách):** Ứng dụng Windows Forms hiển thị bảng danh sách máy và bảng danh sách sự cố theo thời gian thực để người trực tiếp nhận và xử lý.
-4. **`LabGuard.Gateway` & `LabGuard.Collector` (Phần mở rộng — Sinh viên D phụ trách):** Tầng cân bằng tải L4 TCP và trạm gom dữ liệu phân tán khi hệ thống mở rộng phục vụ hàng trăm máy trạm.
-
----
-
-## 2. HIỆN TRẠNG MÃ NGUỒN THỰC TẾ
-
-> [!IMPORTANT]
-> **Hiện trạng chính thức của nhóm (sau khi merge PR #4, #5, #7, #8, #9):**
-> - ✅ **ĐÃ HOÀN THÀNH & NGHIỆM THU (DONE / ACCEPTED):**
->   - **A-001, A-002, A-003, A-004 (Agent & Protocol):** Đã nghiệm thu chính thức (`Protocol.Tests` 107/107 PASS, `Agent.Tests` 34/34 PASS trong đó A-004 có 18/18 xUnit cases và đối soát Windows Reference 10/10 PASS).
->   - **B-001 (Central Server):** Đã nghiệm thu qua PR #7 (`CentralServer.cs` mở cổng Socket TCP 5000, hỗ trợ đa client, `Central.Tests` 9/9 PASS).
->   - **D-002 (TCP Echo):** Đã nghiệm thu qua PR #8 (`tools/TcpEcho/Program.cs` hỗ trợ đa client, shutdown an toàn).
-> - 🟡 **ĐANG LÀM / NGHIỆM THU TỪNG PHẦN:**
->   - **B-005 (Database SQL Server):** PR #5 đã merge `database/schema.sql` (DDL tạo bảng `ProcessedBatches`, `MetricSamples`, `Incidents`). Phần C# persistence trong `DatabaseRepository.cs` và kiểm thử tương tác SQL Server chưa nghiệm thu.
->   - **C-001 (Admin WinForms UI):** PR #4 đã merge khung giao diện UI 0.1 (`DashboardForm.cs`, ảnh bằng chứng `docs/evidence/admin_dashboard_c001.png`). Nghiệm thu toàn diện UI và data binding đang chờ thực hiện.
-> - ⚪ **CHƯA LÀM / TIẾP THEO:**
->   - **Sinh viên A:** Tiếp theo là `A-005` (Tự động kết nối lại khi rớt mạng).
->   - **Sinh viên B:** Tiếp theo là `B-002` (Bắt tay HELLO/AUTH) và hoàn thiện `B-005` persistence.
->   - **Sinh viên C:** Tiếp theo là `C-002` (AdminClient kết nối Socket tới Central).
->   - **Sinh viên D:** `D-001` (chưa có báo cáo); tiếp theo là `D-003` (TCP Relay). Các module `Gateway`, `Collector`, `Simulator` (`D-004..D-006`) là dự kiến mở rộng sau.
-> - 🛠️ **CÔNG CỤ GIẢ LẬP BỔ TRỢ (MOCK HARNESS):** PR #9 đã merge `tools/mock_harness/FakeAgent`, `FakeCentral` và `tests/LabGuard.MockHarness.Tests` (15/15 tests PASS). Đây là công cụ phục vụ kiểm thử giao thức độc lập, không thay thế cho nhiệm vụ `D-003`.
-
-### Các lệnh kiểm tra hệ thống:
-
-#### 1. Chạy bộ kiểm thử tự động (165/165 tests PASS)
 ```powershell
-dotnet test
+dotnet build LabGuard.sln
+dotnet test LabGuard.sln
+dotnet run --project src/LabGuard.Agent -- --init-config ./scratch/agentsettings.json --central-host 127.0.0.1 --central-port 5000
+dotnet run --project src/LabGuard.Agent -- --config ./scratch/agentsettings.json --validate-config
+dotnet run --project src/LabGuard.Agent -- --config ./scratch/agentsettings.json --collect-once
 ```
-*Kết quả:* `Passed! - Failed: 0` — Tổng cộng **165 tests PASS** trên môi trường cục bộ:
-- `LabGuard.Protocol.Tests`: 107/107 PASS
-- `LabGuard.Central.Tests`: 9/9 PASS
-- `LabGuard.Agent.Tests`: 34/34 PASS
-- `LabGuard.MockHarness.Tests`: 15/15 PASS
-*(Lưu ý: Đây là số liệu kiểm thử cục bộ trước khi merge; hệ thống CI tự động trên GitHub chưa được thiết lập).*
 
-#### 2. Chạy công cụ độc lập kiểm tra đóng khung tin TCP 4 byte (A-002)
+Để probe local, chạy Central trong Console riêng rồi chạy Agent:
+
 ```powershell
-dotnet run --project tools/validation/test_frame_codec/test_frame_codec.csproj
+dotnet run --project src/LabGuard.Central
+# Console khác:
+dotnet run --project src/LabGuard.Agent -- --config ./scratch/agentsettings.json --probe
 ```
-*Kết quả:* Toàn bộ 10 kịch bản kiểm tra phân mảnh và ghép khung tin TCP đều đạt chuẩn (`10/10 scenarios passed`).
 
-#### 3. Chạy thử các phân hệ dự án
-* Máy trạm Agent: `dotnet run --project src/LabGuard.Agent/LabGuard.Agent.csproj`
-* Máy chủ Central (B-001 lắng nghe port 5000): `dotnet run --project src/LabGuard.Central/LabGuard.Central.csproj`
-* Giao diện Admin (C-001 WinForms Dashboard): `dotnet run --project src/LabGuard.Admin/LabGuard.Admin.csproj`
-* Máy chủ TCP Echo (D-002): `dotnet run --project tools/TcpEcho/TcpEcho.csproj`
-* Giả lập Mock Harness: `dotnet run --project tools/mock_harness/FakeCentral/FakeCentral.csproj` / `FakeAgent.csproj`
+127.0.0.1 chỉ dùng thử trên cùng máy; tạo cấu hình riêng và địa chỉ máy chủ được phép cho mỗi PC. Init không ghi đè DeviceId. Không đưa cấu hình có định danh hoặc bí mật vào Git. Chạy Agent không chọn chế độ thử sẽ dừng với exit 5: chế độ giám sát đang bị chặn theo thiết kế hiện tại. Không tự triển khai lên máy trường khi chưa được phép.
 
----
+**Verification được báo cáo từ PR #11:** 195 tests passed trên Windows (Protocol 107, Agent 64, Central 9, MockHarness 15), build 0 warning/error. Đây là kết quả local, không phải GitHub CI và không chứng minh SQL/ACK/LAN/Service đã sẵn sàng. [Chi tiết và script chạy lại](docs/agent_deployment/VALIDATION_EVIDENCE.md).
 
-## 3. BẠN LÀ THÀNH VIÊN TRONG NHÓM? BẮT ĐẦU TẠI ĐÂY!
+## Phân công chính thức
 
-Để bắt tay vào thực hiện nhiệm vụ của mình, hãy đọc theo đúng thứ tự 2 tài liệu sau:
+Nguồn: quyết định trực tiếp của người điều phối ngày 17/10/2026, ghi tại [TEAM_ASSIGNMENTS.md](docs/internal/TEAM_ASSIGNMENTS.md).
 
-👉 **[START_HERE.md](START_HERE.md)**: **Bắt đầu tại đây!** Hướng dẫn nhanh cho từng bạn (A, B, C, D) — Đọc để biết bạn phụ trách việc gì, bắt đầu từ file nào, cách thử và làm sao biết mình chạy đúng.
-👉 **[FILE_MAP.md](FILE_MAP.md)**: Bản đồ toàn bộ file trong project — Giải thích vai trò của từng file trong mã nguồn hiện tại.
+| Mã | Thành viên | Trách nhiệm |
+|---|---|---|
+| A | Võ Trọng Phúc | Agent & Protocol |
+| B | Nguyễn Bá Quang | Central & SQL Server |
+| C | Lý Tuyết Vy | Admin WinForms |
+| D | Đỗ Minh Ngọc | Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố |
+
+Assistant là kế hoạch phát triển chính thức của Ngọc, phối hợp Quang/Vy; không phải ứng dụng TCP chẩn đoán độc lập. Gateway/Collector là mở rộng tùy chọn.
+
+## Tài liệu và kế hoạch
+
+- [START_HERE.md](START_HERE.md): bắt đầu theo phần việc.
+- [FILE_MAP.md](FILE_MAP.md): file đang có và thành phần còn dự kiến.
+- [TODO.md](TODO.md), [WBS 40 task](docs/internal/WBS_TASKS.csv), [tracker Excel](LabGuard_Task_Tracker.xlsx): kế hoạch/trạng thái; không nâng A-005/A-006 thành DONE do có launcher.
+- [Ownership](docs/internal/OWNERSHIP_MATRIX.md), [dependencies](docs/internal/DEPENDENCY_MAP.md).
+- [Năm handbook và cách rebuild PDF](docs/pdf/README.md): tài liệu học/triển khai; các ví dụ tương lai không phải bằng chứng đã chạy.
+
+.NET 10 là công việc migration riêng cho toàn solution. PR housekeeping này giữ .NET 9, schema và giao thức hiện tại.
