@@ -8,13 +8,13 @@ Mốc nguồn: [PR #11](https://github.com/Phuchello/LabGuard/pull/11), merge `7
 
 | Phần | Đã có | Chưa hoàn tất |
 |---|---|---|
-| Protocol | Envelope, FrameCodec, DTO và fixtures dùng chung | Hợp đồng đóng băng; không sửa tùy tiện |
-| Agent | Launcher Console, JSON config, DeviceId mỗi installation, collector CPU/RAM/uptime Windows, development TCP/HELLO probe | Chế độ giám sát bị chặn có chủ đích tới khi có TLS/session/AUTH; A-005 reconnect, A-006 ReplayBuffer, ServiceMonitor và Windows Service chưa hoàn tất |
-| Central | Listener nhiều client, framing và đọc HELLO | Authentication, liveness, rules, persistence SQL và ACK sau commit |
-| SQL Server | DDL ba bảng đã merge | B-005 C# persistence/tích hợp SQL chưa nghiệm thu; seed chưa có dữ liệu |
-| Admin | Layout WinForms 0.1 | C-001 đang làm; binding, kết nối Central và quy trình xử lý sự cố còn trong kế hoạch |
-| Công cụ kiểm thử TCP | TcpEcho; mock_harness kiểm thử giao thức độc lập | Relay chưa nghiệm thu; mock không chứng minh Central nghiệp vụ đã chạy |
-| Hỗ trợ phân tích, xử lý sự cố (Troubleshooting Assistant) | Phân công chính thức và kế hoạch tích hợp | Chưa hiện thực: nằm trong quy trình xử lý sự cố Admin, dùng dữ liệu có thẩm quyền qua Central |
+| Giao thức (Protocol) | Cấu trúc thông điệp, FrameCodec, cấu trúc dữ liệu trao đổi (DTO) và mẫu JSON dùng chung | Hợp đồng đóng băng; không sửa tùy tiện |
+| Agent | Chương trình Console, cấu hình JSON, DeviceId riêng mỗi bản cài đặt; thu CPU/RAM/thời gian hoạt động trên Windows và chế độ thử TCP/HELLO | Giám sát bị chặn tới khi có bảo mật TLS/phiên kết nối/xác thực AUTH; A-005 kết nối lại, A-006 ReplayBuffer, ServiceMonitor và Windows Service chưa hoàn tất |
+| Central Server | Tiếp nhận nhiều kết nối TCP, tách khung và đọc HELLO | Chưa hoàn tất xác thực, kiểm tra mất kết nối, quy tắc cảnh báo, lưu SQL và ACK sau khi ghi thành công |
+| SQL Server | Đã có lệnh định nghĩa ba bảng (DDL) trên main | B-005 lưu dữ liệu từ C#/tích hợp SQL chưa nghiệm thu; chưa có dữ liệu khởi tạo |
+| Admin Windows Forms | Bố cục giao diện 0.1 | C-001 đang làm; liên kết dữ liệu, kết nối Central và quy trình xử lý sự cố còn trong kế hoạch |
+| Công cụ kiểm thử truyền thông TCP | TcpEcho; mock_harness kiểm thử giao thức độc lập | Chuyển tiếp TCP chưa nghiệm thu; mô phỏng không chứng minh Central nghiệp vụ đã chạy |
+| Chức năng hỗ trợ phân tích và xử lý sự cố | Phân công chính thức và kế hoạch tích hợp | Chưa hiện thực: nằm trong quy trình xử lý sự cố Admin, dùng dữ liệu có thẩm quyền qua Central |
 | Mở rộng tùy chọn | Giữ placeholder Simulator | Gateway/Collector và sinh tải chỉ xét sau khi phần cốt lõi ổn định |
 
 Kết nối TCP thành công chưa chứng minh đã xác thực ứng dụng, nhận số liệu, ghi SQL hoặc nhận ACK ứng dụng. Chế độ thử trả exit 0 chỉ xác nhận lệnh kết thúc; chưa có phần đọc phản hồi/kiểm tra mất kết nối để luôn phát hiện phía bên kia đã đóng kết nối.
@@ -52,9 +52,11 @@ Nguồn: quyết định trực tiếp của người điều phối ngày 17/10
 | A | Võ Trọng Phúc | Agent & Protocol |
 | B | Nguyễn Bá Quang | Central & SQL Server |
 | C | Lý Tuyết Vy | Admin WinForms |
-| D | Đỗ Minh Ngọc | Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố |
+| D | Đỗ Minh Ngọc | Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard |
 
-Assistant là kế hoạch phát triển chính thức của Ngọc, phối hợp Quang/Vy; không phải ứng dụng TCP chẩn đoán độc lập. Gateway/Collector là mở rộng tùy chọn.
+Chức năng hỗ trợ xử lý sự cố là kế hoạch phát triển chính thức của Ngọc, phối hợp Quang/Vy; không phải ứng dụng TCP chẩn đoán độc lập. Gateway/Collector là mở rộng tùy chọn.
+
+Công cụ kiểm thử truyền thông TCP kiểm tra kết nối, gửi, nhận và chuyển tiếp dữ liệu. Chức năng hỗ trợ phân tích và xử lý sự cố nhận dữ liệu từ Central Server, hiển thị bằng chứng, nhận định và đề xuất bước kiểm tra trong giao diện quản trị. Người quản trị quyết định thao tác; chức năng này không tự xác định chắc chắn nguyên nhân hoặc tự sửa máy.
 
 ## Tài liệu và kế hoạch
 

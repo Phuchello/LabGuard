@@ -1,4 +1,4 @@
-# Agent deployment readiness — review 18/10/2026
+# Triển khai Agent — mức sẵn sàng ngày 18/10/2026
 
 Phần Agent của bộ hồ sơ này đã merge qua [PR #11](https://github.com/Phuchello/LabGuard/pull/11), main `70481fa`. Các mốc audit/test bên dưới ghi nhận lượt đó; trạng thái dự án hiện hành ở [PROJECT_STATE.md](../../PROJECT_STATE.md).
 

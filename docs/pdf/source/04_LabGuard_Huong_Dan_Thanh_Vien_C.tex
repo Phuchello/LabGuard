@@ -47,7 +47,7 @@
 \begin{tcolorbox}[enhanced, colback=lgLightTeal, colframe=lgTeal, boxrule=1pt, arc=2mm, top=2.5mm, bottom=2.5mm, left=3mm, right=3mm]
 {\large\bfseries\color{lgTeal} 1. BẠN LÀ AI?}\par
 \vspace{1mm}
-Bạn là người tạo ra "bộ mặt" trực quan của hệ thống: ứng dụng màn hình quản trị đồ họa (\textbf{Admin Client} trên Windows Forms) dành cho người coi thi và quản trị viên phòng máy.
+Bạn phụ trách giao diện quản trị của hệ thống: ứng dụng màn hình quản trị đồ họa (\textbf{Admin Client} trên Windows Forms) dành cho người coi thi và quản trị viên phòng máy.
 \end{tcolorbox}
 \vspace{2mm}
 
@@ -69,7 +69,7 @@ Bạn là người tạo ra "bộ mặt" trực quan của hệ thống: ứng d
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt, topsep=1pt]
   \item Bạn \textbf{không cần} lo việc lấy số liệu phần cứng từ hệ điều hành máy sinh viên (việc của \textbf{Thành viên A}).
   \item Bạn \textbf{không cần} lo viết câu lệnh SQL lưu trữ dữ liệu hay tự tính toán nhịp tim sống chết (việc của \textbf{Thành viên B}).
-  \item Vy giữ host Admin và workflow; phối hợp Ngọc nhúng logic Assistant. Gateway/Collector của kế hoạch cũ chỉ là tùy chọn.
+  \item Vy giữ giao diện Admin và quy trình xử lý; phối hợp Ngọc nhúng logic của chức năng hỗ trợ xử lý sự cố. Gateway/Collector của kế hoạch cũ chỉ là tùy chọn.
 \end{itemize}
 \end{tcolorbox}
 \vspace{2mm}
@@ -114,20 +114,20 @@ Mở dự án \texttt{src/LabGuard.Admin/} trong Visual Studio, chạy thử fil
 % ==============================================================================
 \section{Tổng quan vai trò của Thành viên C}
 
-\subsection*{C-012: Assistant nằm trong quy trình xử lý sự cố}
-Ngọc phụ trách logic giải thích/gợi ý, Vy nhúng vào chi tiết sự cố của máy đang chọn, Quang cung cấp dữ liệu có thẩm quyền qua Central. Bốn vùng đọc là Bằng chứng, Nhận định, Hướng kiểm tra, Thao tác xử lý. Giữ quyền, expected RowVersion/affected-row check và phản hồi Central; không tự ACK/Resolve hoặc sửa máy. Tách kết nối ONLINE/OFFLINE, điều kiện cảnh báo và workflow OPEN/ACKNOWLEDGED/IN\_PROGRESS/RESOLVED. Ba giờ ghép C-012 chỉ tính sau core Admin ready; code networking/workflow còn thiếu tính riêng.
+\subsection*{C-012: Tích hợp hỗ trợ xử lý sự cố}
+Ngọc phụ trách logic giải thích/gợi ý, Vy nhúng vào chi tiết sự cố của máy đang chọn, Quang cung cấp dữ liệu có thẩm quyền qua Central. Bốn vùng đọc là Bằng chứng, Nhận định, Hướng kiểm tra, Thao tác xử lý. Giữ quyền, kiểm tra RowVersion dự kiến và số dòng bị cập nhật và phản hồi Central; không tự xác nhận hoặc đóng sự cố hoặc sửa máy. Tách kết nối ONLINE/OFFLINE, điều kiện cảnh báo và quy trình xử lý OPEN/ACKNOWLEDGED/IN\_PROGRESS/RESOLVED. Ba giờ ghép C-012 chỉ tính khi phần cốt lõi Admin sẵn sàng; phần kết nối và quy trình xử lý còn thiếu tính riêng.
 
 
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Bạn phụ trách "bộ mặt" trực quan của đồ án: ứng dụng quản trị WinForms (\texttt{LabGuard.Admin}).
+  \item Bạn phụ trách giao diện quản trị của đồ án: ứng dụng Windows Forms (\texttt{LabGuard.Admin}).
   \item Kết nối TCP tới cổng 5000 của Central để nhận số liệu và gửi lệnh điều khiển.
   \item Xử lý an toàn đa luồng (\texttt{BeginInvoke}) để không bao giờ làm đơ chuột hay văng ứng dụng.
-  \item Hiển thị cảnh báo thông minh khi có hai người cùng thao tác trên một sự cố (OCC).
+  \item Hiển thị thông báo xung đột cập nhật khi có hai người cùng thao tác trên một sự cố (OCC).
 \end{itemize}
 \end{summarybox}
 
-Trong toàn bộ đồ án LabGuard, bạn là người chịu trách nhiệm về "bộ mặt" của sản phẩm. Khi giảng viên chấm thi, điều đầu tiên thầy cô nhìn thấy và trực tiếp trải nghiệm chính là ứng dụng giao diện WinForms do bạn thiết kế:
+Trong LabGuard, bạn chịu trách nhiệm về giao diện quản trị. Giao diện Windows Forms hiển thị dữ liệu từ Central và cho người có quyền thực hiện thao tác quản lý:
 
 \begin{conceptbox}
 \textbf{Trọng trách cốt lõi của Thành viên C:}
@@ -135,7 +135,7 @@ Trong toàn bộ đồ án LabGuard, bạn là người chịu trách nhiệm v�
   \item \textbf{Thiết kế giao diện WinForms (\texttt{src/LabGuard.Admin/}):} Xây dựng bảng điều khiển \texttt{DashboardForm.cs} trực quan, hiển thị sơ đồ phòng máy và danh sách sự cố.
   \item \textbf{Lập trình kết nối mạng TCP Client:} Kết nối ứng dụng WinForms tới cổng 5000 của Central Server để nhận các thông báo sự kiện theo thời gian thực.
   \item \textbf{Xử lý an toàn đa luồng (Cross-Thread UI):} Chuyển các gói tin nhận từ luồng mạng ngầm về luồng giao diện chính một cách an toàn bằng \texttt{BeginInvoke}.
-  \item \textbf{Giải quyết xung đột OCC:} Hiển thị cảnh báo thông minh khi có hai quản trị viên cùng thao tác trên một sự cố.
+  \item \textbf{Giải quyết xung đột OCC:} Hiển thị thông báo xung đột cập nhật khi có hai quản trị viên cùng thao tác trên một sự cố.
 \end{enumerate}
 \end{conceptbox}
 

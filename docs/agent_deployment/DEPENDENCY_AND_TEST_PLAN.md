@@ -1,4 +1,4 @@
-# Phụ thuộc và kế hoạch kiểm tra
+# Kế hoạch phụ thuộc và kiểm thử
 
 Chạy baseline trước sửa và chạy lại sau sửa. Chỉ ghi PASS khi lệnh thực chạy thành công; nếu môi trường chặn thì ghi BLOCKED/NOT RUN, không chuyển thành kết quả phần mềm.
 

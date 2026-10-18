@@ -10,15 +10,15 @@ Cập nhật nguồn/PDF sau PR #11 (main `70481fa`) và quyết định phân c
 | 2 | [Thành viên A](LabGuard_Huong_Dan_Thanh_Vien_A.pdf) | Võ Trọng Phúc: Agent & Protocol |
 | 3 | [Thành viên B](LabGuard_Huong_Dan_Thanh_Vien_B.pdf) | Nguyễn Bá Quang: Central & SQL Server |
 | 4 | [Thành viên C](LabGuard_Huong_Dan_Thanh_Vien_C.pdf) | Lý Tuyết Vy: Admin WinForms |
-| 5 | [Thành viên D](LabGuard_Huong_Dan_Thanh_Vien_D.pdf) | Đỗ Minh Ngọc: Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố |
+| 5 | [Thành viên D](LabGuard_Huong_Dan_Thanh_Vien_D.pdf) | Đỗ Minh Ngọc: Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard |
 
 Các tập dùng chung [sync_status.tex](source/sync_status.tex) để mô tả đúng launcher/config/DeviceId/local collect/development probe và monitoring đang bị chặn chờ TLS/session/AUTH. 195 tests Windows local được báo cáo từ PR #11, không phải GitHub CI. Những số 34/165 hoặc Windows reference trong hồ sơ cũ được giữ như lịch sử, không phải verification mới.
 
-Assistant nhúng trong quy trình xử lý sự cố Admin, dùng dữ liệu Central có thẩm quyền, phối hợp B/C. Nội dung Gateway/Collector trong tập D chỉ là kiến thức P1 tùy chọn; Simulator vẫn placeholder. Các ví dụ/pseudocode và tiêu chí kiểm tra tương lai không chứng minh tính năng đã hoàn tất. Xem [trạng thái dự án](../../PROJECT_STATE.md), [phân công](../internal/TEAM_ASSIGNMENTS.md), [Agent deployment](../agent_deployment/README.md).
+Chức năng hỗ trợ xử lý sự cố nhúng trong quy trình xử lý sự cố Admin, dùng dữ liệu Central có thẩm quyền, phối hợp B/C. Nội dung Gateway/Collector trong tập D chỉ là kiến thức P1 tùy chọn; Simulator vẫn placeholder. Các ví dụ/pseudocode và tiêu chí kiểm tra tương lai không chứng minh tính năng đã hoàn tất. Xem [trạng thái dự án](../../PROJECT_STATE.md), [phân công](../internal/TEAM_ASSIGNMENTS.md), [Agent deployment](../agent_deployment/README.md).
 
 ## Rebuild và kiểm tra
 
-Cần XeLaTeX với font Times New Roman/Consolas và các package trong [labguard_pdf.sty](source/labguard_pdf.sty). Dùng PATH hoặc biến môi trường `LABGUARD_XELATEX` để chọn executable, không hardcode đường dẫn cá nhân.
+Cần XeLaTeX với font Times New Roman/Consolas và các package trong [labguard_pdf.sty](source/labguard_pdf.sty). Dùng PATH hoặc biến môi trường `LABGUARD_XELATEX` để chọn chương trình chạy riêng, không hardcode đường dẫn cá nhân.
 
 ```powershell
 ./docs/pdf/build.ps1 -OutputDirectory scratch/handbook-candidates

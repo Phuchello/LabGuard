@@ -21,11 +21,11 @@
 A --- Võ Trọng Phúc & Agent và Protocol. \\
 B --- Nguyễn Bá Quang & Central Server và SQL Server. \\
 C --- Lý Tuyết Vy & Admin Windows Forms. \\
-D --- Đỗ Minh Ngọc & Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố. \\
+D --- Đỗ Minh Ngọc & Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard. \\
 \bottomrule
 \end{tabularx}
 \end{center}
-Nguồn: quyết định trực tiếp của người điều phối dự án ngày 17/10/2026; không tự tạo biên bản họp hoặc chữ ký. Assistant là \textbf{phần việc chính thức trong kế hoạch}, chưa phải chức năng đã được lập trình. Logic nhúng trong quy trình xử lý sự cố của LabGuard Admin, dùng dữ liệu có thẩm quyền qua Central; D phối hợp B/C, không làm ứng dụng TCP độc lập.
+Nguồn: quyết định trực tiếp của người điều phối dự án ngày 17/10/2026; không tự tạo biên bản họp hoặc chữ ký. Chức năng hỗ trợ xử lý sự cố là \textbf{phần việc chính thức trong kế hoạch}, chưa phải chức năng đã được lập trình. Logic nhúng trong quy trình xử lý sự cố của LabGuard Admin, dùng dữ liệu có thẩm quyền qua Central; D phối hợp B/C, không làm ứng dụng TCP độc lập.
 
 Gateway/Collector và Simulator là \textbf{mở rộng P1 tùy chọn} sau khi phần cốt lõi ổn định. Nội dung mở rộng được giữ để học, không phải cam kết chính của Ngọc. GK là một buổi trình bày đề xuất theo lịch giảng viên, không phải hạn hoàn thành đồ án; các chặng là kế hoạch tương đối toàn dự án.
 
@@ -33,5 +33,5 @@ Gateway/Collector và Simulator là \textbf{mở rộng P1 tùy chọn} sau khi 
 
 \textbf{Năm mốc khác nhau:} kết nối TCP; xác thực ứng dụng; nhận số liệu; ghi thành công SQL; nhận ACK ứng dụng. Chế độ thử trả exit 0 chỉ cho biết lệnh kết thúc; phía bên kia đóng kết nối có thể chưa được phát hiện. Nhật ký kết nối không chứng minh đã xác thực hoặc lưu SQL.
 
-\textbf{Bắt đầu đúng cách:} đọc \path{docs/agent_deployment/README.md} và \path{docs/internal/TEAM_ASSIGNMENTS.md}. WBS giữ 34 task cũ và sáu task Assistant bổ sung, đều chưa làm. Migration .NET 10 là công việc riêng toàn solution, chưa thực hiện trong lượt housekeeping này.
+\textbf{Bắt đầu đúng cách:} đọc \path{docs/agent_deployment/README.md} và \path{docs/internal/TEAM_ASSIGNMENTS.md}. WBS giữ 34 nhiệm vụ cũ và sáu nhiệm vụ bổ sung cho chức năng hỗ trợ xử lý sự cố, đều chưa làm. Nâng cấp .NET 10 là việc riêng toàn bộ dự án, chưa thực hiện trong lượt đồng bộ này.
 \newpage

@@ -162,7 +162,7 @@ Bảng dưới đây tổng hợp các tiêu chí kỹ thuật giữa LabGuard v
 \begin{enumerate}
   \item \textbf{Giám sát thời gian thực:} Định kỳ thu thập các chỉ số phần cứng cốt lõi (CPU, RAM khả dụng, tiến trình) từ máy trạm gửi về máy chủ.
   \item \textbf{Phát hiện mất kết nối tự động:} Thông qua nhịp tim định kỳ 5 giây, nếu máy trạm im lặng quá 20 giây ($> 20\text{s}$), máy chủ tự động kích hoạt cảnh báo mất mạng.
-  \item \textbf{Động cơ cảnh báo thông minh (Rule Engine):} Tự động phát hiện hiện tượng quá tải phần cứng (ví dụ máy \texttt{LAB01-PC02} có CPU vượt ngưỡng $90\%$ trong 3 chu kỳ liên tiếp) để cảnh báo tức thời lên màn hình quản trị.
+  \item \textbf{Bộ xử lý cảnh báo (Rule Engine):} Tự động phát hiện hiện tượng quá tải phần cứng (ví dụ máy \texttt{LAB01-PC02} có CPU vượt ngưỡng $90\%$ trong 3 chu kỳ liên tiếp) để cảnh báo tức thời lên màn hình quản trị.
   \item \textbf{Bảng điều khiển trực quan (Admin Dashboard):} Giao diện đồ họa WinForms hiển thị bản đồ toàn bộ phòng máy với màu sắc rõ ràng.
   \item \textbf{Tính toàn vẹn dữ liệu (Khóa lạc quan OCC):} Khi nhiều quản trị viên cùng thao tác, hệ thống ngăn chặn ghi đè mâu thuẫn dữ liệu.
 \end{enumerate}
@@ -310,7 +310,7 @@ Hình này chỉ cần nhìn theo các đường kết nối: Agent và Admin k�
 \begin{itemize}
   \item \textbf{Bản chất:} Máy chủ tiếp nhận, kiểm tra và xử lý dữ liệu của toàn bộ phòng máy.
   \item \textbf{Cơ chế hoạt động:} Là TCP Server lắng nghe trên cổng 5000 duy nhất, tiếp nhận đồng thời cả Agent và Admin.
-  \item \textbf{Nhiệm vụ chính:} Lưu dữ liệu vào SQL Server, chạy động cơ kiểm tra sống còn (\texttt{LivenessMonitor}) và bộ xử lý quy tắc (\texttt{RuleEngine}) để phát hiện máy hỏng.
+  \item \textbf{Nhiệm vụ chính:} Lưu dữ liệu vào SQL Server, chạy bộ xử lý kiểm tra nhịp tim (\texttt{LivenessMonitor}) và bộ xử lý quy tắc (\texttt{RuleEngine}) để phát hiện máy hỏng.
 \end{itemize}
 
 \subsection{LabGuard.Admin (Màn hình quản trị WinForms)}
@@ -738,7 +738,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
     Protocol & A-001/A-002 XONG & Envelope, FrameCodec, DTO/fixtures đã có; hợp đồng đóng băng. \\
     Agent & Component và startup đã có & PR \#11: launcher/config/DeviceId/local collect/probe. Monitoring chờ TLS/session/AUTH; A-005/A-006 chưa làm. \\
     Central & B-001 XONG & Listener đã merge; auth, liveness, rules, SQL persistence và ACK chưa hoàn tất. \\
-    Admin & C-001 ĐANG LÀM & Layout 0.1 đã merge; data binding, Central client và workflow chưa nghiệm thu. \\
+    Admin & C-001 ĐANG LÀM & Layout 0.1 đã merge; data binding, Central client và quy trình xử lý chưa nghiệm thu. \\
     Simulator & Placeholder & Giữ source tối thiểu, chỉ xét sinh tải sau khi phần cốt lõi ổn định. \\
     Tests & 195 local Windows & Báo cáo từ PR \#11, không phải CI hoặc nghiệm thu toàn tuyến. \\
     \bottomrule
@@ -850,7 +850,7 @@ Khi bạn mở một tệp mã nguồn C\# trong đồ án LabGuard, hãy áp d�
   \item \textbf{Thành viên A (Protocol \& Agent):} Xây dựng thư viện giao thức và lập trình Agent đo CPU/RAM, gửi nhịp tim và lưu bộ đệm khi rớt mạng.
   \item \textbf{Thành viên B (Central Server \& CSDL):} Lập trình máy chủ TCP cổng 5000, kết nối SQL Server, phát hiện máy tắt ($>20$s) và quá tải ($\ge 90\%$).
   \item \textbf{Thành viên C (Admin Dashboard):} Thiết kế giao diện WinForms, đồng bộ dữ liệu an toàn đa luồng (\texttt{BeginInvoke}) và xử lý khóa lạc quan OCC.
-  \item \textbf{Thành viên D --- Đỗ Minh Ngọc:} Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố nhúng trong Admin, dùng dữ liệu qua Central; phối hợp Quang/Vy. Gateway/Collector chỉ là P1 tùy chọn.
+  \item \textbf{Thành viên D --- Đỗ Minh Ngọc:} Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard; phần hỗ trợ nằm trong Admin, dùng dữ liệu qua Central; phối hợp Quang/Vy. Gateway/Collector chỉ là P1 tùy chọn.
 \end{itemize}
 
 \begin{takeawaybox}
@@ -883,7 +883,7 @@ Hình này chỉ cần nhìn theo các chặng từ trên xuống dưới: hoàn
     \node[done] (c1) at (0, 0) {Chặng 1: Xây dựng Giao thức \& Đóng khung tin (ĐÃ HOÀN THÀNH — Protocol tests PASS)};
     \node[stage] (c2) at (0, -1.3) {Chặng 2: Kết nối đơn Agent $\leftrightarrow$ Central (Gửi nhận gói Hello \& Heartbeat)};
     \node[stage] (c3) at (0, -2.6) {Chặng 3: Kết nối CSDL SQL Server \& Lưu trữ số liệu máy trạm định kỳ};
-    \node[stage] (c4) at (0, -3.9) {Chặng 4: Tích hợp Động cơ Liveness ($> 20$s) \& Rule Engine quá tải CPU $\ge 90\%$};
+    \node[stage] (c4) at (0, -3.9) {Chặng 4: Tích hợp Bộ xử lý Liveness ($> 20$s) \& Rule Engine quá tải CPU $\ge 90\%$};
     \node[stage] (c5) at (0, -5.2) {Chặng 5: Xây dựng Giao diện WinForms Admin \& Xử lý xung đột khóa lạc quan (OCC)};
     \node[stage] (c6) at (0, -6.5) {Chặng 6: Thử tải quy mô 30 máy trạm, bắt gói Wireshark \& Diễn tập bảo vệ};
 
@@ -983,7 +983,7 @@ Passed!  - Failed: 0, Passed: 107, Skipped: 0, Total: 107, Duration: 412 ms
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item 4 biểu đồ tuần tự trực quan thể hiện toàn bộ kịch bản vận hành của đồ án.
   \item Luồng 1: Thu thập số liệu định kỳ; Luồng 2: Phát hiện mất kết nối sau 20s.
-  \item Luồng 3: Động cơ quy tắc quá tải CPU; Luồng 4: Giải quyết xung đột khóa lạc quan OCC.
+  \item Luồng 3: Bộ xử lý quy tắc quá tải CPU; Luồng 4: Giải quyết xung đột khóa lạc quan OCC.
 \end{itemize}
 \end{summarybox}
 
@@ -1159,7 +1159,7 @@ Hình này chỉ cần nhìn vào hai luồng thao tác: Admin 1 bấm trước 
     \hline
     \textbf{Nhịp tim} & Keepalive / Heartbeat & Gói tin định kỳ 5 giây giữa Agent và Central để chứng minh máy trạm còn sống. \\
     \hline
-    \textbf{Sống còn} & Liveness Monitor & Bộ kiểm tra sống còn trên máy chủ, cảnh báo khi máy trạm im lặng quá 20 giây ($> 20\text{s}$). \\
+    \textbf{Sống còn} & Liveness Monitor & Bộ kiểm tra nhịp tim trên máy chủ, cảnh báo khi máy trạm im lặng quá 20 giây ($> 20\text{s}$). \\
     \hline
     \textbf{Khóa lạc quan} & OCC & Kiểm soát tương tranh dựa trên cột \texttt{RowVersion}, báo lỗi 409 Conflict khi bị tranh chấp. \\
     \hline
@@ -1220,7 +1220,7 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
   \item \textbf{Khi mất mạng, Agent lưu trữ dữ liệu như thế nào để không bị mất?} \\
     \textit{Trả lời:} Theo thiết kế hệ thống (tác vụ A-006 dự kiến triển khai), Agent sẽ sử dụng bộ đệm ngoại tuyến (\texttt{ReplayBuffer}) lưu tối đa 50 mẻ số liệu (\texttt{METRIC\_BATCH}, tương đương 250 giây dữ liệu) theo chính sách FIFO Drop-Oldest (loại bỏ mẻ cũ nhất khi đầy để bảo vệ bộ nhớ RAM). Khi mạng phục hồi, Agent tự động gửi bù các mẻ này kèm cờ \texttt{isReplay = true}. Lưu ý rằng bản tin nhịp tim (\texttt{HEARTBEAT}) và trạng thái dịch vụ (\texttt{SERVICE\_STATUS}) không được lưu vào bộ đệm vì dữ liệu thời gian thực cũ không còn giá trị liveness.
   \item \textbf{Quy tắc cảnh báo quá tải CPU hoạt động ra sao?} \\
-    \textit{Trả lời:} Động cơ quy tắc yêu cầu mức CPU $\ge 90\%$ liên tục trong 3 mẫu đo (sau 3 chu kỳ đo liên tiếp, mỗi chu kỳ 5 giây) để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để đánh dấu điều kiện RECOVERED; không tự chuyển workflow sang RESOLVED.
+    \textit{Trả lời:} Bộ xử lý quy tắc yêu cầu mức CPU $\ge 90\%$ liên tục trong 3 mẫu đo (sau 3 chu kỳ đo liên tiếp, mỗi chu kỳ 5 giây) để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để đánh dấu điều kiện RECOVERED; không tự chuyển quy trình xử lý sang RESOLVED.
   \item \textbf{Lỗi Cross-thread trên WinForms là gì? Khắc phục thế nào?} \\
     \textit{Trả lời:} Là ngoại lệ xảy ra khi một luồng nền nhận tin TCP cố tình gán thuộc tính Control của giao diện. Khắc phục bằng cách kiểm tra \texttt{InvokeRequired} và gọi \texttt{BeginInvoke} để chuyển hành động về cho UI Thread thực hiện an toàn.
   \item \textbf{Bộ kiểm thử tự động của Protocol có bao nhiêu bài test?} \\

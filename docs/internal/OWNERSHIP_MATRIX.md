@@ -33,18 +33,18 @@
 - A — Võ Trọng Phúc (25521452): Protocol & Agent.
 - B — Nguyễn Bá Quang (25521524): Central Server & SQL Server.
 - C — Lý Tuyết Vy (25522107): Admin WinForms.
-- D — Đỗ Minh Ngọc (25521203): Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố.
+- D — Đỗ Minh Ngọc (25521203): Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard.
 
-Nguồn: quyết định trực tiếp của người điều phối dự án, ghi tại TEAM_ASSIGNMENTS.md; không phải chữ ký hoặc biên bản đồng thuận tập thể được tạo thêm. Assistant là công việc chính thức trong kế hoạch phát triển, chưa phải chức năng đã được lập trình.
+Nguồn: quyết định trực tiếp của người điều phối dự án, ghi tại TEAM_ASSIGNMENTS.md; không phải chữ ký hoặc biên bản đồng thuận tập thể được tạo thêm. Chức năng hỗ trợ xử lý sự cố là công việc chính thức trong kế hoạch phát triển, chưa phải chức năng đã được lập trình.
 
 | Phần bổ sung | Chủ trì | Phối hợp | Ranh giới |
 |---|---|---|---|
-| `src/LabGuard.Troubleshooting/**` (đường dẫn thư viện dự kiến, chưa có mã) | D / Ngọc | B, C | Logic evidence-to-recommendation C# được Admin gọi, không executable chẩn đoán độc lập |
-| Context thiết bị/sự cố qua Central | B / Quang | D, C | B-010 ghép dữ liệu được phép khi core sẵn sàng, không Admin→SQL/Agent |
-| Panel chi tiết sự cố và handler UI | C / Vy | D, B | C-012 nhúng logic D và giữ workflow/quyền hiện có |
+| `src/LabGuard.Troubleshooting/**` (đường dẫn thư viện dự kiến, chưa có mã) | D / Ngọc | B, C | Logic C# chuyển bằng chứng thành gợi ý kiểm tra, được Admin gọi; không tạo chương trình chẩn đoán độc lập |
+| Dữ liệu thiết bị/sự cố qua Central | B / Quang | D, C | B-010 ghép dữ liệu được phép khi phần cốt lõi sẵn sàng; Admin không truy vấn trực tiếp SQL/Agent |
+| Vùng chi tiết sự cố và bộ xử lý lệnh giao diện | C / Vy | D, B | C-012 nhúng logic của D và giữ quy trình xử lý/quyền hiện có |
 | Sáu ca A–F trong luồng Admin thật sau này | D / Ngọc | B, C | D-010 chỉ có bằng chứng sau khi thực hiện; GK trình bày ý tưởng/kế hoạch |
 
-D-001/002/003 giữ nguyên. Gateway/Collector/Simulator vẫn P1 có điều kiện; dòng Simulator đồng bộ owner chính D với WBS D-006, A hỗ trợ. Không thay điều kiện triển khai thành cam kết bắt buộc. B-010 (2 giờ) / C-012 (3 giờ) là effort ghép bổ sung, không tính toàn bộ core còn thiếu; readiness và công sức core phải rà riêng.
+D-001/002/003 giữ nguyên. Gateway/Collector/Simulator vẫn P1 có điều kiện; dòng Simulator đồng bộ owner chính D với WBS D-006, A hỗ trợ. Không thay điều kiện triển khai thành cam kết bắt buộc. B-010 (2 giờ) / C-012 (3 giờ) là công sức ghép bổ sung, không tính toàn bộ chức năng cốt lõi còn thiếu; mức sẵn sàng và công sức phần cốt lõi phải rà riêng.
 
 Không sửa schema/protocol trong quyết định phân công này. Giai đoạn 1 dùng dữ liệu Central được phép và hiện thiếu bằng chứng. Giai đoạn 2 lịch sử SQL qua GET_METRICS/METRICS_RESULT tùy chọn cần được duyệt và kiểm tra riêng.
 

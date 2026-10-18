@@ -1,4 +1,4 @@
-# Tập thay đổi nhỏ nhất
+# Danh sách thay đổi tối thiểu
 
 Phạm vi nhánh review: workstream **Phúc/Agent** và test Agent, tài liệu triển khai. Phần Quang chỉ mô tả đầu vào cần bàn giao; không sửa Central, schema, protocol, WBS hoặc tài liệu GK. Người điều phối đã cho phép commit/push lên nhánh review và tạo Draft PR; chưa cho phép merge hoặc ghi trực tiếp main.
 

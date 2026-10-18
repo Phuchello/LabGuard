@@ -1,4 +1,4 @@
-# Validation evidence — 18/10/2026
+# Bằng chứng kiểm tra — 18/10/2026
 
 Hồ sơ kiểm tra của PR #11, đã merge vào main `70481fa`. Giữ các mốc nguồn và kết quả thực chạy trước merge dưới đây; xem [PROJECT_STATE.md](../../PROJECT_STATE.md) cho housekeeping/phân công hiện hành.
 
@@ -52,7 +52,7 @@ Bằng chứng cũ được giữ local, không xóa: console logs baseline/buil
 
 - Quang: TLS/session/authorization, identity binding, transaction SQL thật/dedup và BATCH_ACK sau commit. Agent nhận HELLO_ACK/AUTH_RESULT trước khi bật monitoring.
 - Phúc: session reader/liveness, reconnect, ACK/replay coordination; sau đó mới ghép MetricsService/HeartbeatService với config thực. Probe không có bypass monitoring chưa AUTH.
-- Vy kiểm tra góc nhìn Admin khi Central pipeline có thật; Ngọc kiểm tra lỗi mạng và Troubleshooting Assistant tích hợp trên dữ liệu Central có thẩm quyền. Không thêm tool độc lập hoặc bắt buộc Gateway/Collector.
+- Vy kiểm tra góc nhìn Admin khi Central pipeline có thật; Ngọc kiểm tra lỗi mạng và chức năng hỗ trợ phân tích và xử lý sự cố tích hợp trên dữ liệu Central có thẩm quyền. Không thêm tool độc lập hoặc bắt buộc Gateway/Collector.
 - Hai máy LAN, nhiều PC thật, máy sạch không runtime, PC phòng máy được cấp phép: NOT RUN. Windows Service: NOT INSTALLED/NOT TESTED.
 - .NET 10: NOT MIGRATED/NOT TESTED. Đánh giá toàn 13 csproj (12 trong solution, test_frame_codec ở ngoài), NuGet/WinForms/Designer và RID; không suy compatibility từ build net9. Xem `DEPENDENCY_AND_TEST_PLAN.md`.
 
