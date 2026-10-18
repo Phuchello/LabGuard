@@ -121,7 +121,7 @@ Theo [quyết định trực tiếp của người điều phối ngày 17/10/20
 
 Ngọc phối hợp với Quang để nhận dữ liệu qua Central và với Vy để tích hợp chức năng hỗ trợ xử lý sự cố vào Admin. Đây là trách nhiệm phát triển chính thức, chưa phải chức năng đã hoàn thành. Chi tiết phạm vi và phụ thuộc ở [ma trận trách nhiệm](docs/internal/OWNERSHIP_MATRIX.md) và [bản đồ phụ thuộc](docs/internal/DEPENDENCY_MAP.md).
 
-## Bộ năm sổ tay hướng dẫn LabGuard
+## 5 sổ tay hướng dẫn LabGuard
 
 Các sổ tay giải thích thiết kế, kiến thức và kế hoạch triển khai; ví dụ về chức năng dự kiến không phải bằng chứng chức năng đã chạy.
 
