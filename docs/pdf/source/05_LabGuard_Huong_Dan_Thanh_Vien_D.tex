@@ -1,10 +1,11 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage{labguard_pdf}
+\usepackage{longtable}
 
 \begin{document}
 
 % ==============================================================================
-% TRANG BIA CHUAN DO AN UIT (TEXT-ONLY, GON GANG, HOC THUAT)
+% TRANG BÌA CHUẨN ĐỒ ÁN UIT (TEXT-ONLY, GỌN GÀNG, HỌC THUẬT)
 % ==============================================================================
 \begin{titlepage}
   \centering
@@ -21,83 +22,83 @@
   \vspace{5mm}
   {\bfseries\Huge\color{lgDeepBlue} HƯỚNG DẪN THÀNH VIÊN D\par}
   \vspace{8mm}
-  {\bfseries\Large KIỂM THỬ TCP \& HỖ TRỢ XỬ LÝ SỰ CỐ\par}
+  {\bfseries\Large KIỂM THỬ TCP \& ĐỊNH HƯỚNG THIẾT KẾ HỖ TRỢ XỬ LÝ SỰ CỐ\par}
   \vspace{4mm}
-  {\large Đỗ Minh Ngọc: hỗ trợ xử lý sự cố dựa trên bằng chứng trong LabGuard Admin\par}
+  {\large Đỗ Minh Ngọc: công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard\par}
   \vspace{12mm}
   {\color{lgTeal}\hrule height 1pt}
   \vspace{25mm}
-  {\large\textbf{BIÊN SOẠN: VÕ TRỌNG PHÚC}\par}
+  {\large\textbf{BIÊN SOẠN: NHÓM ĐỒ ÁN LABGUARD}\par}
   \vspace{6mm}
-  {\large\textbf{NHÓM THỰC HIỆN: 4 THÀNH VIÊN}\par}
+  {\large\textbf{TÀI LIỆU ĐỊNH HƯỚNG THIẾT KẾ KỸ THUẬT (RÀ SOÁT PR \#14 — 18/10/2026)}\par}
   \vfill
   {\bfseries\color{lgSlate} TP. HỒ CHÍ MINH — 2026\par}
 \end{titlepage}
 
 % ==============================================================================
-% TRANG 2: KHỞI ĐỘNG NHANH CHO THÀNH VIÊN D (5 MỤC KHÔNG BIỆT NGỮ)
+% TRANG 2: KHỞI ĐỘNG NHANH CHO THÀNH VIÊN D (5 MỤC RÕ RÀNG)
 % ==============================================================================
+\begingroup\fontsize{10.5}{12.6}\selectfont
 \thispagestyle{empty}
 \vspace*{-8mm}
 {\centering\Large\bfseries\color{lgDeepBlue} KHỞI ĐỘNG NHANH DÀNH CHO THÀNH VIÊN D\par}
 \vspace{1mm}
-{\centering\footnotesize\color{lgGray} (Đọc xong trang này trong 2 phút là bạn biết chính xác mình cần làm gì hôm nay)\par}
+{\centering\footnotesize\color{lgGray} (Bản định hướng thiết kế tinh gọn — nắm bắt nhiệm vụ và ranh giới kỹ thuật trong 2 phút)\par}
 \vspace{4mm}
 
 \begin{tcolorbox}[enhanced, colback=lgLightTeal, colframe=lgTeal, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
 {\bfseries\color{lgTeal} 1. BẠN LÀ AI?}\par
 \vspace{0.5mm}
-Bạn là \textbf{Đỗ Minh Ngọc}, phụ trách \textbf{Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard}. Phần hỗ trợ nằm trong Admin; Gateway/Collector chỉ là tùy chọn.
+Bạn là \textbf{Đỗ Minh Ngọc}, đảm nhiệm phân công chính thức: \textbf{Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard} (mã nhóm nhiệm vụ: LG-D-001 đến LG-D-010). Vai trò của bạn là kỹ sư kiểm thử tầng mạng và người thiết kế thư viện phân tích bằng chứng sự cố nhúng trong Admin WinForms.
 \end{tcolorbox}
 \vspace{1.5mm}
 
 \begin{tcolorbox}[enhanced, colback=lgLightBlue, colframe=lgDeepBlue, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
-{\bfseries\color{lgDeepBlue} 2. BẠN LÀM GÌ?}\par
+{\bfseries\color{lgDeepBlue} 2. BẠN CẦN LÀM GÌ?}\par
 \vspace{0.5mm}
 \begin{itemize}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
-  \item Hiểu giao thức Protocol do Thành viên A thiết kế.
-  \item Dựng môi trường Stub/Mock (FakeAgent và FakeCentral) để thử nghiệm độc lập.
-  \item Nắm vững cơ chế hàng đợi có giới hạn để điều tiết lưu lượng gói tin.
-  \item Thiết kế logic gợi ý có bằng chứng trong chi tiết sự cố, phối hợp Quang/Vy.
-  \item Kiểm tra thiếu/cũ/lỗi nguồn; không tự kết luận nguyên nhân hoặc tự sửa máy.
+  \item \textbf{Kiểm thử TCP thiết yếu (Nền tảng):} Nắm chắc lập trình Socket không nghẽn, đóng khung 4 byte Big-Endian (\texttt{FrameCodec}), kiểm tra lưu lượng bằng Wireshark (port 5000); nghiệm thu TCP Echo (\texttt{LG-D-002} đã XONG qua PR \#8) và hoàn thiện TCP Relay (\texttt{LG-D-003}) với hàng đợi Bounded Channel chống tràn RAM.
+  \item \textbf{Thiết kế hỗ trợ xử lý sự cố (D-007..D-010):} Tự tay thiết kế và lập trình thư viện C\# thuần túy (\texttt{LabGuard.Troubleshooting}) phục vụ Admin WinForms; thẩm định chất lượng dữ liệu (độ mới, phần thiếu/cũ, trạng thái kết nối do Central cung cấp); đối soát ma trận quy tắc tất định; phân định rõ 3 tầng trạng thái (Kết nối, Cảnh báo kỹ thuật, Quy trình xử lý); xếp hạng bước kiểm tra ưu tiên không xâm lấn; dứt khoát không đưa ra kết luận võ đoán khi thiếu bằng chứng.
 \end{itemize}
 \end{tcolorbox}
 \vspace{1.5mm}
 
 \begin{tcolorbox}[enhanced, colback=lgLightRed, colframe=lgCrimson, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
-{\bfseries\color{lgCrimson} 3. BẠN KHÔNG CẦN LO PHẦN NÀO?}\par
+{\bfseries\color{lgCrimson} 3. BẠN TUYỆT ĐỐI KHÔNG CẦN LO PHẦN NÀO?}\par
 \vspace{0.5mm}
 \begin{itemize}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
-  \item Bạn \textbf{không cần} lo đo phần cứng máy trạm (việc của \textbf{Thành viên A}).
-  \item Bạn \textbf{không cần} lo cấu trúc bảng CSDL SQL Server hay viết luật nghiệp vụ (việc của \textbf{Thành viên B}).
-  \item Bạn \textbf{không cần} lo vẽ giao diện đồ họa WinForms (việc của \textbf{Thành viên C}).
-  \item \textit{Lưu ý:} Simulator và Wireshark là \textbf{công cụ hỗ trợ kiểm thử sau này}, không phải nghiệp vụ cốt lõi bạn cần lo ngay từ đầu.
+  \item Bạn \textbf{không cần} lo đo phần cứng máy trạm Windows hay vòng lặp Agent (việc của \textbf{Võ Trọng Phúc --- A}).
+  \item Bạn \textbf{không cần} tạo bảng SQL Server, không viết \texttt{RuleEngine} phát hiện sự cố máy chủ (việc của \textbf{Nguyễn Bá Quang --- B}).
+  \item Bạn \textbf{không cần} thiết kế giao diện WinForms Dashboard hay bắt sự kiện nút bấm UI (việc của \textbf{Lý Tuyết Vy --- C}).
+  \item \textit{Phân định mở rộng:} Gateway L4, Collector L7 và Bộ giả lập Simulator 50 máy là \textbf{nghiên cứu mở rộng P1 tùy chọn} (nằm ở Phụ lục), không phải cam kết bắt buộc của bạn.
 \end{itemize}
 \end{tcolorbox}
 \vspace{1.5mm}
 
 \begin{tcolorbox}[enhanced, colback=lgLightGreen, colframe=lgForestGreen, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
-{\bfseries\color{lgForestGreen} 4. HÔM NAY BẮT ĐẦU Ở ĐÂU?}\par
+{\bfseries\color{lgForestGreen} 4. HÔM NAY BẮT ĐẦU TỪ ĐÂU?}\par
 \vspace{0.5mm}
-Đọc phân công và WBS D-007..D-010, đối chiếu dữ liệu thiết bị/sự cố bắt buộc với B/C; giữ nhiệm vụ TCP Echo/Relay và giao thức đã đóng băng.
+Đọc kỹ quy chuẩn Wire Protocol (\path{docs/spec/PROTOCOL_SPEC.md}) và Quyết định Kiến trúc (\path{docs/spec/ARCHITECTURE_DECISIONS.md}); nắm vững các hợp đồng dữ liệu giữa Central và Admin; tự thiết kế cấu trúc lớp và thuật toán thẩm định bằng chứng cho thư viện phân tích; viết bộ unit test độc lập cho 6 kịch bản sự cố chuẩn hóa (Ca 1 đến Ca 6).
 \end{tcolorbox}
 \vspace{1.5mm}
 
 \begin{tcolorbox}[enhanced, colback=lgLightSlate, colframe=lgSlate, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
-{\bfseries\color{lgSlate} 5. FILES BẠN CẦN MỞ TRƯỚC:}\par
+{\bfseries\color{lgSlate} 5. CÁC TÀI LIỆU VÀ TẬP TIN CẦN MỞ ĐẦU TIÊN:}\par
 \vspace{0.5mm}
 \begin{enumerate}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
-  \item \path{docs/internal/TEAM_ASSIGNMENTS.md}: Phân công chính thức và ranh giới tích hợp.
-  \item \path{src/LabGuard.Protocol/FrameCodec.cs}: Cách cắt và ghép 4 byte độ dài khi trung chuyển dữ liệu.
-  \item \path{src/LabGuard.Protocol/WireEnvelope.cs}: Cấu trúc thông điệp chuẩn để kiểm tra tính toàn vẹn.
-  \item \path{src/LabGuard.Protocol/MessageTypes.cs}: Danh mục tên các loại thông điệp cần kiểm thử.
+  \item \path{docs/internal/TEAM_ASSIGNMENTS.md}: Phân công chính thức và ranh giới tam giác B-C-D.
+  \item \path{docs/spec/PROTOCOL_SPEC.md}: Đặc tả 69 bản tin và định dạng WireEnvelope chuẩn.
+  \item \path{docs/spec/ARCHITECTURE_DECISIONS.md}: Các quyết định kiến trúc chính thức (CP2-001 đến CP2-019).
+  \item \path{src/LabGuard.Protocol/FrameCodec.cs}: Cách đóng gói và giải mã tiền tố 4 byte Big-Endian.
+  \item \path{docs/internal/WBS_TASKS.csv}: Tiêu chí nghiệm thu các mã LG-D-001..LG-D-010.
 \end{enumerate}
 \end{tcolorbox}
 
+\endgroup
 \newpage
 
 % ==============================================================================
-% MUC LUC
+% MỤC LỤC
 % ==============================================================================
 \pagenumbering{roman}
 \setcounter{page}{3}
@@ -109,419 +110,606 @@ Bạn là \textbf{Đỗ Minh Ngọc}, phụ trách \textbf{Công cụ kiểm th�
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
-\input{sync_status.tex}
+\input{sync_status_pr14.tex}
 
 % ==============================================================================
-% PHAN 1: TONG QUAN VAI TRO THANH VIEN D
+% PHẦN 1: TỔNG QUAN VAI TRÒ VÀ RANH GIỚI KỸ THUẬT CỦA THÀNH VIÊN D
 % ==============================================================================
+\section{Tổng quan vai trò và ranh giới kỹ thuật của Thành viên D}
 
-\section[Kiểm thử TCP và hỗ trợ xử lý sự cố]{Đỗ Minh Ngọc: kiểm thử TCP và hỗ trợ xử lý sự cố}
 \begin{summarybox}
-D-002 TCP Echo đã XONG qua PR \#8; D-001/D-003 chưa có nghiệm thu. Bộ kiểm thử mô phỏng của PR \#9 đã có, không thay D-003. D-007..D-010 là nhiệm vụ chính thức theo quyết định người điều phối 17/10/2026, \textbf{đều CHƯA LÀM}. Chức năng hỗ trợ phải nằm trong Admin, không thay bằng chương trình chẩn đoán TCP độc lập.
+Thành viên D (\textbf{Đỗ Minh Ngọc}) phụ trách hai mảng công việc phối hợp: (1) \textbf{Công cụ kiểm thử truyền thông TCP} độc lập nhằm xác thực tầng mạng và điều tiết hàng đợi; (2) \textbf{Chức năng hỗ trợ phân tích, xử lý sự cố} được đóng gói thành thư viện C\# dùng lại được tiêu thụ bởi LabGuard Admin. Sổ tay này đóng vai trò \textbf{định hướng thiết kế kỹ thuật}, đưa ra các yêu cầu, giao diện tham khảo và tiêu chí nghiệm thu để bạn tự tay thiết kế và lập trình hoàn thiện.
 \end{summarybox}
-\subsection{D-007 đến D-010: từ bằng chứng đến gợi ý có giới hạn}
-\begin{enumerate}
-\item \textbf{D-007 --- rà nguồn:} dữ liệu bắt buộc/tùy chọn, quyền truy cập, độ mới, phần thiếu/cũ và ý nghĩa từng trường. Không suy tình trạng SQL hay thời điểm đo khi chưa có nguồn xác nhận.
-\item \textbf{D-008 --- thiết kế quy tắc:} mỗi nhận định có bằng chứng, giới hạn và hướng kiểm tra. Bao phủ CPU, RAM, mất liên lạc, dịch vụ dừng; phân biệt điều kiện đã phục hồi với trạng thái xử lý sự cố.
-\item \textbf{D-009 --- logic nội bộ:} thư viện dùng lại do Admin gọi, nhận dữ liệu B/C đã thống nhất; không truy vấn SQL/Agent trực tiếp, không tự thay đổi dữ liệu hoặc đóng sự cố.
-\item \textbf{D-010 --- xác minh tích hợp:} sau D-009, B-010 và C-012, chạy sáu ca với nguồn và luồng xử lý thật. Phân biệt thiết kế, mã đã viết và kiểm thử đã chạy; mô phỏng riêng không chứng minh toàn hệ thống hoạt động.
-\end{enumerate}
 
-\subsection{Phối hợp Quang và Vy}
-Quang (B-010) cung cấp dữ liệu/lệnh có thẩm quyền qua Central; Vy (C-012) phụ trách giao diện, quy trình xử lý, quyền và kiểm tra xung đột cập nhật. Hai giờ B và ba giờ C chỉ là phần ghép khi chức năng cốt lõi đã sẵn sàng; xác thực, lưu dữ liệu và kết nối còn thiếu phải tính riêng. Ngọc giữ công cụ kiểm thử TCP và logic gợi ý, không nhận thay phần cốt lõi của A/B/C.
-
-Giai đoạn đầu dùng dữ liệu thiết bị/sự cố được phép lấy qua Central và hiện rõ bằng chứng còn thiếu. Giai đoạn sau chỉ khi nhóm chấp thuận và phần xử lý đã sẵn sàng mới lấy lịch sử SQL qua thiết kế tùy chọn \texttt{GET\_METRICS} / \texttt{METRICS\_RESULT}. Không tạo thời điểm, lịch sử hoặc tình trạng SQL giả; không sửa schema/giao thức đóng băng.
-
-\subsection{Ví dụ kế hoạch MAY-03 --- dữ liệu hoàn toàn minh họa}
-\begin{conceptbox}[breakable=false]
-\textbf{Bằng chứng:} giả định MAY-03 đang kết nối (ONLINE), ba mẫu CPU minh họa $91.2\% \rightarrow 93.1\% \rightarrow 92.4\%$, RAM $58.5\%$, sự cố HIGH\_CPU đang mở (OPEN). Đây không phải số đo hoặc sự cố từ phần mềm đã chạy.
-
-\textbf{Nhận định:} ba mẫu vượt ngưỡng CPU $90\%$ của thiết kế phù hợp một cảnh báo HIGH\_CPU; không xác định chắc tiến trình/nguyên nhân. ONLINE là kết nối, HIGH\_CPU là cảnh báo, OPEN là trạng thái xử lý: không gộp thành một trạng thái chung.
-
-\textbf{Hướng kiểm tra:} kiểm tra độ mới/nguồn của mẫu, trao đổi tác vụ đang chạy, đối chiếu tiến trình trên máy bằng người có quyền. Nếu thiếu mẫu hoặc chỉ có dữ liệu cũ, hiện rõ thiếu bằng chứng thay vì khẳng định quá tải hiện tại.
-
-\textbf{Thao tác xử lý:} người quản trị xác nhận, bắt đầu hoặc hoàn tất xử lý theo quyền, qua bộ xử lý lệnh Central khi đã hiện thực. Chức năng hỗ trợ không tự đóng sự cố hoặc chạy lệnh sửa từ xa. Điều kiện phục hồi không tự chuyển trạng thái xử lý sang RESOLVED.
-\end{conceptbox}
-
-\subsection{Sản phẩm bàn giao và kiểm tra dự kiến}
-Bảng ánh xạ dữ liệu, quy tắc giải thích, thư viện dùng trong Admin, vùng hiển thị cùng C và hồ sơ sáu ca sau tích hợp. Các ca phải kiểm tra nguồn, phần thiếu/cũ, trạng thái, quyền và phản hồi xung đột. Chưa kết luận đạt khi chưa chạy mã với nguồn thật. DeviceId thuộc Agent; chức năng hỗ trợ dùng thiết bị đang chọn, không yêu cầu nhập lại định danh.
-
-\section{Tham khảo tùy chọn: Gateway, Collector và kiểm tra tải}
-\begin{summarybox}
-Phần tiếp theo giữ kiến thức mở rộng của cẩm nang cũ. Gateway/Collector/Simulator thuộc P1 sau khi phần cốt lõi ổn định, \textbf{không phải cam kết chính của Ngọc}. Các diagram, pseudocode và kịch bản mở rộng là đề xuất học tập, không phải hiện trạng triển khai.
-\end{summarybox}
-\subsection{Bài toán thực tế: Khi phòng máy có hàng trăm máy tính}
-Khi hệ thống LabGuard được nhân rộng cho cả một dãy phòng máy của trường đại học với hơn 500 đến 1,000 máy tính hoạt động cùng lúc:
+\subsection{Hiện trạng nhiệm vụ và lộ trình triển khai}
+Căn cứ quyết định phân công chính thức ngày 17/10/2026 và bảng WBS hợp nhất:
 \begin{itemize}
-  \item \textbf{Nguy cơ bão kết nối (Connection Storm):} Khả năng quá tải phụ thuộc lưu lượng, I/O và tài nguyên thực tế; chỉ xem xét scale sau khi đo đúng workload, không giả định số lượng socket tự gây nghẽn.
-  \item \textbf{Mạng giữa các phòng học (WAN / NAT):} Các máy trong từng phòng thường nằm sau router riêng, Collector L7 là hướng gom dữ liệu có điều kiện; hiệu quả cần đo thực tế. Gateway L4 và Collector L7 không phải cùng một thành phần.
+  \item \textbf{LG-D-002 (TCP Echo Console):} Đã hoàn thành và nghiệm thu qua PR \#8 (chương trình độc lập tại \path{tools/TcpEcho/Program.cs}).
+  \item \textbf{LG-D-001 \& LG-D-003 (Nền tảng TCP \& TCP Relay Bounded Channel):} Chưa nghiệm thu (WBS: CHƯA LÀM); \path{tools/mock_harness} (PR \#9) là công cụ bổ trợ kiểm thử, không thay thế mã nguồn chính thức của D-003.
+  \item \textbf{LG-D-007 đến LG-D-010 (Hỗ trợ phân tích, xử lý sự cố tích hợp):} Là nhóm nhiệm vụ trọng tâm chính thức \textbf{đang ở giai đoạn thiết kế và chuẩn bị lập trình (CHƯA LÀM)}. Chức năng này bắt buộc phải là một thư viện C\# thuần túy dùng lại được tiêu thụ bởi Admin WinForms, tuyệt đối không xây dựng thành ứng dụng chẩn đoán mạng chạy rời rạc.
+  \item \textbf{LG-D-004, LG-D-005, LG-D-006 (Gateway, Collector, Simulator):} Là các hướng \textbf{nghiên cứu mở rộng P1 tùy chọn}, chỉ xem xét sau khi toàn bộ hệ thống cốt lõi đã nghiệm thu ổn định.
 \end{itemize}
 
-\begin{conceptbox}
-\textbf{Nội dung tham khảo mở rộng, không phải nhiệm vụ chính:}
-\begin{enumerate}
-  \item \textbf{Collector L7 tùy chọn:} Gom các bản tin số liệu từ các máy trong phòng, đưa vào hàng đợi an toàn và chuyển tiếp về máy chủ trung tâm.
-  \item \textbf{Môi trường giả lập độc lập (FakeAgent / FakeCentral):} Giúp nhóm kiểm thử sớm mà không phải đợi nhau viết xong code.
-  \item \textbf{Bộ giả lập phòng máy (Simulator):} Hướng mở rộng tùy chọn để mô phỏng nhiều máy trạm và tình huống lỗi. Hiện chỉ có bản khung; chưa có bằng chứng sinh tải hoặc hiển thị số liệu/cảnh báo trên Admin.
-  \item \textbf{Phân tích gói tin qua Wireshark:} Soi dòng byte nhị phân để chứng minh hệ thống đóng khung 4 byte Big-Endian chuẩn xác.
-\end{enumerate}
-\end{conceptbox}
+\subsection{Phân định ranh giới trách nhiệm tam giác (Quang B --- Vy C --- Ngọc D)}
+Nhằm đảm bảo tính toàn vẹn kiến trúc và tránh chồng chéo trách nhiệm, ranh giới xử lý sự cố được quy định chặt chẽ theo Bảng~\ref{tab:tam-giac-trach-nhiem}:
 
-Hình này chỉ cần nhìn theo các khối chức năng từ trên xuống dưới theo thứ tự triển khai.
+\begin{table}[H]
+  \centering
+  \caption{Phân định ranh giới trách nhiệm giữa Thành viên B, C và D}
+  \label{tab:tam-giac-trach-nhiem}
+  \small
+  \begin{tabularx}{\textwidth}{|p{0.22\textwidth}|X|p{0.25\textwidth}|}
+    \hline
+    \rowcolor{lgDeepBlue}
+    \color{white}\textbf{Thành viên} & \color{white}\textbf{Phạm vi trách nhiệm có thẩm quyền} & \color{white}\textbf{Điều tuyệt đối không làm} \\
+    \hline
+    \textbf{Nguyễn Bá Quang\newline(Thành viên B)} &
+    - Lắng nghe kết nối TCP Agent, quản trị phiên kết nối.\newline
+    - Thực thi \texttt{RuleEngine} phát hiện sự cố dựa trên ngưỡng và hysteresis chính thức (CPU $\ge 90\%$, RAM $\ge 85\%$, nhịp tim quá hạn $> 20$s).\newline
+    - Ghi nhận và lưu trữ CSDL SQL Server (\texttt{MetricSamples}, \texttt{Incidents}).\newline
+    - Cung cấp dữ liệu thiết bị và sự cố có thẩm quyền cho Admin. &
+    - Không can thiệp logic giao diện hiển thị WinForms.\newline
+    - Không viết mã thuật toán gợi ý bước xử lý của Admin. \\
+    \hline
+    \textbf{Đỗ Minh Ngọc\newline(Thành viên D)} &
+    - Phát triển thư viện C\# thuần túy (\texttt{LabGuard.Troubleshooting}).\newline
+    - Thẩm định chất lượng dữ liệu: độ mới (\textit{freshness}), dữ liệu thiếu/cũ, trễ nhịp tim.\newline
+    - Đối chiếu ma trận quy tắc giải thích tất định (Rule-Based).\newline
+    - Xếp hạng danh mục các bước kiểm tra (ưu tiên không xâm lấn).\newline
+    - Dứt khoát từ chối kết luận suy đoán khi bằng chứng không đầy đủ. &
+    - Không tự ý truy vấn trực tiếp vào CSDL SQL Server.\newline
+    - Không tự mở socket kết nối trực tiếp đến Agent.\newline
+    - Không tự ý đóng sự cố hoặc thay đổi dữ liệu Central.\newline
+    - Không nhúng mã giao diện WinForms vào thư viện. \\
+    \hline
+    \textbf{Lý Tuyết Vy\newline(Thành viên C)} &
+    - Thiết kế giao diện WinForms Admin Dashboard và bảng điều khiển sự cố.\newline
+    - Gọi thư viện của D để lấy nhận định và danh sách gợi ý kiểm tra.\newline
+    - Điều phối luồng thao tác của người quản trị (\texttt{INCIDENT\_ACK}, \texttt{INCIDENT\_START}, \texttt{INCIDENT\_RESOLVE}).\newline
+    - Gửi lệnh cập nhật trạng thái sự cố về Central kèm kiểm soát khóa lạc quan OCC (\texttt{RowVersionHex}). &
+    - Không tự ý viết mã phân tích quy tắc sự cố cứng trong WinForms Form.\newline
+    - Không tin cậy dữ liệu cũ khi người dùng thao tác. \\
+    \hline
+  \end{tabularx}
+\end{table}
 
 \begin{figure}[H]
   \centering
-  \begin{tikzpicture}[node distance=0.9cm, auto,
-    block/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners, text width=13.5cm, minimum height=0.9cm, align=left, font=\footnotesize},
-    arrow/.style={thick, ->, >=stealth, color=lgDeepBlue}]
-    \node[block] (g1) {\textbf{Chặng 1: Môi trường Stub độc lập (Wire Contract Fixtures)}\\Nắm vững 16 fixture chuẩn và xây dựng FakeAgent / FakeCentral stub.};
-    \node[block, below=of g1] (g2) {\textbf{Chặng 2: Hàng đợi thu gom có giới hạn (Bounded Queue)}\\Áp dụng Bounded Channel chống tràn bộ nhớ và điều tiết luồng dữ liệu.};
-    \node[block, below=of g2] (g3) {\textbf{Chặng 3: Chuyển tiếp hai chiều (Duplex Relay) \& Xử lý chịu lỗi}\\Duy trì bảng định tuyến kết nối phiên và tự phục hồi khi mất kết nối WAN.};
-    \node[block, below=of g3] (g4) {\textbf{Chặng 4: Công cụ hỗ trợ — Bộ giả lập phòng máy (Simulator)}\\Tạo 30--50 máy ảo song song, tích hợp menu phím bơm lỗi CPU và mạng.};
-    \node[block, below=of g4] (g5) {\textbf{Chặng 5: Công cụ hỗ trợ — Đo kiểm gói tin qua Wireshark}\\Lọc cổng 5000, kiểm chứng cấu trúc nhị phân 4 byte Big-Endian và JSON.};
-    \node[block, below=of g5] (g6) {\textbf{Chặng 6: Kịch bản diễn tập thuyết trình ngắn}\\Phối hợp nhóm thực hiện kịch bản chứng minh tải và phản ứng sự cố.};
-    \draw[arrow] (g1) -- (g2);
-    \draw[arrow] (g2) -- (g3);
-    \draw[arrow] (g3) -- (g4);
-    \draw[arrow] (g4) -- (g5);
-    \draw[arrow] (g5) -- (g6);
+  \begin{tikzpicture}[
+    component/.style={draw=lgDeepBlue,fill=lgLightBlue,rounded corners=2mm,text width=4.1cm,minimum height=2.0cm,align=center,font=\small},
+    local/.style={draw=lgTeal,fill=lgLightTeal,rounded corners=2mm,text width=4.5cm,minimum height=1.8cm,align=center,font=\small},
+    net/.style={thick,->,>=stealth,color=lgDeepBlue},
+    call/.style={thick,->,>=stealth,color=lgTeal,dashed}]
+    \node[component] (central) at (0,0) {\textbf{Central Server (Quang)}\\Tiếp nhận, xác thực\\Liveness, quy tắc\\Truy cập SQL Server};
+    \node[component] (admin) at (8,0) {\textbf{Admin WinForms (Vy)}\\Hiển thị dữ liệu Central\\Nhận thao tác quản trị};
+    \node[local] (engine) at (8,-4.1) {\textbf{Thư viện hỗ trợ (Ngọc)}\\Chạy trong Admin\\Đánh giá bằng chứng\\Gợi ý bước kiểm tra};
+    \draw[net] ([yshift=4mm]central.east) -- node[above,font=\footnotesize,align=center]{Dữ liệu được phép\\qua TCP} ([yshift=4mm]admin.west);
+    \draw[net] ([yshift=-4mm]admin.west) -- node[below,font=\footnotesize,align=center]{Lệnh quản trị\\kèm phiên bản kỳ vọng} ([yshift=-4mm]central.east);
+    \draw[call] ([xshift=-5mm]admin.south) -- node[left,font=\footnotesize,align=right]{Ngữ cảnh\\gọi hàm C\#} ([xshift=-5mm]engine.north);
+    \draw[call] ([xshift=5mm]engine.north) -- node[right,font=\footnotesize,align=left]{Kết quả\\trả về Admin} ([xshift=5mm]admin.south);
   \end{tikzpicture}
-  \caption{Sơ đồ tham khảo mở rộng tùy chọn, không phải roadmap chính của Ngọc}
+  \caption{Sơ đồ phân định trách nhiệm tam giác B-C-D và luồng dữ liệu hỗ trợ phân tích sự cố}
+  \label{fig:tam-giac-data-flow}
 \end{figure}
 
-Ý chính: Ngọc ưu tiên Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard; sơ đồ mở rộng trên chỉ là tài liệu P1 tùy chọn, chưa có kết quả tải hay failover.
+\subsection{Bốn nguyên tắc bất biến của chức năng hỗ trợ xử lý sự cố}
+\begin{enumerate}
+  \item \textbf{100\% Luật tất định (Deterministic Rule-Based), tuyệt đối cấm Machine Learning / Chatbot AI:} Hệ thống không sử dụng mạng nơ-ron, học máy hay gọi API mô hình ngôn ngữ lớn (LLM). Mọi gợi ý phải giải thích được từ quy tắc và nguồn bằng chứng đã nêu, đảm bảo tính ổn định và khả năng tái lập trong kiểm thử.
+  \item \textbf{Tôn trọng hợp đồng dữ liệu thực tế:} Chỉ phân tích các trường dữ liệu thực sự có trong giao thức mạng (\texttt{WireEnvelope}) và CSDL SQL Server (\texttt{MetricSamples}, \texttt{Incidents}). Các thông tin chưa hỗ trợ (như danh sách tiến trình con \texttt{ProcessList} trên máy trạm) bắt buộc phải ghi rõ là \textit{Chưa có nguồn dữ liệu / Dự kiến}, tuyệt đối không bịa đặt dữ liệu mẫu.
+  \item \textbf{Tuyệt đối không bịa đặt điểm tin cậy ảo:} Không xuất các chỉ số phần trăm vô căn cứ (ví dụ: ``khả năng lỗi CPU là 87\%''). Kết luận phải là mệnh đề logic rõ ràng: \textit{Đủ bằng chứng xác nhận}, \textit{Nghi vấn cần kiểm chứng}, hoặc \textit{Không đủ bằng chứng}.
+  \item \textbf{Dứt khoát từ chối kết luận khi thiếu dữ liệu:} Khi nguồn metric thiếu, cũ hoặc chưa đủ mẫu liên tiếp, thư viện nêu giới hạn bằng chứng và không kết luận tải hiện tại. Nếu Central báo OFFLINE do heartbeat hợp lệ quá hạn, hiển thị riêng tình trạng mất liên lạc; không tự lấy mốc 20 giây làm ngưỡng cũ của metric.
+\end{enumerate}
 
-\begin{takeawaybox}
-\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Gateway là trạm trung gian kết nối giữa máy phòng học và máy chủ trung tâm.
-  \item Simulator và Wireshark là công cụ hỗ trợ để thẩm định độ ổn định và kiểm chứng hệ thống dưới tải lớn.
-\end{itemize}
-\end{takeawaybox}
+
 
 % ==============================================================================
-% PHAN 2: LO TRINH THUC HIEN 6 GIAI DOAN CUA THANH VIEN D
+% PHẦN 2: NỀN TẢNG KIỂM THỬ TRUYỀN THÔNG TCP CỐT LÕI (D-001, D-002, D-003)
 % ==============================================================================
-\section{Các bài học TCP và mở rộng tùy chọn}
+\section{Nền tảng kiểm thử truyền thông TCP thiết yếu (D-001, D-002, D-003)}
 
 \begin{summarybox}
-\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Chặng 1: Xây dựng FakeAgent và FakeCentral để kiểm thử độc lập.
-  \item Chặng 2--3: Lập trình hàng đợi Bounded Channel và chuyển tiếp hai chiều.
-  \item Chặng 4--5: Viết bộ giả lập 50 máy ảo và bắt gói tin qua Wireshark.
-  \item Chặng 6: Diễn tập kịch bản demo ngắn trước hội đồng chấm thi.
-\end{itemize}
+Trước khi tích hợp logic xử lý sự cố, Thành viên D phải làm chủ tầng truyền vận mạng: nắm chắc cơ chế bắt tay 3 bước TCP, lập trình socket không nghẽn, kiểm soát hiện tượng phân mảnh luồng byte bằng tiền tố độ dài 4 byte Big-Endian, và áp dụng hàng đợi Bounded Channel để điều tiết áp lực ngược (Backpressure).
 \end{summarybox}
 
-% ------------------------------------------------------------------------------
-\subsection{Chặng 1: CÔNG CỤ ĐÃ CÓ PR \#9: Môi trường Stub độc lập (FakeAgent / FakeCentral)}
-\vspace{2mm}
+\subsection{Lập trình Socket TCP căn bản và công cụ TCP Echo (LG-D-002)}
+TCP là giao thức hướng luồng byte (\textit{Byte Stream}), không có ranh giới bản tin tự nhiên. Khi bên gửi gọi lệnh \texttt{Write}, dữ liệu có thể bị phân mảnh (\textit{packet fragmentation}) hoặc dồn ép (\textit{packet coalescing}) tùy thuộc vào kích thước MSS và thuật toán Nagle của hệ điều hành.
 
-\subsubsection{Tại sao cần môi trường Stub?}
-Khi làm việc nhóm 4 người, nếu bạn phải chờ bạn A viết xong Agent hoặc bạn B viết xong Central mới được thử code của mình thì tiến độ sẽ bị tắc nghẽn hoàn toàn. Các thành phần giả lập (\textbf{Stubs}) giúp bạn tự do thử nghiệm độc lập:
+Chương trình \texttt{TcpEcho} (PR \#8) chứng minh khả năng thiết lập máy chủ phản hồi tại \path{tools/TcpEcho/Program.cs}:
 \begin{itemize}
-  \item \textbf{FakeAgent:} Một chương trình nhỏ giả vờ là máy sinh viên, tự động kết nối và gửi các gói tin mẫu chuẩn.
-  \item \textbf{FakeCentral:} Một server nhỏ mở cổng 5000, lắng nghe kết nối và phản hồi các gói tin mẫu.
+  \item Lắng nghe trên cổng cục bộ bằng \texttt{new TcpListener(IPAddress.Any, port)}.
+  \item Tiếp nhận kết nối bất đồng bộ qua \texttt{await listener.AcceptTcpClientAsync(ct)}.
+  \item Đọc luồng dữ liệu từ \texttt{NetworkStream} vào bộ đệm và ghi trả nguyên vẹn về máy gửi.
+  \item \textbf{Giải phóng tài nguyên chuẩn mực:} Đóng \texttt{TcpClient} bằng \texttt{using} và giải phóng \texttt{NetworkStream}, bắt chính xác các ngoại lệ \texttt{IOException} và \texttt{OperationCanceledException} khi đối tác ngắt kết nối đột ngột.
 \end{itemize}
 
-\subsubsection{Khi chạy, chuyện gì xảy ra?}
-Dùng mock harness hiện có theo README của tools/mock\_harness. Bộ 16 fixture thuộc Protocol; không khẳng định FakeAgent đã chạy mọi fixture nếu chưa có ca tương ứng.
+\subsection{Đóng khung 4 byte và bảng byte minh họa}
+\label{sec:wire-example}
+\texttt{FrameCodec} dùng tiền tố \textbf{UInt32 Big-Endian}: $0<N\le262\,144$ byte UTF-8, rồi đúng $N$ byte payload. Không tính 4 byte tiền tố vào $N$.
 
-\subsubsection{Khi nào coi là xong? (PASS Criteria)}
-\begin{itemize}
-  \item Gửi và nhận chính xác 16 fixture mẫu mà không bị lỗi giải mã.
-  \item Toàn bộ khung tin trao đổi đều có 4 byte Big-Endian đúng quy định.
-\end{itemize}
-
-% ------------------------------------------------------------------------------
-\subsection{Chặng 2: THAM KHẢO TÙY CHỌN: Hàng đợi thu gom an toàn (Bounded Channel)}
-\vspace{2mm}
-
-\subsubsection{Tại sao cần phần này?}
-Trong thiết kế mở rộng tùy chọn, Collector xử lý thông điệp ứng dụng có thể cần hàng đợi khi tốc độ tiếp nhận lớn hơn tốc độ gửi tới Central. Hàng đợi không giới hạn có nguy cơ làm tăng bộ nhớ. Gateway L4 chỉ chuyển tiếp luồng byte theo kết nối, không gom hay đóng gói lại các thông điệp ứng dụng.
-
-\subsubsection{Khi chạy, chuyện gì xảy ra?}
-Hàng đợi có giới hạn để bộ nhớ không tăng vô hạn. Khi hàng đợi đầy, producer phải chờ để hệ thống tự giảm tốc độ tiếp nhận. Cơ chế bảo vệ này được gọi là \textbf{điều tiết áp lực ngược (Backpressure)}.
-
-Ví dụ học tập dưới đây dành cho Collector, chưa được triển khai. Hàng đợi minh họa có 100 phần tử (\texttt{BoundedChannelOptions(100)}) với chính sách chờ (\path{BoundedChannelFullMode.Wait}):
-\begin{itemize}
-  \item Duy nhất một luồng nền lấy từng gói tin ra để gửi tuần tự về Central Server.
-  \item Khi đủ 100 phần tử, tác vụ thêm dữ liệu chờ bất đồng bộ cho tới khi có chỗ. Cần giới hạn cả kích thước phần tử và số tác vụ đang chờ; số phần tử riêng lẻ không bảo đảm toàn bộ bộ nhớ ổn định.
-\end{itemize}
-
-\begin{orientationbox}
-\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Hạn mức 100 chỉ giới hạn số phần tử đang nằm trong hàng đợi minh họa.
-  \item Chính sách \texttt{FullMode.Wait} làm tác vụ ghi chờ; còn phải kiểm tra kích thước dữ liệu, hủy tác vụ và giới hạn tài nguyên.
-\end{itemize}
-\end{orientationbox}
-
-\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Hàng đợi thu gom Bounded Channel và Backpressure}]
-// Pseudocode minh hoa: Hang doi thu gom du lieu Bounded Channel
-public class TelemetryCollector
-{
-    private readonly Channel<byte[]> _queue = Channel.CreateBounded<byte[]>(
-        new BoundedChannelOptions(100) { FullMode = BoundedChannelFullMode.Wait });
-
-    public async ValueTask EnqueueAsync(byte[] frame, CancellationToken ct)
-        => await _queue.Writer.WriteAsync(frame, ct);
-
-    public async Task ForwardAsync(Stream stream, CancellationToken ct)
-    {
-        await foreach (var frame in _queue.Reader.ReadAllAsync(ct))
-            await FrameCodec.WriteFrameAsync(stream, frame, ct);
-    }
-}
+\textbf{Ví dụ tự dựng, không phải gói bắt thực tế:} chuỗi JSON dưới đây là một dòng ASCII/UTF-8, không BOM, không khoảng trắng hoặc xuống dòng bổ sung. Việc tự ngắt dòng khi in không thuộc dữ liệu wire.
+\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true,breakatwhitespace=false,columns=fullflexible,caption={HEARTBEAT tự dựng dùng để tính byte}]
+{"version":1,"messageType":"HEARTBEAT","requestId":"550e8400-e29b-41d4-a716-446655440000","deviceId":"MAY-03","sentAtUtc":"2026-10-18T08:30:00Z","payload":{"sequenceNumber":1,"uptimeSeconds":1234}}
 \end{lstlisting}
+\begin{table}[H]
+\centering\small
+\caption{Offset minh họa tính từ byte đầu khung đã ghép lại, không phải đầu gói Ethernet}
+\label{tab:wireshark-byte-inspection}
+\begin{tabularx}{\textwidth}{|l|r|X|}\hline
+\textbf{Offset bao gồm hai đầu} & \textbf{Số byte} & \textbf{Nội dung} \\ \hline
+\texttt{0x0000--0x0003} & 4 & \texttt{00 00 00 C5}: $N=197$; đọc bằng \texttt{ReadUInt32BigEndian}. \\ \hline
+\texttt{0x0004--0x0010} & 13 & \texttt{version} \\ \hline
+\texttt{0x0011--0x002A} & 26 & \texttt{messageType} \\ \hline
+\texttt{0x002B--0x005D} & 51 & \texttt{requestId} \\ \hline
+\texttt{0x005E--0x0071} & 20 & \texttt{deviceId} \\ \hline
+\texttt{0x0072--0x0094} & 35 & \texttt{sentAtUtc} \\ \hline
+\texttt{0x0095--0x00C8} & 52 & \texttt{payload} \\ \hline
+\end{tabularx}
+\end{table}
+Tổng: $4+197=201$ byte. Các đoạn liên tiếp phủ đúng offset $0$ đến $200$, không trùng hoặc bỏ byte. SHA-256 toàn khung (nối hai dòng, không thêm ký tự):
+\begin{center}\ttfamily\small 7b318078cb7239743e64bf212b1858bf\\bf17534e3f066849fd151a9d74f00ef9\end{center}
 
-\subsubsection{Khi nào coi là xong? (PASS Criteria)}
-\begin{itemize}
-  \item Hàng đợi giữ tối đa 100 phần tử, producer tự động tạm dừng đồng bộ nhịp độ khi đầy.
-  \item Đo bộ nhớ và tác vụ chờ trong các ca thử dự kiến; chưa có kết quả thực nghiệm cho ví dụ này.
-\end{itemize}
+Khi kiểm thử sau này, lọc \texttt{tcp.port == 5000} và đối chiếu luồng TCP đã tái ghép; một khung có thể nằm trong nhiều segment. Với TLS, payload bắt trên mạng là dữ liệu mã hóa: chỉ xem JSON ở endpoint phát triển TCP thường hoặc qua giải mã được phép. Bảng này không chứng minh đã có capture hay đã kiểm thử LAN.
 
-% ------------------------------------------------------------------------------
-\subsection{Chặng 3: THAM KHẢO TÙY CHỌN: Chuyển tiếp hai chiều (Duplex Relay) \& Tự phục hồi (Failover)}
-\vspace{2mm}
 
-\subsubsection{Tại sao cần chuyển tiếp hai chiều?}
-Dữ liệu trong phòng máy không chỉ đi một chiều từ máy trạm lên máy chủ. Khi máy chủ Central muốn phản hồi gói tin xác nhận (\texttt{HEARTBEAT\_ACK}) hoặc gửi lệnh điều khiển (ví dụ ACK hoặc phản hồi phiên trong thiết kế), làm sao gửi đúng đến chiếc máy đích nếu mọi máy trạm đều kết nối tập trung qua Gateway?
-
-Gateway L4 cần giữ cặp kết nối Agent--Central để chuyển tiếp byte theo hai chiều. Collector L7 mới cần ánh xạ phiên để định tuyến thông điệp ứng dụng. Hai cách này là thiết kế tùy chọn khác nhau.
-
-\subsubsection{Khi chạy, chuyện gì xảy ra?}
-Ví dụ Collector có thể dùng bảng tra cứu phiên an toàn khi truy cập đồng thời (\texttt{Concurrent\allowbreak{}Dictionary}). Việc thêm, xóa và đóng kết nối vẫn cần quản lý vòng đời rõ ràng.
-Khi nhận bản tin điều khiển từ Central gửi về, Collector L7 có thể đọc phong bì để route phản hồi theo phiên; Gateway L4 chỉ relay byte, không đọc JSON để route từng thông điệp. Đây đều là thiết kế tùy chọn chưa triển khai.
-
-\subsubsection{Kịch bản tự phục hồi khi đứt mạng (Failover)}
-Đối với Collector, nếu kết nối tới Central bị gián đoạn, kế hoạch phục hồi cần xác định rõ:
-\begin{enumerate}
-  \item Giới hạn bộ đệm và cách thông báo lỗi cho Agent; không xác nhận đã lưu khi Central chưa ghi SQL thành công.
-  \item Thử kết nối lại với thời gian chờ tăng dần, có giới hạn và hỗ trợ hủy tác vụ. Đây là kế hoạch, chưa có mã hoặc kiểm thử chứng minh.
-  \item Quyền gửi lại và chống trùng theo hợp đồng hiện hành; không tự tạo hàng đợi bền vững hoặc cam kết không mất dữ liệu. Gateway L4 không tự chuyển thông điệp giữa các phiên TCP mới.
-\end{enumerate}
-
-% ------------------------------------------------------------------------------
-\subsection{Công cụ hỗ trợ: Bộ giả lập phòng máy (Simulator)}
-{\footnotesize\color{lgGray}\textit{Tham khảo tùy chọn — Mã tác vụ: LG-D-006}}\par
-\vspace{2mm}
-
-\subsubsection{Tại sao cần phần này?}
-Bộ giả lập \texttt{LabGuard.Simulator} hiện chỉ có placeholder. Theo kế hoạch tùy chọn, công cụ có thể mô phỏng 20--50 máy trạm để kiểm tra hệ thống; tải trên một máy không thay thế thử nghiệm LAN thực tế và chưa có kết quả để công bố.
-
-\subsubsection{Khi chạy, chuyện gì xảy ra?}
-Simulator khởi chạy 30--50 tác vụ \texttt{Task.Run} song song. Mỗi tác vụ đóng vai một máy sinh viên gửi nhịp tim mỗi 5 giây. Menu bàn phím cho phép bạn chủ động tạo sự cố:
-\begin{itemize}
-  \item Phím [1] dự kiến: gửi ba mẫu CPU $95\%$ liên tiếp cho máy ảo 05 để kiểm tra quy tắc HIGH\_CPU khi bộ xử lý đã được hiện thực.
-  \item Phím [2] dự kiến: gửi ba mẫu CPU $20\%$ liên tiếp để kiểm tra điều kiện RECOVERED; giữ nguyên quy trình xử lý để người có quyền thao tác.
-  \item Phím [3]: Rút mạng máy ảo 12 $\rightarrow$ Sau hơn 20 giây ($> 20\text{s}$), Central báo \texttt{OFFLINE}.
-  \item Phím [4]: Cắm lại mạng cho máy ảo 12 $\rightarrow$ Kết nối lại bình thường.
-\end{itemize}
-
-\begin{orientationbox}
-\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Mỗi máy ảo chạy độc lập trong vòng lặp \texttt{PeriodicTimer(5s)}.
-  \item Biến cờ \texttt{IsNetworkCut} giúp mô phỏng tình huống rút dây mạng nhanh chóng.
-\end{itemize}
-\end{orientationbox}
-
-\begin{lstlisting}[language=CSharp, caption={Pseudocode minh họa: Vòng lặp mô phỏng VirtualAgent}]
-// Pseudocode minh hoa: May ao VirtualAgent gui nhip tim va so lieu
-while (await timer.WaitForNextTickAsync(ct))
-{
-    if (IsNetworkCut) continue; // Gia lap rut day mang
-    await SendHeartbeatAsync(stream, ct);
-    await SendMetricBatchAsync(stream, SimulatedCpu, ct);
-}
+\subsection{Đặc tả TCP Relay hai chiều và áp lực ngược (LG-D-003)}
+Đây là yêu cầu để Ngọc tự thiết kế, không phải mã Relay đã hoàn tất. Đối chiếu trực tiếp \path{src/LabGuard.Protocol/FrameCodec.cs}:
+\begin{lstlisting}[language=CSharp,caption={Chữ ký hiện có, không phải thuật toán Relay}]
+Task<byte[]?> ReadFrameAsync(Stream stream,
+    int maxPayloadSize = MaxPayloadSize,
+    CancellationToken ct = default)
+Task WriteFrameAsync(Stream stream,
+    ReadOnlyMemory<byte> payload,
+    CancellationToken ct = default)
 \end{lstlisting}
+\texttt{ReadFrameAsync(source, ct: ct)} là cách truyền token theo tên; tham số thứ hai theo vị trí là \texttt{int}, không phải token. Kết quả chỉ là \textbf{payload}, đã bỏ tiền tố 4 byte. \texttt{null} là EOF sạch tại ranh giới khung; EOF giữa header/payload gây \texttt{EndOfStreamException}; độ dài 0 hoặc quá giới hạn gây \texttt{InvalidDataException}.
 
-\subsubsection{Khi nào coi là xong? (PASS Criteria)}
 \begin{itemize}
-  \item Tạo 30--50 máy ảo đồng thời mà không làm đơ laptop.
-  \item Menu phím bấm bơm lỗi phản hồi tức thời trên màn hình Admin.
+\item Mỗi chiều có một hàng đợi riêng: client--đích và đích--client. Theo CP2-019, mỗi hàng đợi có tối đa 100 phần tử, \texttt{FullMode.Wait}; không dùng chung hàng đợi giữa hai chiều hoặc hai phiên.
+\item Hàng đợi chứa payload nguyên byte. Writer gọi \texttt{WriteFrameAsync(destination, payload, ct)} để tạo lại đúng \emph{một} tiền tố; không ghi payload trần và không đóng khung hai lần.
+\item Chỉ một writer ghi mỗi stream. Khi đầy, producer chờ bất đồng bộ; không bỏ khung để giảm tải. Giới hạn số phần tử không phải giới hạn chính xác toàn bộ RAM vì còn buffer và đối tượng đang xử lý.
+\item Hai chiều chạy đồng thời để phản hồi không bị chặn bởi chiều yêu cầu. Ngọc phải định nghĩa EOF/half-close, hoàn tất hàng đợi, xả dữ liệu đã nhận và hủy khi lỗi; không để tác vụ chờ vô hạn.
 \end{itemize}
+\begin{lstlisting}[caption={Pseudocode định hướng, không cung cấp cài đặt hoàn chỉnh}]
+CHO MOI CHIEU (client -> dich, dich -> client), CHAY DONG THOI:
+  reader: doc mot payload hop le; cho cho trong hang doi
+  writer: lay payload; ghi lai frame voi dung mot length prefix
+  EOF sach: hoan tat hang doi, xa du lieu theo chinh sach half-close
+  loi/huy: bao loi, huy cac tac vu lien quan, giai phong ket noi
+\end{lstlisting}
+\textbf{Tiêu chí kiểm thử dự kiến:} tách header/payload qua nhiều lần đọc; ghép nhiều khung; so nguyên byte trước/sau cả hai chiều; giữ phản hồi khi phía kia còn gửi; queue đầy phải chờ; hủy khi chờ không treo; EOF sạch/EOF giữa khung; độ dài 0/quá lớn; writer không xen byte; các phiên độc lập. Chính sách half-close và giới hạn chờ đóng cần được ghi rõ trước nghiệm thu. Chưa có kết quả Relay mới trong tài liệu này.
 
-% ------------------------------------------------------------------------------
-\subsection{Công cụ hỗ trợ: Bắt và phân tích gói tin bằng Wireshark}
-{\footnotesize\color{lgGray}\textit{Chặng 5 — Mã tác vụ nội bộ: LG-D-005}}\par
-\vspace{2mm}
 
-\subsubsection{Tại sao cần phần này?}
-Wireshark hỗ trợ kiểm chứng dữ liệu thực tế trên đường truyền, giúp bạn quan sát trực tiếp luồng byte nhị phân:
-\begin{enumerate}
-  \item Mở Wireshark, chọn card mạng \texttt{Adapter for loopback} (nếu chạy nội bộ).
-  \item Gõ bộ lọc hiển thị: \texttt{tcp.port == 5000}.
-  \item Bấm vào một gói tin và chỉ cho thầy cô thấy:
+
+
+% ==============================================================================
+% PHẦN 3: TRỌNG TÂM D-007 ĐẾN D-010: ĐỊNH HƯỚNG THIẾT KẾ HỖ TRỢ XỬ LÝ SỰ CỐ
+% ==============================================================================
+\section{Trọng tâm D-007 đến D-010: Định hướng thiết kế hỗ trợ xử lý sự cố}
+
+\begin{summarybox}
+Đây là nội dung kỹ thuật cốt lõi của Thành viên D. Mục tiêu phần này là cung cấp \textbf{định hướng thiết kế, hợp đồng dữ liệu tham khảo, thuật toán phân tích và tiêu chí nghiệm thu} để bạn Đỗ Minh Ngọc tự tay triển khai thư viện \texttt{LabGuard.Troubleshooting}. Thư viện tiếp nhận ngữ cảnh sự cố từ Admin, thẩm định độ mới dữ liệu, áp dụng ma trận quy tắc tất định, phân định rạch ròi 3 tầng trạng thái và đề xuất các bước kiểm tra có thứ tự ưu tiên logic.
+\end{summarybox}
+
+\subsection{Mô hình đầu vào / đầu ra và căn cứ dữ liệu (LG-D-007)}
+Thư viện được thiết kế theo nguyên lý Clean Architecture: là một thư viện lớp C\# thuần túy (\textit{Class Library}), không phụ thuộc vào Windows Forms UI, không kết nối trực tiếp CSDL và không mở socket mạng. Toàn bộ dữ liệu trao đổi được chuẩn hóa qua các đối tượng DTO.
+
+\subsubsection{Cấu trúc DTO Đầu vào tham khảo: \texttt{TroubleshootingContext}}
+Dữ liệu đầu vào được Admin tổng hợp từ các bản tin có thẩm quyền của Central và chuyển giao cho thư viện:
+\begin{itemize}
+  \item \textbf{DeviceState (Ánh xạ từ \texttt{DeviceSummaryDto} trong \path{src/LabGuard.Protocol/Dtos/AdminDtos.cs}):}
     \begin{itemize}
-      \item Bắt tay 3 bước TCP (\texttt{[SYN]}, \texttt{[SYN, ACK]}, \texttt{[ACK]}).
-      \item 4 byte Big-Endian ở đầu khung tin (ví dụ: \texttt{00 00 00 9C} là 156 bytes).
-      \item Dữ liệu JSON của \texttt{WireEnvelope} với đúng 6 trường quy chuẩn.
+      \item \texttt{DeviceId} (string, bắt buộc): Định danh máy trạm (ví dụ: \texttt{"AGENT-LAB01-03"}).
+      \item \texttt{Hostname} (string): Tên Windows máy trạm (lưu ý: tài liệu gốc dùng \texttt{Hostname}, không phải \texttt{MachineName}).
+      \item \texttt{IpAddress} / \texttt{MacAddress} (string): Địa chỉ IP kết nối và địa chỉ MAC.
+      \item \texttt{Status} (string, bắt buộc): Trạng thái thiết bị trên Central gồm \texttt{"ONLINE"}, \texttt{"OFFLINE"}, hoặc \texttt{"DEGRADED"} (không dùng cờ boolean \texttt{IsConnected}).
+      \item \texttt{LastSeenUtc} (string? trên wire): thông tin quan sát do Central cung cấp. DTO chỉ khai báo trường nullable, không chứng minh đó là thời điểm heartbeat hợp lệ cuối; không tự chuyển thành đồng hồ liveness trong Admin.
+      \item \texttt{CpuUsage} / \texttt{RamUsage} (double?): Chỉ số tải gần nhất lưu trên cache máy chủ.
+      \item \texttt{UptimeSeconds} (long?): Thời gian máy trạm đã hoạt động liên tục (tính bằng giây).
+      \item \textit{Trường mở rộng tùy chọn:} \texttt{AgentVersion} (string?) được xem là thuộc tính nội bộ mở rộng, không nằm trong wire contract P0.
     \end{itemize}
+  \item \textbf{IncidentRecord (Ánh xạ từ \texttt{IncidentSummaryDto} trong \path{src/LabGuard.Protocol/Dtos/AdminDtos.cs}):}
+    \begin{itemize}
+      \item \texttt{IncidentId} (long, bắt buộc): Mã sự cố định danh duy nhất.
+      \item \texttt{DeviceId} (string, bắt buộc): Mã máy trạm xảy ra sự cố.
+      \item \texttt{RuleName} (string, bắt buộc): Tên quy tắc sự cố chính thức theo ADR CP2-006..CP2-008: \texttt{"HIGH\_CPU"}, \texttt{"HIGH\_MEMORY"}, \texttt{"SERVICE\_DOWN"}, hoặc \texttt{"DEVICE\_OFFLINE"} (lưu ý: giao thức dùng \texttt{RuleName}, không dùng \texttt{IncidentType}).
+      \item \texttt{ConditionState} (string): Giá trị thiết kế theo ADR (DTO hiện chú thích ACTIVE/RECOVERED; UNKNOWN cần B/C xác minh ánh xạ trước tích hợp): \texttt{"ACTIVE"}, \texttt{"RECOVERED"}, hoặc \texttt{"UNKNOWN"}.
+      \item \texttt{WorkflowState} (string): Nhãn thiết kế quy trình; DTO/đặc tả đang khác tên như ghi chú đối chiếu bên dưới: \texttt{"OPEN"}, \texttt{"ACKNOWLEDGED"}, \texttt{"INVESTIGATING"} (hoặc \texttt{"IN\_PROGRESS"}), \texttt{"RESOLVED"}.
+      \item \texttt{OccurrenceCount} (int): Số lần điều kiện cảnh báo lặp lại.
+      \item \texttt{OpenedAtUtc} (string, bắt buộc): Thời điểm sự cố được ghi nhận lần đầu.
+      \item \texttt{RowVersionHex} (string, bắt buộc): Chuỗi hex 18 ký tự đại diện cho token phiên bản SQL Server OCC (ví dụ: \texttt{"0x0000000000000001"}).
+    \end{itemize}
+  \item \textbf{RecentMetrics (Danh sách các mẫu đo gần nhất):}
+    \begin{itemize}
+      \item Danh sách nội bộ dự kiến, không phải trường sẵn có của \texttt{DeviceSummaryDto}. Mẫu có thể tham khảo \texttt{MetricSampleDto} (\path{TelemetryDtos.cs}), gồm \texttt{MetricName} (\texttt{"CPU"}, \texttt{"RAM"}), \texttt{MetricValue} (double), \texttt{Unit} (\texttt{"\%"}), và \texttt{RecordedAtUtc} (string ISO 8601 UTC).
+    \end{itemize}
+  \item \textbf{SystemTimeUtc (DateTime):} giờ UTC dùng đánh giá hiển thị; không phải đồng hồ đơn điệu của Central.
+\end{itemize}
+
+\subsubsection{Nguồn ba mẫu: P0 không đồng nghĩa có API lịch sử}
+\label{sec:recentmetrics-roadmap}
+P0 bắt buộc có \texttt{LIST\_DEVICES/DEVICE\_PAGE}, snapshot và \texttt{DEVICE\_UPDATE}. \texttt{DeviceSummaryDto} có số CPU/RAM gần nhất và \texttt{LastSeenUtc}; \texttt{DeviceUpdatePayload} có \texttt{UpdatedAtUtc}. Không DTO nào trong hai loại này chứa lịch sử ba mẫu hoặc \texttt{RecordedAtUtc} của mẫu gốc. Ba lần poll/snapshot, ba lần nhận event hay giá trị lặp lại không chứng minh ba mẫu liên tiếp.
+\begin{enumerate}
+\item \textbf{Giai đoạn 1 -- chỉ dùng dữ liệu P0 được Central cho phép:} khi các handler cốt lõi sẵn sàng, Admin hiển thị giá trị hiện có và sự cố Central đã ghi. Nếu không có chuỗi mẫu thì để \texttt{RecentMetrics} rỗng/không sẵn có, ghi \texttt{Insufficient} cho câu hỏi xu hướng tải; chỉ giải thích ``Central báo HIGH\_CPU'', không tự xác nhận lại ba mẫu. Bản ghi cục bộ thời điểm Admin nhận event chỉ là lịch sử quan sát, không được đổi tên thành thời điểm đo hay lịch sử SQL. Hiện listener HELLO chưa chứng minh các handler này đã hoàn tất.
+\item \textbf{Giai đoạn 2 -- có điều kiện nhóm chấp thuận:} \texttt{GET\_METRICS/METRICS\_RESULT} thuộc \emph{OPTIONAL}, không phải P0 bắt buộc. Tên bản tin không chứng minh đã có handler/API lịch sử. Quang cần xác minh nguồn SQL, quyền, hợp đồng phản hồi; Vy ánh xạ vào ngữ cảnh nội bộ; Ngọc chỉ dùng dữ liệu đã xác minh. Không tự thêm trường hoặc sửa wire/schema đóng băng.
+\item \textbf{Điều kiện gọi là ba mẫu liên tiếp:} đúng thiết bị, cùng nguồn/phiên phù hợp, đúng loại chỉ số, có thứ tự và thời điểm đo xác minh được, không lặp do snapshot/replay và không có khoảng thiếu chưa giải thích. Nếu phản hồi chưa đủ thông tin để chứng minh tính liên tiếp thì vẫn báo thiếu bằng chứng, không tự tạo timestamp/BootId.
+\end{enumerate}
+\textbf{Phụ thuộc:} LG-B-010 đối chiếu dữ liệu/nguồn sau khi phần Central cốt lõi sẵn sàng; LG-C-012 ghép ngữ cảnh và giao diện sau khi phần Admin cốt lõi sẵn sàng. Ước lượng 2 giờ/3 giờ là phần ghép bổ sung, không bao gồm xây API lịch sử hoặc hoàn thiện lõi còn thiếu. Unit test được dùng fixture tổng hợp ba mẫu, phải ghi rõ không phải lịch sử lấy từ Central thật.
+
+\begin{importantbox}
+\textbf{GHI CHÚ ĐỐI SOÁT HỢP ĐỒNG \& ĐIỂM CẦN THỐNG NHẤT TRONG NHÓM:}
+\begin{enumerate}[leftmargin=1.5em, itemsep=1pt]
+  \item \textbf{Tên trạng thái quy trình xử lý:} Trong DTO \path{AdminDtos.cs} sử dụng tên \texttt{"INVESTIGATING"}, trong khi ADR CP2-012 và \path{PROTOCOL_SPEC.md} liệt kê \texttt{"IN\_PROGRESS"}. Đây là chênh lệch cần B/C thống nhất adapter trước tích hợp; Ngọc không tự nhận cả hai là wire enum hợp lệ hoặc tự sửa giao thức đóng băng.
+  \item \textbf{Định danh người phụ trách sự cố:} Trong \path{AdminDtos.cs} là thuộc tính \texttt{AssignedToUserId} kiểu \texttt{int?}, trong khi lược đồ SQL DDL hiện hành đặt tên cột là \texttt{AssigneeId} kiểu \texttt{NVARCHAR(64)}. Sổ tay ghi nhận đây là vấn đề mở giữa Quang (B) và Vy (C); Ngọc chỉ nhận giá trị hiển thị mà không phụ thuộc cứng vào kiểu dữ liệu này.
+  \item \textbf{Trường dữ liệu tiến trình (\texttt{ProcessList}):} Giao thức P0 hiện tại \textbf{hoàn toàn chưa có} bản tin thu thập danh sách tiến trình từ Agent. Do đó, mọi gợi ý liên quan đến tiến trình bắt buộc phải hướng dẫn người quản trị kiểm tra thủ công tại máy trạm, tuyệt đối không giả định phần mềm đã có dữ liệu này.
+\end{enumerate}
+\end{importantbox}
+
+\subsubsection{Cấu trúc DTO Đầu ra tham khảo: \texttt{TroubleshootingAssessment}}
+\begin{itemize}
+  \item \texttt{DataQuality} là enum \emph{nội bộ đề xuất}, chưa nằm trong DTO giao thức: \texttt{Fresh}, \texttt{Stale}, \texttt{Insufficient}, \texttt{Missing}. Tách khỏi kết nối và trạng thái chuyển tiếp; không thêm enum này vào wire.
+  \item \texttt{EvidenceSummary} (string): Tóm lược định lượng các dữ kiện khách quan ghi nhận được (số mẫu, giá trị đo, thời gian trễ).
+  \item \texttt{AssessmentConclusion} (string): Nhận định kỹ thuật có giới hạn, nêu rõ phạm vi và từ chối suy đoán khi thiếu căn cứ.
+  \item \texttt{RecommendedChecks} (\texttt{IReadOnlyList<RecommendedCheck>}): Danh mục các bước kiểm tra thực tế đã được xếp hạng ưu tiên (gồm \texttt{StepNumber}, \texttt{Title}, \texttt{Description}, \texttt{Priority}, \texttt{IsNonInvasive}).
+  \item \texttt{PermittedActions} (\texttt{IReadOnlyList<string>}): Gợi ý các lệnh quản trị phù hợp với trạng thái sự cố và quyền RBAC của người dùng (\texttt{INCIDENT\_ACK}, \texttt{INCIDENT\_START}, \texttt{INCIDENT\_RESOLVE}).
+\end{itemize}
+
+\subsection{Chu kỳ đo đạc, khoảng thời gian chuỗi mẫu và thẩm định chất lượng dữ liệu}
+
+\subsubsection{Thời điểm đo, quan sát và liveness có ý nghĩa khác nhau}
+\begin{itemize}
+\item \texttt{RecordedAtUtc}: thời điểm lấy mẫu do Agent ghi; \texttt{sentAtUtc}: thời điểm gửi envelope. Cả hai phụ thuộc đồng hồ client; mẫu replay không chứng minh Agent đang sống.
+\item \texttt{LastSeenUtc}: trường UTC nullable trong \texttt{DeviceSummaryDto}; ý nghĩa cập nhật phải được B xác nhận. \texttt{UpdatedAtUtc} của event chỉ là thời điểm cập nhật event, không được giả làm thời điểm đo hoặc heartbeat cuối.
+\item Heartbeat hợp lệ: thuộc phiên Agent đã xác thực, đúng thế hệ kết nối và qua kiểm tra Central. HELLO đơn lẻ hoặc gói từ phiên cũ không đủ căn cứ phục hồi kết nối.
+\item Liveness Central dùng đồng hồ đơn điệu (CP2-ADR-03). Mốc cuối là heartbeat hợp lệ trong phiên hiện hành: $\Delta t=\operatorname{elapsed}(t_{\rm now},t_{\rm lastHB})$. Quá hạn khi $\Delta t>20$ giây; quét dự kiến mỗi 2,5 giây. Admin dùng trạng thái do Central cung cấp, không tự suy ra OFFLINE từ phép trừ giờ UTC hoặc timestamp client. Mốc đơn điệu này chưa có trong DTO Admin.
+\end{itemize}
+Chu kỳ lấy mẫu dự kiến 5 giây; ba mẫu liên tiếp cách đều có khoảng đầu--cuối khoảng 10 giây. Đây không phải độ mới của mẫu: chuỗi 10 giây có thể đã cũ nhiều phút. Khi đồng hồ lệch hoặc nguồn/phiên không xác minh được, ghi lý do thiếu căn cứ; không lấy giờ nhận thay cho giờ đo. Ngưỡng cũ metric và dung sai clock skew cần nhóm thống nhất riêng, không tự dùng 20 giây của liveness làm hạn metric.
+
+\subsubsection{Hợp đồng chất lượng dữ liệu nội bộ đề xuất}
+Hai sổ tay dùng cùng bốn giá trị dưới đây; Ngọc tự thiết kế thuật toán, không có enum triển khai mới trong lượt sửa này.
+\begin{description}[leftmargin=2.8cm,style=nextline]
+\item[\texttt{Missing}] Thiếu nguồn hoặc định danh bắt buộc cho câu hỏi đang xét. Không có sự cố mở có thể là tình huống bình thường, không tự là Missing.
+\item[\texttt{Stale}] Bằng chứng cần cho nhận định hiện tại đã cũ theo chính sách độ mới được nhóm chốt. OFFLINE là trạng thái kết nối riêng, không phải tên DataQuality.
+\item[\texttt{Insufficient}] Có dữ liệu nhưng chưa đủ số mẫu/tính liên tiếp hoặc nguồn/thời điểm để kết luận; P0 chỉ có giá trị gần nhất thường thuộc trường hợp này khi xét xu hướng tải.
+\item[\texttt{Fresh}] Đủ bằng chứng liên quan, có nguồn và độ mới được xác minh. Với kết luận chuỗi CPU/RAM phải đủ ba mẫu liên tiếp, không chỉ ba event.
+\end{description}
+Nếu một đánh giá cần một enum duy nhất, đề xuất ưu tiên \texttt{Missing}, rồi \texttt{Stale}, rồi \texttt{Insufficient}, cuối cùng \texttt{Fresh}; nêu đầy đủ các lý do đồng thời trong \texttt{EvidenceSummary}. Dữ liệu mâu thuẫn là lý do cần kiểm tra, không tự thêm giá trị \texttt{Conflicting}. Quy tắc ưu tiên và chính sách độ mới là thiết kế nội bộ chờ nhóm thống nhất, không phải thay đổi wire.
+
+\textbf{Tiêu chí dự kiến:} dữ liệu thiếu/cũ không cho phép kết luận tải hiện tại; vẫn có thể thuật lại sự cố Central đã báo và đề nghị bước kiểm tra phù hợp. Trạng thái chuyển tiếp trong Relay (đang nối/chờ/đã đóng/lỗi) chỉ là chẩn đoán công cụ nội bộ, không là DataQuality hay kết nối Agent do Central quyết định.
+
+
+\subsection{Phân định rõ ràng 3 tầng trạng thái độc lập}
+Hệ thống LabGuard được thiết kế trên mô hình máy trạng thái phân tầng độc lập (Dual-Layer FSM kết hợp Transport Liveness theo CP2-ADR-05). Thành viên D cần nắm vững bản chất từng tầng như mô tả tại Bảng~\ref{tab:ba-tang-trang-thai}: Các nhãn UNKNOWN/IN\_PROGRESS theo thiết kế ADR không chứng minh handler/adapter đã hỗ trợ; khác biệt với chú thích DTO phải được B/C chốt. Trạng thái Relay không thuộc ba trục nghiệp vụ này.
+
+\begin{table}[H]
+  \centering
+  \caption{So sánh bản chất và chu kỳ vòng đời của 3 tầng trạng thái trong LabGuard}
+  \label{tab:ba-tang-trang-thai}
+  \small
+  \begin{tabularx}{\textwidth}{|p{0.2\textwidth}|X|p{0.25\textwidth}|X|}
+    \hline
+    \rowcolor{lgDeepBlue}
+    \color{white}\textbf{Tầng trạng thái} & \color{white}\textbf{Khái niệm kỹ thuật} & \color{white}\textbf{Các giá trị trạng thái} & \color{white}\textbf{Cơ chế kích hoạt \& chuyển đổi} \\
+    \hline
+    \textbf{Tầng 1:\newline Kết nối thiết bị\newline(Device Status)} &
+    Tình trạng kênh truyền socket và nhịp tim giữa Agent và Central. &
+    - \texttt{ONLINE}\newline
+    - \texttt{OFFLINE}\newline
+    - \texttt{DEGRADED} &
+    Central đo bằng đồng hồ đơn điệu: nếu không nhận \texttt{HEARTBEAT} quá hạn $> 20.0$s (4 chu kỳ 5s) thì chuyển sang \texttt{OFFLINE}. \\
+    \hline
+    \textbf{Tầng 2:\newline Điều kiện kỹ thuật\newline(ConditionState)} &
+    Tình trạng vượt ngưỡng tài nguyên tại máy trạm, do Central tính toán tự động. &
+    - \texttt{ACTIVE}\newline
+    - \texttt{RECOVERED}\newline
+    - \texttt{UNKNOWN} &
+    Tính toán theo thuật toán Hysteresis:\newline
+    - CPU $\ge 90\%$ (3 mẫu) $\rightarrow$ \texttt{ACTIVE}.\newline
+    - CPU $\le 75\%$ (3 mẫu) $\rightarrow$ \texttt{RECOVERED}.\newline
+    - Mất mạng $\rightarrow$ \texttt{UNKNOWN}. \\
+    \hline
+    \textbf{Tầng 3:\newline Quy trình vận hành\newline(WorkflowState)} &
+    Vòng đời sự cố nghiệp vụ lưu trữ bền vững trong bảng \texttt{Incidents}. &
+    - \texttt{OPEN}\newline
+    - \texttt{ACKNOWLEDGED}\newline
+    - \texttt{INVESTIGATING}\newline
+    - \texttt{RESOLVED} &
+    Do người quản trị thao tác qua Admin WinForms bằng các lệnh \texttt{INCIDENT\_ACK}, \texttt{INCIDENT\_START}, \texttt{INCIDENT\_RESOLVE} kèm kiểm soát OCC. \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\begin{importantbox}
+\textbf{LƯU Ý CỐT TỬ VỀ ĐIỀU KIỆN PHỤC HỒI (\texttt{RECOVERED}):}
+Khi tài nguyên máy trạm hạ nhiệt an toàn (CPU $\le 75\%$ trong 3 mẫu liên tiếp), Tầng 2 tự động chuyển điều kiện sang \texttt{RECOVERED}. Tuy nhiên, sự kiện này \textbf{TUYỆT ĐỐI KHÔNG TỰ ĐỘNG ĐÓNG SỰ CỐ THÀNH RESOLVED} ở Tầng 3. Sự cố vẫn giữ nguyên trạng thái trên bảng điều khiển Admin cho đến khi người quản trị xem xét nguyên nhân và chủ động nhấn nút giải quyết sự cố.
+\end{importantbox}
+
+\subsection{Ma trận quy tắc đối soát và nguyên tắc xếp hạng bước kiểm tra (LG-D-008)}
+Thư viện áp dụng ma trận đối soát quy tắc logic nhị phân với các nhận định kỹ thuật có giới hạn được mô tả tại Bảng~\ref{tab:ma-tran-quy-tac}:
+
+\begingroup
+\fontsize{10.5}{12.6}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{|p{0.17\textwidth}|p{0.23\textwidth}|p{0.23\textwidth}|p{0.27\textwidth}|}
+\caption{Ma trận quy tắc dự kiến; chuỗi mẫu chỉ dùng khi đã xác minh nguồn theo Mục 3.1.2}\label{tab:ma-tran-quy-tac}\\ \hline
+\rowcolor{lgDeepBlue}
+\color{white}\textbf{Tình huống} & \color{white}\textbf{Bằng chứng cần có} & \color{white}\textbf{Giới hạn nhận định} & \color{white}\textbf{Bước kiểm tra gợi ý} \\ \hline
+\endfirsthead
+\hline
+\rowcolor{lgDeepBlue}
+\color{white}\textbf{Tình huống} & \color{white}\textbf{Bằng chứng cần có} & \color{white}\textbf{Giới hạn nhận định} & \color{white}\textbf{Bước kiểm tra gợi ý} \\ \hline
+\endhead
+\endfoot
+    \textbf{CPU cao kéo dài\newline(\texttt{HIGH\_CPU})} &
+    - 3 mẫu liên tiếp: $\text{CPU} \ge 90\%$.\newline
+    - Trạng thái: \texttt{ONLINE}.\newline
+    - Nguồn và độ mới mẫu đã xác minh; ONLINE do Central báo. &
+    Tải tính toán cao liên tục trong cửa sổ quan trắc. Phù hợp điều kiện \texttt{ACTIVE} của quy tắc \texttt{HIGH\_CPU}. Chưa có dữ liệu tiến trình để chỉ định nguyên nhân cụ thể. &
+    1. (\textit{Không xâm lấn}) Trao đổi với sinh viên về tác vụ thực hành đang chạy.\newline
+    2. (\textit{Quan sát}) Kiểm tra Task Manager trực tiếp tại máy trạm.\newline
+    3. (\textit{Can thiệp}) Yêu cầu sinh viên dừng tiến trình nếu không thuộc nội dung bài học. \\
+    \hline
+    \textbf{Đột biến CPU\newline(Transient Spike)} &
+    - 1 mẫu đo tăng cao $\ge 90\%$.\newline
+    - Các mẫu tiếp theo tự hạ $\le 75\%$.\newline
+    - Trạng thái: \texttt{ONLINE}. &
+    Đột biến tải nhất thời trong thời gian ngắn rồi tự hồi phục về ngưỡng an toàn. Không thỏa mãn điều kiện chuỗi mẫu để mở sự cố. &
+    1. (\textit{Không xâm lấn}) Tiếp tục theo dõi chu kỳ thu thập kế tiếp.\newline
+    2. (\textit{Ghi nhận}) Không cần thao tác can thiệp kỹ thuật. \\
+    \hline
+    \textbf{Bộ nhớ RAM cao\newline(\texttt{HIGH\_MEMORY})} &
+    - 3 mẫu liên tiếp: $\text{RAM} \ge 85\%$.\newline
+    - CPU: Ổn định bình thường.\newline
+    - Trạng thái: \texttt{ONLINE}. &
+    Bộ nhớ vật lý sử dụng vượt ngưỡng an toàn kéo dài. Chưa đủ căn cứ lịch sử để khẳng định có rò rỉ bộ nhớ hay do ứng dụng thực hành chiếm dụng nhiều RAM. &
+    1. (\textit{Không xâm lấn}) Đối chiếu thời gian hoạt động (\texttt{UptimeSeconds}).\newline
+    2. (\textit{Quan sát}) Mở Task Manager tại máy kiểm tra ứng dụng chiếm RAM lớn.\newline
+    3. (\textit{Can thiệp}) Hướng dẫn sinh viên đóng bớt ứng dụng không cần thiết. \\
+    \hline
+    \textbf{Mất kết nối đột ngột\newline(\texttt{DEVICE\_\allowbreak OFFLINE})} &
+    - Trạng thái: \texttt{OFFLINE}.\newline
+    - Central báo heartbeat hợp lệ quá hạn $>20$ giây.\newline
+    - Mẫu đo trước đó: Bình thường. &
+    Máy chủ mất tín hiệu liên lạc từ máy trạm. Điều kiện chuyển sang \texttt{UNKNOWN}. Không tự kết luận đứt cáp hay hỏng switch. &
+    1. (\textit{Không xâm lấn}) Người trực dùng công cụ ping được phép; không giả định Admin đã có lệnh này.\newline
+    2. (\textit{Vật lý}) Kiểm tra đèn tín hiệu cổng mạng LAN tại máy trạm.\newline
+    3. (\textit{Nguồn}) Kiểm tra người dùng có tắt máy hoặc khởi động lại máy không. \\
+    \hline
+    \textbf{Tải cao trước khi ngắt kết nối} &
+    - Các mẫu đo cuối: CPU $\ge 90\%$, RAM $\ge 85\%$.\newline
+    - Sau đó: Central báo \texttt{OFFLINE} do heartbeat hợp lệ quá hạn. &
+    Ghi nhận tình trạng tài nguyên tăng cao ngay trước khi mất liên lạc mạng. Chưa đủ bằng chứng xác định quan hệ nhân quả; cần kiểm tra tại chỗ. &
+    1. (\textit{Quan sát}) Quan sát màn hình máy trạm tại chỗ xem máy có bị đơ cứng chuột hoặc màn hình xanh không.\newline
+    2. (\textit{Can thiệp}) Nếu máy mất phản hồi hoàn toàn, kỹ thuật viên xác nhận và khởi động lại máy tại chỗ. \\
+    \hline
+    \textbf{Dữ liệu thiếu / Quá hạn quan trắc} &
+    - Mẫu thiếu hoặc cũ theo chính sách độ mới riêng; không suy từ heartbeat.\newline
+    - Số mẫu đo $< 3$ mẫu.\newline
+    - Sự cố trên bảng: Đang \texttt{OPEN}. &
+    Dữ liệu đo đạc bị gián đoạn hoặc không đủ số mẫu liên tiếp. Hệ thống dứt khoát bảo lưu kết luận chẩn đoán tải hiện tại. &
+    1. (\textit{Không xâm lấn}) Giữ nguyên phiếu sự cố, không tự ý đóng phiếu.\newline
+    2. (\textit{Hạ tầng}) Kiểm tra đường truyền mạng và tiến trình dịch vụ Agent.\newline
+    3. (\textit{Theo dõi}) Chờ Agent kết nối lại và gửi mẻ đo mới để tái đánh giá. \\
+    \hline
+\end{longtable}
+\endgroup
+
+\subsubsection{Thuật toán xếp hạng bước kiểm tra (Ranked Inspection Steps Algorithm)}
+Danh mục các bước kiểm tra \texttt{RecommendedChecks} phải tuân thủ nghiêm ngặt 3 mức độ ưu tiên:
+\begin{enumerate}
+  \item \textbf{Mức ưu tiên 1 (Không xâm lấn --- Non-Invasive):} Thu thập thêm thông tin quan sát (ping IP, đối chiếu tác vụ thực hành, kiểm tra mốc thời gian) mà không gây ảnh hưởng hay gián đoạn sinh viên đang sử dụng máy.
+  \item \textbf{Mức ưu tiên 2 (Tác động thấp --- Low-Impact):} Quan sát Task Manager trực tiếp tại chỗ, kiểm tra đèn LED cáp mạng LAN, kiểm tra nguồn điện thiết bị.
+  \item \textbf{Mức ưu tiên 3 (Can thiệp kỹ thuật --- Invasive/Actionable):} Yêu cầu dừng tiến trình, khởi động lại dịch vụ Agent hoặc khởi động lại máy tính. \textbf{Điều kiện bắt buộc:} Phải nêu rõ lý do kỹ thuật, yêu cầu đúng thẩm quyền quản trị (\texttt{Operator} hoặc \texttt{Admin}) và phải có sự xác nhận/phê duyệt của người quản trị trước khi thực hiện.
 \end{enumerate}
 
-\subsubsection{Bảng soi từng byte khung tin trên Wireshark}
-\begin{table}[H]
-  \centering
-  \small
-  \begin{tabularx}{\textwidth}{|l|l|X|}
-    \hline
-    \rowcolor{lgDeepBlue}
-    \color{white}\textbf{Vị trí Byte} & \color{white}\textbf{Giá trị Hex / Ký tự} & \color{white}\textbf{Giải thích kỹ thuật} \\
-    \hline
-    \texttt{0x0000--0x0003} & \texttt{00 00 00 9C} & 4 byte độ dài Big-Endian $= 156$ byte payload theo sau. \\
-    \hline
-    \texttt{0x0004--0x0011} & \texttt{\{"version":1,} & Phiên bản giao thức \texttt{version = 1}. \\
-    \hline
-    \texttt{0x0012--0x002B} & \texttt{"messageType":"HEARTBEAT",} & Tên thông điệp chuẩn trong \texttt{MessageTypes.cs}. \\
-    \hline
-    \texttt{0x002C--0x0058} & \path{"requestId":"d2a7...-90ef",} & Mã UUID v4 duy nhất 36 ký tự. \\
-    \hline
-    \texttt{0x0059--0x0078} & \texttt{"deviceId":"AGENT-LAB01-05",} & Tên thiết bị gửi bản tin. \\
-    \hline
-    \texttt{0x0079--0x00A8} & \path{"sentAtUtc":"2026-03-29...",} & Dấu thời gian UTC chuẩn có đuôi \texttt{Z}. \\
-    \hline
-    \texttt{0x00A9--0x009F} & \texttt{"payload":\{...\}\}} & Nội dung nghiệp vụ chi tiết của thông điệp. \\
-    \hline
-  \end{tabularx}
-\end{table}
+\subsection{Thiết kế giao diện thư viện tham khảo và Tiêu chí nghiệm thu (LG-D-009)}
+Nhằm tôn trọng quyền tự chủ kỹ thuật của Thành viên D, sổ tay không viết mã cài đặt sẵn thay cho bạn. Dưới đây là định nghĩa giao diện tham khảo và tiêu chí nghiệm thu để bạn tự tay thiết kế và lập trình:
 
-% ------------------------------------------------------------------------------
-\subsection{Kịch bản kiểm thử dự kiến cho nhiệm vụ chính của Ngọc}
-\vspace{2mm}
+\begin{lstlisting}[language=CSharp, caption={Giao diện hợp đồng tham khảo của thư viện LabGuard.Troubleshooting}]
+namespace LabGuard.Troubleshooting;
 
-Đây là \textbf{kế hoạch kiểm thử}, không phải kết quả trình diễn đã đạt. Các bước dưới tập trung công cụ kiểm thử TCP và chức năng hỗ trợ xử lý sự cố trong Admin, không yêu cầu triển khai Gateway/Collector. Chỉ thực hiện từng bước khi có đủ mã, nguồn dữ liệu và điều kiện tích hợp tương ứng. Nếu chưa sẵn sàng, chỉ giải thích thiết kế hoặc dùng dữ liệu giả định có nhãn minh họa; không mô tả như phần mềm đã hoạt động.
+public enum DataQualityStatus
+{
+    Fresh,          // Bang chung du, nguon va do moi da xac minh
+    Stale,          // Bang chung cu theo chinh sach do moi rieng
+    Insufficient,   // Khong du 3 mau lien tiep de ket luan
+    Missing         // Thieu nguon/dinh danh bat buoc cho cau hoi
+}
 
-\begin{table}[H]
-  \centering
-  \caption{Các bước kiểm thử dự kiến và điều kiện thực hiện}
-  \small
-  \begin{tabularx}{\textwidth}{|p{0.16\textwidth}|X|X|}
-    \hline
-    \rowcolor{lgDeepBlue}
-    \color{white}\textbf{Nội dung} & \color{white}\textbf{Điều kiện thực hiện} & \color{white}\textbf{Dự kiến kiểm tra và ghi nhận} \\
-    \hline
-    Kết nối, gửi và nhận TCP & Có chương trình gửi/nhận chạy được, địa chỉ và cổng được phép; có thể dùng TcpEcho hoặc bộ mô phỏng độc lập đã có. & Gửi dữ liệu xác định trước, đối chiếu byte nhận và nhật ký kết nối/đóng kết nối. Ghi rõ chương trình và nguồn dữ liệu đã dùng. \\
-    \hline
-    Chuyển tiếp TCP & Chỉ chạy khi phần chuyển tiếp D-003 đã được viết và kiểm tra; không coi Gateway tùy chọn là điều kiện bắt buộc. & Đối chiếu dữ liệu ở hai đầu và cả hai chiều; kiểm tra đọc từng phần, ngắt kết nối và giải phóng tài nguyên. Chưa có mã thì ghi chưa thực hiện. \\
-    \hline
-    Dữ liệu sự cố có nguồn & Central và Admin đã hiện thực, tích hợp và kiểm chứng luồng dữ liệu/quyền; có dữ liệu sự cố được phép qua Central. & Đối chiếu thiết bị/sự cố đang chọn với dữ liệu Central. Hiện rõ nguồn, giá trị có thật và phần chưa được cung cấp; không tạo thời điểm hoặc lịch sử giả. \\
-    \hline
-    Bằng chứng và gợi ý & Có logic giải thích, bộ chuyển đổi dữ liệu và vùng hỗ trợ trong Admin đã được tích hợp; có ca dữ liệu đủ, thiếu và cũ được kiểm soát. & Phân biệt bằng chứng hiện có/thiếu/cũ; trình bày nhận định có giới hạn và đề xuất bước kiểm tra. Người có quyền quyết định thao tác; không tự kết luận nguyên nhân hoặc sửa máy. \\
-    \hline
-  \end{tabularx}
-\end{table}
+public sealed record RecommendedCheck(
+    int StepNumber,
+    string Title,
+    string Description,
+    string Priority,    // "LOW", "MEDIUM", "HIGH", "URGENT"
+    bool IsNonInvasive
+);
 
-\textbf{Mở rộng tùy chọn:} chỉ xem xét thử nhiều máy giả lập sau khi Simulator và các phần thu/lưu số liệu, nhịp tim, phát hiện sự cố, liên kết dữ liệu Admin đã được hiện thực, tích hợp và kiểm chứng. Hiện chưa cam kết Dashboard hiển thị một số lượng máy cụ thể, cảnh báo CPU hay OFFLINE. Kết quả chỉ được ghi sau khi thực chạy; không suy từ kịch bản dự kiến.
+public sealed record TroubleshootingAssessment(
+    DataQualityStatus DataQuality,
+    string EvidenceSummary,
+    string AssessmentConclusion,
+    IReadOnlyList<RecommendedCheck> RecommendedChecks,
+    IReadOnlyList<string> PermittedActions
+);
 
-\begin{takeawaybox}
-\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Mỗi kiểm tra TCP cần đối chiếu dữ liệu gửi/nhận và ghi đúng phần đã chạy; mô phỏng riêng không chứng minh toàn bộ LabGuard hoạt động.
-  \item Chức năng hỗ trợ xử lý sự cố dùng dữ liệu có thẩm quyền qua Central, hiện giới hạn bằng chứng và gợi ý bước kiểm tra trong Admin.
-\end{itemize}
-\end{takeawaybox}
-
-% ==============================================================================
-% PHAN 3: NAM BAY LOI LAP TRINH GATEWAY VA KIEM THU MANG
-% ==============================================================================
-\section{Năm bẫy lỗi lập trình Gateway \& Kiểm thử mạng}
-
-\begin{pitfallbox}
-\textbf{Bẫy 1: Tưởng lầm một lệnh Write trên TCP luôn tạo ra một gói tin mạng}
-\newline TCP là dòng byte, một lần Read không nhất thiết là một message. Bên nhận ứng dụng hoặc Collector L7 cần đọc đúng frame; Gateway L4 có thể relay byte nguyên thứ tự mà không phân tích JSON.
-\newline\textbf{Cách làm đúng:} Phân biệt relay L4 với xử lý message L7. Không coi partial read là frame hoàn chỉnh; cũng không khẳng định relay byte đúng thứ tự tự làm hỏng framing.
-\end{pitfallbox}
-
-\begin{orientationbox}
-\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item L4 giữ byte và thứ tự, không đổi framing hoặc route theo JSON.
-  \item L7 đọc đủ frame bằng FrameCodec khi cần xử lý từng message.
-\end{itemize}
-\end{orientationbox}
-
-\begin{lstlisting}[language=CSharp, caption={Pseudocode tham khảo: relay L4 và xử lý frame L7 là hai thiết kế khác nhau}]
-// L4: hai chieu rieng, giu thu tu byte; can shutdown/cancel phu hop.
-await Task.WhenAll(
-    agentStream.CopyToAsync(centralStream, ct),
-    centralStream.CopyToAsync(agentStream, ct));
-
-// L7 (vi du doc mot frame): khong coi mot Read la mot message.
-byte[]? payload = await FrameCodec.ReadFrameAsync(agentStream, ct);
-if (payload != null)
-    await centralStream.WriteAsync(FrameCodec.Encode(payload), ct);
+public interface ITroubleshootingEngine
+{
+    // Ngoc tu do thiet ke kien truc noi bo (Strategy, Chain of Responsibility...)
+    TroubleshootingAssessment Evaluate(TroubleshootingContext context);
+}
 \end{lstlisting}
 
+\begin{checklistbox}
+\textbf{TIÊU CHÍ NGHIỆM THU CHO THÀNH VIÊN D (ACCEPTANCE CRITERIA --- LG-D-009):}
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+  \item Thư viện độc lập hoàn toàn, không phụ thuộc vào `System.Windows.Forms` hay thư viện SQL client nào.
+  \item Khi mẫu cũ hoặc chưa đủ ba mẫu liên tiếp có nguồn xác minh, trả về chất lượng phù hợp và nêu phần thiếu; không tự thay trạng thái kết nối do Central cung cấp.
+  \item Tuân thủ chính xác ngưỡng kích hoạt và hồi phục: CPU $\ge 90\%$ (bật), $\le 75\%$ (phục hồi); RAM $\ge 85\%$ (bật), $\le 70\%$ (phục hồi) theo đúng chuỗi 3 mẫu liên tiếp.
+  \item Danh sách bước kiểm tra phải sắp xếp theo thứ tự ưu tiên (bước không xâm lấn luôn đứng trước).
+  \item Toàn bộ các kiểm thử đơn vị tự động cho 6 kịch bản sự cố (Ca 1 đến Ca 6) đều phải vượt qua (PASS 100\%).
+\end{itemize}
+\end{checklistbox}
+
+
+
+\subsection{Bộ sáu ca kiểm thử dự kiến (LG-D-010)}
+Các ca dưới đây là \textbf{fixture giả định}, không phải API lịch sử hoặc kết quả nghiệm thu. Ca có ba mẫu chỉ được chạy tích hợp với nhận định chuỗi mẫu khi nguồn RecentMetrics đã được xác minh theo Mục~\ref{sec:recentmetrics-roadmap}; ở giai đoạn P0 thiếu nguồn, kết quả phải hiện thiếu bằng chứng. Mốc 20 giây là quyết định liveness của Central, không do thư viện suy từ clock client.
+
+\begingroup
+\fontsize{10.5}{13}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}p{0.08\textwidth}p{0.42\textwidth}p{0.44\textwidth}@{}}
+\caption{Sáu ca dự kiến: dữ kiện, chất lượng và giới hạn nhận định}\label{tab:sau-kich-ban-kiem-thu}\\
+\toprule\textbf{Ca} & \textbf{Dữ kiện giả định và DataQuality} & \textbf{Nhận định và bước kiểm tra}\\\midrule
+\endfirsthead
+\toprule\textbf{Ca} & \textbf{Dữ kiện giả định và DataQuality} & \textbf{Nhận định và bước kiểm tra (tiếp)}\\\midrule
+\endhead
+\bottomrule\endfoot
+1 & MAY-03: CPU $91.2\%\to93.1\%\to92.4\%$, RAM $58.5\%$. Ba mẫu đúng thứ tự/nguồn và mới trong fixture; Central báo ONLINE, HIGH\_CPU/ACTIVE/OPEN. \textbf{Fresh}. & Đủ minh họa điều kiện CPU cao; không biết tiến trình gây tải. Hỏi tác vụ học; quan sát Task Manager tại máy được phép. Can thiệp chỉ khi người có quyền xác nhận.\\\addlinespace[8pt]
+2 & MAY-07: CPU $96.5\%\to62.1\%\to58.4\%$, RAM $45.0\%$; ba mẫu đã xác minh; ONLINE; không có sự cố mở. \textbf{Fresh}; IncidentRecord rỗng trong ca này không tự thành Missing. & Chỉ một mẫu cao, chưa thỏa chuỗi ba mẫu mở HIGH\_CPU. Theo dõi thêm, không tạo sự cố hoặc can thiệp tự động.\\\addlinespace[8pt]
+3 & MAY-12: RAM $88.4\%\to89.1\%\to91.0\%$, CPU $24.5\%$; nguồn ba mẫu đã xác minh; ONLINE, HIGH\_MEMORY/ACTIVE/OPEN. \textbf{Fresh}. & Nhận định tải RAM cao, không kết luận rò rỉ RAM. Đối chiếu thời gian hoạt động, kiểm tra Task Manager tại chỗ; đóng ứng dụng phải có quyền và xác nhận.\\\addlinespace[8pt]
+4 & MAY-15: Central báo OFFLINE do quá hạn heartbeat hợp lệ; mẫu CPU $14.2\%$ trước đó đã cũ theo chính sách fixture. \textbf{Stale} cho nhận định tải hiện tại. UNKNOWN là điều kiện theo ADR, cần ánh xạ B/C xác minh. & Chỉ xác nhận Central mất liên lạc; không nói đứt cáp hoặc mất điện. Người trực có thể ping bằng công cụ được phép, kiểm tra đèn cổng mạng và nguồn tại chỗ; không tự mở chức năng điều khiển từ thư viện.\\\addlinespace[8pt]
+5 & MAY-09: mẫu cuối CPU $\ge90\%$, RAM $\ge85\%$ đã cũ; sau đó Central báo OFFLINE. \textbf{Stale}. Chuyển ONLINE sang OFFLINE là diễn biến kết nối, không phải enum DataQuality. & Thuật lại tải cao trước khi mất liên lạc, không khẳng định quan hệ nhân quả. Kiểm tra màn hình và Agent tại chỗ; chỉ khởi động lại sau xác nhận của người có quyền và bảo toàn công việc cần thiết.\\\addlinespace[8pt]
+6 & MAY-02: sự cố HIGH\_CPU/OPEN; chỉ một mẫu $92.0\%$ và mẫu đã cũ trong fixture. \textbf{Stale} theo ưu tiên đề xuất; EvidenceSummary vẫn phải ghi thiếu ba mẫu. Nếu thiếu nguồn bắt buộc hoàn toàn thì Missing. & Không kết luận tải hiện tại hoặc tự đóng phiếu. Hiện rõ mẫu cũ, số mẫu thiếu; kiểm tra luồng dữ liệu/Agent, chờ bằng chứng mới. Với một mẫu còn mới, ca biến thể phải trả Insufficient.\\
+\end{longtable}
+\endgroup
+
+
+
+\section{Năm bẫy lỗi lập trình cần tránh dành cho Thành viên D}
+
 \begin{pitfallbox}
-\textbf{Bẫy 2: Nghẽn đầu hàng (Head-of-Line Blocking) do dùng hàng đợi không giới hạn}
-\newline Nếu sử dụng \texttt{Queue<byte[]>} không giới hạn dung lượng, khi mạng chậm gói tin sẽ dồn ứ vô tận trong RAM dẫn đến tràn bộ nhớ (\textit{OutOfMemoryException}).
-\newline\textbf{Cách làm đúng:} Luôn sử dụng \texttt{Channel.CreateBounded} với giới hạn dung lượng an toàn để tránh tăng RAM vô hạn.
+\textbf{Bẫy 1: Đồng nhất một lần đọc TCP (\texttt{NetworkStream.ReadAsync}) với một thông điệp hoàn chỉnh}
+\newline \textbf{Bản chất:} TCP là giao thức dòng byte không ranh giới. Một bản tin JSON 500 byte có thể bị chia thành hai lần nhận (200 byte và 300 byte), hoặc ba bản tin nhịp tim liên tiếp bị gom lại trong một bộ đệm đọc.
+\newline \textbf{Cách phòng tránh:} Tuyệt đối không parse trực tiếp JSON từ một lệnh \texttt{ReadAsync}. Bắt buộc phải đọc đủ 4 byte Big-Endian tiền tố bằng \path{FrameCodec.ReadExactlyBytesAsync}, lấy đúng kích thước $N$, sau đó đọc chính xác tiếp $N$ byte payload rồi mới tiến hành giải mã JSON.
 \end{pitfallbox}
 
 \begin{pitfallbox}
-\textbf{Bẫy 3: Tranh chấp truy cập bảng định tuyến phiên}
-\newline Khi 50 máy con kết nối và ngắt kết nối đồng thời, việc tra cứu socket đích sẽ gây lỗi đa luồng nếu dùng \texttt{Dictionary} thông thường.
-\newline\textbf{Cách làm đúng:} Luôn dùng \texttt{ConcurrentDictionary<string, TcpClient>}.
+\textbf{Bẫy 2: Phán đoán nguyên nhân võ đoán hoặc bịa đặt điểm tin cậy ảo khi dữ liệu thiếu/cũ}
+\newline \textbf{Bản chất:} Khi thấy sự cố CPU mà nhịp tim đã mất quá hạn, lập trình viên vội vã in ra thông báo suy đoán máy trạm đang bị quá tải hoặc bị rò rỉ bộ nhớ. Đây là lỗi logic học thuật nghiêm trọng vì dữ liệu đã mất tính thời sự.
+\newline \textbf{Cách phòng tránh:} Tuân thủ nghiêm ngặt rào chắn kiểm tra chất lượng dữ liệu (\textit{Data Quality Gate}). Nếu thiếu nguồn bắt buộc, mẫu cũ theo chính sách metric riêng hoặc chưa đủ ba mẫu đã xác minh, dùng quy tắc ưu tiên ở Mục 3.2 (Missing, Stale, Insufficient); không kết luận tải hiện tại. OFFLINE do Central cung cấp được hiển thị riêng, không tự đổi thành Stale chỉ vì heartbeat quá hạn.
 \end{pitfallbox}
 
 \begin{pitfallbox}
-\textbf{Bẫy 4: Tạo quá nhiều Thread độc lập trong bộ giả lập Simulator}
-\newline Nếu tạo 50 máy ảo bằng cách gõ 50 lần \texttt{new Thread()}, máy tính sẽ bị ngốn hàng chục MB bộ nhớ và làm CPU giật lag do chuyển ngữ cảnh liên tục.
-\newline\textbf{Cách làm đúng:} Tận dụng \texttt{Task.Run} kết hợp \texttt{async/await} và \texttt{PeriodicTimer}.
+\textbf{Bẫy 3: Nhầm lẫn giữa điều kiện phục hồi (\texttt{RECOVERED}) với việc đóng sự cố (\texttt{RESOLVED})}
+\newline \textbf{Bản chất:} Khi nhận được 3 mẫu CPU $\le 75\%$, lập trình viên tự động cập nhật trạng thái sự cố trong CSDL thành \texttt{RESOLVED}. Điều này phá hủy quy trình kiểm soát của quản trị viên và làm mất vết lịch sử sự cố chưa được kiểm tra thực địa.
+\newline \textbf{Cách phòng tránh:} Phân biệt rạch ròi: \texttt{RECOVERED} là trạng thái của Tầng 2 (Điều kiện cảnh báo kỹ thuật), trong khi \texttt{RESOLVED} thuộc Tầng 3 (Quy trình vận hành). Điều kiện phục hồi chỉ mang ý nghĩa thông báo cho quản trị viên biết tải đã hạ nhiệt; chỉ có con người mới có quyền xác nhận đóng sự cố.
 \end{pitfallbox}
 
 \begin{pitfallbox}
-\textbf{Bẫy 5: Quên giải phóng kết nối khi máy trạm ngắt đột ngột}
-\newline Khi máy trạm bị tắt nguồn hoặc rút cáp, nếu vòng lặp không bắt lỗi đóng luồng thì socket sẽ bị treo vĩnh viễn, làm rò rỉ tài nguyên mạng của hệ thống.
-\newline\textbf{Cách làm đúng:} Luôn đặt luồng socket trong khối lệnh \texttt{using}.
+\textbf{Bẫy 4: Thư viện phân tích vi phạm ranh giới, tự ý kết nối SQL hoặc nhúng mã WinForms}
+\newline \textbf{Bản chất:} Để tiện lấy dữ liệu, thư viện của D tự mở kết nối \texttt{SqlConnection} truy vấn bảng \texttt{Incidents}, hoặc trực tiếp thay đổi màu sắc của các Control trên WinForms. Điều này biến mã nguồn thành một mớ hỗn độn (Spaghetti Code), gây xung đột đa luồng và không thể viết Unit Test độc lập.
+\newline \textbf{Cách phòng tránh:} Đóng gói thư viện phân tích thành Pure C\# Class Library. Toàn bộ dữ liệu đầu vào được truyền qua đối tượng ngữ cảnh (\texttt{TroubleshootingContext}), kết quả trả về là DTO thuần túy. Việc đọc DB do Thành viên B đảm trách, việc hiển thị WinForms do Thành viên C đảm trách.
 \end{pitfallbox}
+
+\begin{pitfallbox}
+\textbf{Bẫy 5: Rò rỉ tài nguyên Socket và nghẽn bộ nhớ do sử dụng hàng đợi không giới hạn}
+\newline \textbf{Bản chất:} Trong các công cụ TCP Relay hoặc kiểm thử, sử dụng \texttt{Queue<T>} không giới hạn làm bộ nhớ phình to khi đối tác xử lý chậm. Đồng thời, không đóng socket đúng cách khi client ngắt kết nối khiến cổng socket bị treo ở trạng thái \texttt{CLOSE\_WAIT}.
+\newline \textbf{Cách phòng tránh:} Luôn sử dụng \texttt{Channel.CreateBounded} với cơ chế \texttt{BoundedChannelFullMode.Wait} để áp dụng áp lực ngược. Giải phóng \texttt{TcpClient} bằng \texttt{using}; giải phóng stream đúng vòng đời, bắt kịp thời các ngoại lệ \texttt{IOException} và hủy bỏ \texttt{CancellationToken} một cách dứt khoát.
+\end{pitfallbox}
+
+
 
 % ==============================================================================
-% PHAN 4: BO CAU HOI VAN DAP DANG CHO THANH VIEN D (20 CAU)
+% PHẦN 5: BỘ CÂU HỎI VẤN ĐÁP CHUYÊN SÂU DÀNH CHO THÀNH VIÊN D (20 CÂU)
 % ==============================================================================
-\section{Câu hỏi tham khảo TCP và mở rộng tùy chọn (20 câu)}
+\section{Bộ câu hỏi vấn đáp chuyên sâu dành cho Thành viên D (20 câu)}
 
-Các câu về Gateway/Collector/Simulator bên dưới là kiến thức tham khảo cho mở rộng tùy chọn, không chứng minh đã có mã hoặc kết quả kiểm thử. Nhiệm vụ chính của Ngọc vẫn là công cụ kiểm thử TCP và hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard.
+\begin{summarybox}
+Bộ câu hỏi được phân bổ cân bằng phản ánh chính xác phân công thực tế: 8 câu về nền tảng mạng TCP và kiểm thử dòng byte; 10 câu về định hướng thiết kế hỗ trợ phân tích sự cố và ranh giới kiến trúc tam giác; 2 câu về các nghiên cứu mở rộng P1 tùy chọn.
+\end{summarybox}
 
 \begin{enumerate}[label=\textbf{\arabic*.}]
-  \item \textbf{Tại sao phải dùng Wireshark để soi gói tin thay vì chỉ đọc log trên console?} \\
-    \textit{Trả lời:} Wireshark hỗ trợ kiểm chứng dữ liệu thực tế trên đường truyền ở tầng truyền vận (TCP/IP), chứng minh hệ thống tuân thủ chặt chẽ tiêu chuẩn đóng khung 4 byte Big-Endian và mô hình kết nối tin cậy.
-  \item \textbf{Bộ lọc nào trên Wireshark cho phép cô lập chính xác dữ liệu của LabGuard?} \\
-    \textit{Trả lời:} Dùng biểu thức lọc hiển thị \texttt{tcp.port == 5000} để thu thập toàn bộ các gói tin TCP trao đổi giữa Agent, Gateway và Central Server.
-  \item \textbf{Tại sao đồ án cần xây dựng các bản Stub (FakeAgent, FakeCentral)?} \\
-    \textit{Trả lời:} Nhằm phá vỡ sự phụ thuộc chéo về tiến độ giữa các thành viên, cho phép kiểm thử độc lập chức năng chuyển tiếp của Gateway ngay từ những ngày đầu.
-  \item \textbf{Bộ giả lập (Simulator) có vai trò gì trong buổi nghiệm thu đồ án?} \\
-    \textit{Trả lời:} Giúp tái hiện môi trường thực tế với 20--50 máy trạm hoạt động đồng thời, đóng vai trò công cụ hỗ trợ kiểm chứng năng lực chịu tải và thuật toán xử lý sự cố đa luồng của máy chủ.
-  \item \textbf{Tại sao nhịp tim gửi 5 giây một lần mà lại chờ hơn 20 giây mới báo Offline?} \\
-    \textit{Trả lời:} Nhằm tránh báo động giả do trễ mạng hoặc suy giảm kết nối nhất thời. Máy chủ quy định ngưỡng quá hạn gấp 4 lần chu kỳ gửi ($4 \times 5\text{s} = 20\text{s}$).
-  \item \textbf{Làm thế nào để Gateway tránh việc làm nghẽn mạng WAN?} \\
-    \textit{Trả lời:} Bằng kỹ thuật gom cụm (Batching) nhiều bản tin đo đạc nhỏ từ các Agent trong phòng máy vào hàng đợi Bounded Channel trước khi chuyển tiếp thành từng khối lớn về Central Server.
-  \item \textbf{Tại sao hàng đợi thu gom của Gateway phải là hàng đợi có giới hạn (Bounded)?} \\
-    \textit{Trả lời:} Để ngăn ngừa nguy cơ cạn kiệt bộ nhớ RAM khi đường truyền mạng WAN bị gián đoạn hoặc quá tải. Hàng đợi giới hạn 100 phần tử kích hoạt cơ chế điều tiết áp lực ngược (Backpressure) với chính sách \texttt{FullMode.Wait}, buộc bên gửi tạm dừng bất đồng bộ để hệ thống tự điều hòa nhịp độ an toàn.
-  \item \textbf{Cơ chế Exponential Backoff trong quá trình kết nối lại hoạt động ra sao?} \\
-    \textit{Trả lời:} Sau mỗi lần kết nối lại thất bại, thời gian chờ tăng gấp đôi (1s, 2s, 4s, 8s... trần 30s), tránh gây ra hiện tượng bão kết nối làm tê liệt máy chủ.
-  \item \textbf{Làm thế nào để Simulator tạo ra 50 máy ảo mà không làm treo ứng dụng?} \\
-    \textit{Trả lời:} Dùng \texttt{Task.Run} tận dụng ThreadPool và cơ chế I/O Completion Ports (IOCP) của hệ điều hành, cho phép tạo 50--100 máy ảo chạy trên chỉ vài luồng hệ thống mà không tốn RAM.
-  \item \textbf{Tiêu đề 4 byte Big-Endian hiển thị ra sao trong cửa sổ Byte Viewer của Wireshark?} \\
-    \textit{Trả lời:} Hiển thị dưới dạng 4 byte hex liên tiếp ở đầu payload TCP, ví dụ: \texttt{00 00 00 A4} nghĩa là khung tin dài 164 byte.
-  \item \textbf{Tại sao phải chờ hơn 20 giây thì Central Server mới báo máy trạm bị ngắt mạng?} \\
-    \textit{Trả lời:} Vì chu kỳ nhịp tim là 5 giây. Máy chủ cho phép trễ tối đa 4 chu kỳ liên tiếp (tổng cộng $> 20$ giây) để tránh báo động giả khi mạng phòng máy bị nghẽn tức thời.
-  \item \textbf{Kỹ thuật Bơm lỗi (Fault Injection) mang lại lợi ích gì cho đồ án?} \\
-    \textit{Trả lời:} Cho phép chủ động kiểm chứng độ tin cậy và khả năng tự phục hồi của toàn bộ hệ thống ngay tại bàn thi mà không cần can thiệp vào thiết bị phần cứng thật.
-  \item \textbf{Làm thế nào để đo độ trễ mạng (RTT) của gói tin nhịp tim?} \\
-    \textit{Trả lời:} Tính khoảng thời gian từ khi Client gửi bản tin \texttt{HEARTBEAT} đến khi nhận được bản tin \texttt{HEARTBEAT\_ACK} tương ứng từ Central Server.
-  \item \textbf{Giới hạn khung tin 256 KiB có ảnh hưởng gì tới tầng Gateway không?} \\
-    \textit{Trả lời:} Gateway L4 giữ stream byte, không giải mã JSON. Bên ứng dụng hoặc Collector L7 kiểm tra giới hạn qua FrameCodec. Cả hai là kiến thức mở rộng tùy chọn, chưa có nghiệm thu triển khai.
-  \item \textbf{Tại sao khi thử tải lại không chạy trên 50 máy tính thật?} \\
-    \textit{Trả lời:} Vì sinh viên không thể có 50 máy tính thật để thử nghiệm hàng ngày. Bộ giả lập chứng minh năng lực thiết kế phần mềm có thể đáp ứng quy mô lớn ngay trên môi trường phát triển.
-  \item \textbf{Hiện tượng SYN Flood là gì và ảnh hưởng gì tới máy chủ?} \\
-    \textit{Trả lời:} Kẻ tấn công gửi dồn dập các gói tin \texttt{SYN} giả mạo mà không gửi lại gói \texttt{ACK} thứ ba, làm cạn kiệt hàng đợi kết nối đang chờ (\textit{Backlog Queue}) của máy chủ.
-  \item \textbf{Cơ chế Backlog trong lệnh Listen(int backlog) có ý nghĩa gì?} \\
-    \textit{Trả lời:} Là độ dài tối đa của hàng đợi chứa các kết nối đã hoàn thành bắt tay TCP 3 bước nhưng ứng dụng chưa kịp gọi hàm \texttt{Accept}.
-  \item \textbf{Làm sao để đảm bảo các máy trạm ảo trong Simulator không gửi trùng mã RequestId?} \\
-    \textit{Trả lời:} Mỗi thông điệp đều sinh mã \path{Guid.NewGuid().ToString("D")} độc lập, bảo đảm tính duy nhất tuyệt đối trên toàn hệ thống.
-  \item \textbf{Khi tắt đột ngột chương trình Simulator, chuyện gì xảy ra trên máy chủ?} \\
-    \textit{Trả lời:} Hệ điều hành Windows sẽ tự động gửi gói tin cờ \texttt{RST} hoặc \texttt{FIN} tới máy chủ, máy chủ lập tức giải phóng toàn bộ tài nguyên socket của các máy ảo đó.
-  \item \textbf{Mục tiêu chính trong phần việc của Thành viên D là gì?} \\
-    \textit{Trả lời:} Kiểm tra kết nối, gửi, nhận và chuyển tiếp TCP; phát triển chức năng hỗ trợ phân tích, xử lý sự cố trong Admin bằng dữ liệu qua Central. Phân biệt bằng chứng hiện có, thiếu và cũ để gợi ý bước kiểm tra; không tự kết luận nguyên nhân hoặc sửa máy. Đây là mục tiêu phát triển, không phải tuyên bố đã hoàn thành. Gateway/Collector chỉ là mở rộng tùy chọn.
+  \item \textbf{Tại sao giao thức TCP lại đòi hỏi phải có cơ chế đóng khung (Framing) như tiền tố 4 byte Big-Endian?} \\
+    \textit{Trả lời:} Vì TCP là giao thức hướng dòng byte (\textit{Byte Stream}), tầng truyền vận không bảo lưu ranh giới giữa các lần gửi tin. Tiền tố 4 byte Big-Endian chỉ rõ độ dài chính xác của gói tin tiếp theo, giúp bên nhận gom đủ các mẩu byte bị phân mảnh trước khi tiến hành giải mã JSON, ngăn ngừa lỗi vỡ khung dữ liệu.
+
+  \item \textbf{Cơ chế Big-Endian hoạt động ra sao và hiển thị thế nào trên Wireshark?} \\
+    \textit{Trả lời:} Big-Endian lưu trữ byte có trọng số lớn nhất ở địa chỉ bộ nhớ thấp nhất (thứ tự mạng chuẩn). Ví dụ tự dựng tại Mục~\ref{sec:wire-example} có payload 197 byte; tiền tố là \texttt{00 00 00 C5}, toàn khung 201 byte. Đây không phải capture thực tế; offset tính trong khung đã tái ghép, không phải gói Ethernet.
+
+  \item \textbf{Chương trình TCP Echo (\texttt{LG-D-002}) giải quyết bài toán kỹ thuật gì trong đồ án?} \\
+    \textit{Trả lời:} TCP Echo kiểm chứng khả năng thiết lập socket lắng nghe, tiếp nhận kết nối đa luồng, đọc ghi qua \texttt{NetworkStream} và xử lý giải phóng tài nguyên an toàn khi client ngắt kết nối đột ngột, làm tiền đề tin cậy cho các phân hệ mạng phức tạp hơn.
+
+  \item \textbf{Tại sao hàng đợi trong TCP Relay (\texttt{LG-D-003}) bắt buộc phải là Bounded Channel?} \\
+    \textit{Trả lời:} Để ngăn chặn nguy cơ cạn kiệt bộ nhớ RAM khi tốc độ gửi của client lớn hơn tốc độ nhận của server đích. Hàng đợi giới hạn 100 phần tử kích hoạt cơ chế áp lực ngược (\textit{Backpressure}) với chính sách \texttt{FullMode.Wait}, buộc client phải tạm dừng gửi khi hàng đợi bị đầy.
+
+  \item \textbf{Làm thế nào để bắt chính xác sự kiện đối tác ngắt kết nối TCP đột ngột trong C\#?} \\
+    \textit{Trả lời:} Khi đối tác đóng kết nối an toàn, lệnh \texttt{ReadAsync} trên \texttt{NetworkStream} sẽ trả về giá trị $0$ (End-Of-Stream). Nếu đối tác bị rút cáp hoặc sập nguồn, socket sẽ ném ngoại lệ \texttt{IOException} hoặc \texttt{SocketException}. Bắt hai trường hợp này cho phép đóng kết nối an toàn.
+
+  \item \textbf{Bộ lọc Wireshark \texttt{tcp.port == 5000} bắt được những giai đoạn nào của phiên truyền thông?} \\
+    \textit{Trả lời:} Bắt được toàn bộ vòng đời phiên: bắt tay 3 bước (\texttt{SYN}, \texttt{SYN-ACK}, \texttt{ACK}), các khung tin dữ liệu kèm cờ \texttt{PSH, ACK}, bản tin nhịp tim định kỳ, và quá trình đóng kết nối an toàn (\texttt{FIN, ACK}) hoặc ngắt cưỡng bức (\texttt{RST}).
+
+  \item \textbf{Sự khác biệt giữa việc kiểm thử bằng stub cục bộ (\path{mock_harness}) và kiểm thử tích hợp mạng thật là gì?} \\
+    \textit{Trả lời:} Stub cục bộ kiểm chứng tính toàn vẹn cú pháp của hợp đồng dữ liệu trong môi trường đơn máy không trễ; kiểm thử mạng thật trên cổng 5000 đối mặt với độ trễ LAN, hiện tượng phân mảnh byte, tranh chấp kết nối đồng thời và rủi ro đứt cáp vật lý.
+
+  \item \textbf{Tại sao chu kỳ nhịp tim là 5 giây nhưng thời gian xác định mất kết nối lại là $> 20$ giây?} \\
+    \textit{Trả lời:} Để thiết lập khoảng dung sai an toàn chống báo động giả (\textit{False Positive}) khi mạng phòng máy bị suy giảm chất lượng hoặc trễ tức thời. Ngưỡng 20 giây tương đương việc bỏ lỡ liên tiếp 4 bản tin nhịp tim theo đúng ADR CP2-005.
+
+  \item \textbf{Vai trò chính thức của Thành viên D trong chức năng hỗ trợ phân tích sự cố là gì?} \\
+    \textit{Trả lời:} Thiết kế và lập trình thư viện C\# thuần túy (\texttt{LabGuard.Troubleshooting}) để thẩm định chất lượng bằng chứng, đối soát ma trận quy tắc giải thích tất định và xếp hạng các bước kiểm tra hỗ trợ quản trị viên trong Admin WinForms.
+
+  \item \textbf{Tại sao hệ thống hỗ trợ xử lý sự cố tuyệt đối không dùng Machine Learning hay Chatbot AI?} \\
+    \textit{Trả lời:} Vì trong giám sát phòng máy, quản trị viên yêu cầu tính giải thích minh bạch, khả năng đối chiếu bằng chứng và kiểm tra quy tắc. Mô hình học máy dạng hộp đen hoặc chatbot có thể tạo ra ảo giác (hallucination), suy đoán sai lệch và không thể kiểm chứng bằng unit test tự động.
+
+  \item \textbf{Thư viện của D lấy dữ liệu từ đâu và có được phép truy vấn trực tiếp SQL Server không?} \\
+    \textit{Trả lời:} Tuyệt đối không được truy vấn SQL Server trực tiếp. Thư viện chỉ nhận dữ liệu có thẩm quyền từ Central Server được chuyển tiếp qua Admin thông qua đối tượng ngữ cảnh \texttt{TroubleshootingContext}.
+
+  \item \textbf{Thế nào là dữ liệu STALE và thư viện xử lý tình huống này ra sao?} \\
+    \textit{Trả lời:} Stale mô tả bằng chứng đã cũ theo chính sách độ mới metric cần được nhóm chốt. Không dùng nó thay cho OFFLINE: Central quyết định liveness bằng đồng hồ đơn điệu. Thư viện nêu dữ kiện cũ và giới hạn nhận định, không tự kết luận nguyên nhân hoặc đổi trạng thái kết nối.
+
+  \item \textbf{Tại sao thuật toán yêu cầu tối thiểu 3 mẫu metric liên tiếp mới đưa ra đánh giá tải tài nguyên?} \\
+    \textit{Trả lời:} Một hoặc hai mẫu đo cao có thể chỉ là hiện tượng đột biến nhất thời (\textit{Spike}) khi mở ứng dụng. Cần tối thiểu 3 mẫu có nguồn và tính liên tiếp đã được xác minh (khoảng đầu--cuối 10 giây nếu cách đều 5 giây) để minh họa tải cao kéo dài; P0 không tự cung cấp lịch sử này (\textit{Sustained Overload}), tránh đưa ra các khuyến nghị kiểm tra không cần thiết.
+
+  \item \textbf{Hãy phân biệt rõ 3 tầng trạng thái: Thiết bị, Điều kiện kỹ thuật và Quy trình sự cố?} \\
+    \textit{Trả lời:} Thiết bị là trạng thái tầng mạng (ONLINE/OFFLINE qua socket/nhịp tim). Điều kiện kỹ thuật là trạng thái ngưỡng tài nguyên (ACTIVE/RECOVERED/UNKNOWN theo Hysteresis của RuleEngine). Quy trình sự cố là trạng thái nghiệp vụ trong CSDL (OPEN/ACKNOWLEDGED/INVESTIGATING/RESOLVED do con người thao tác).
+
+  \item \textbf{Khi điều kiện kỹ thuật chuyển sang RECOVERED, sự cố trên Admin có tự đóng thành RESOLVED không?} \\
+    \textit{Trả lời:} Tuyệt đối không. Điều kiện \texttt{RECOVERED} chỉ báo hiệu tài nguyên đã hạ nhiệt an toàn. Sự cố trên Admin vẫn giữ nguyên ở quy trình (\texttt{OPEN} hoặc \texttt{INVESTIGATING}) để người quản trị kiểm tra nguyên nhân gốc rễ và chủ động gửi lệnh \texttt{INCIDENT\_RESOLVE}.
+
+  \item \textbf{Nguyên tắc xếp hạng các bước kiểm tra (\texttt{RecommendedChecks}) được xây dựng theo tiêu chí nào?} \\
+    \textit{Trả lời:} Ưu tiên bước không xâm lấn (\textit{Non-invasive}) lên đầu tiên (hỏi người dùng, xem Task Manager, kiểm tra ping); kế tiếp là bước tác động thấp (kiểm tra service, cáp mạng); cuối cùng mới đến can thiệp có điều kiện (yêu cầu dừng tiến trình, khởi động lại máy khi có xác nhận của quản trị viên).
+
+  \item \textbf{Tại sao thư viện không được phép đưa ra điểm số phần trăm tin cậy võ đoán?} \\
+    \textit{Trả lời:} Vì không có mô hình xác suất thực nghiệm được kiểm chứng khoa học phía sau để bảo đảm tính chuẩn xác của các con số phần trăm. Hệ thống dùng kết luận logic nhị phân rõ ràng gắn liền với bằng chứng định lượng cụ thể.
+
+  \item \textbf{Sáu kịch bản kiểm thử (Ca 1 đến Ca 6) đóng vai trò gì trong việc tích hợp nhóm?} \\
+    \textit{Trả lời:} Đóng vai trò bộ kiểm thử biên chuẩn hóa để đối soát hợp đồng giữa thư viện của D, dữ liệu Central của Quang (B) và giao diện Admin của Vy (C), kiểm tra những tình huống đã nêu khi có đủ nguồn dữ liệu; không chứng minh mọi tình huống thực tế hoặc tích hợp đã hoàn tất.
+
+  \item \textbf{Sự khác biệt kỹ thuật giữa L4 TCP Gateway và L7 Collector trong nghiên cứu mở rộng P1 là gì?} \\
+    \textit{Trả lời:} L4 Gateway chuyển tiếp luồng byte thuần túy ở tầng giao vận mà không đọc nội dung; L7 Collector giải mã từng khung tin JSON ở tầng ứng dụng, gom cụm nhiều số liệu nhỏ thành khối lớn để tối ưu hóa lưu lượng mạng WAN.
+
+  \item \textbf{Bộ giả lập Simulator 50 máy ảo trong Phụ lục P1 giúp ích gì cho đồ án?} \\
+    \textit{Trả lời:} Giúp nhóm có thể mô phỏng tải của hàng chục máy trạm đồng thời trên một máy phát triển duy nhất thông qua cơ chế bất đồng bộ \texttt{Task.Run}, hỗ trợ kiểm tra năng lực chịu tải của máy chủ mà không cần 50 máy tính thật.
 \end{enumerate}
+
+
+
+% ==============================================================================
+% PHỤ LỤC: NGHIÊN CỨU MỞ RỘNG P1 TÙY CHỌN (GATEWAY, COLLECTOR & SIMULATOR)
+% ==============================================================================
+\section*{Phụ lục: Nghiên cứu mở rộng P1 tùy chọn (Gateway, Collector \& Simulator)}
+\addcontentsline{toc}{section}{Phụ lục: Nghiên cứu mở rộng P1 tùy chọn}
+
+\begin{summarybox}
+Phần phụ lục này lưu trữ các kiến thức nghiên cứu mở rộng về mặt kỹ thuật mạng quy mô lớn. Các nội dung này là \textbf{nghiên cứu tùy chọn cấp độ P1}, không nằm trong cam kết bắt buộc của Thành viên D để hoàn thành đồ án cốt lõi.
+\end{summarybox}
+
+\subsection*{Phụ lục A: Cân bằng tải tầng 4 (Gateway L4) và Gom cụm thông điệp (Collector L7)}
+Khi quy mô phòng máy mở rộng lên hàng nghìn máy trạm phân bố qua nhiều lớp mạng router/NAT:
+\begin{itemize}
+  \item \textbf{Gateway tầng giao vận (L4 TCP Load Balancer):} Hoạt động như một bộ chuyển tiếp kết nối thô. Gateway tiếp nhận kết nối TCP từ Agent và phân phối tới các nút Central Server theo giải thuật \textit{Least-Connections}. Điểm mạnh là thông lượng cực cao do không phải giải mã nội dung gói tin; điểm yếu là không thể định tuyến dựa trên nội dung loại thông điệp.
+  \item \textbf{Collector tầng ứng dụng (L7 Message Multiplexer):} Đóng vai trò trạm gom dữ liệu trung gian trong từng phòng học. Collector tiếp nhận hàng chục kết nối Agent, giải mã thông điệp qua \texttt{FrameCodec}, đưa vào hàng đệm \texttt{BoundedChannel}, sau đó gom thành từng gói dữ liệu đo đạc lớn (\textit{Batch Multiplexing}) chuyển tiếp về Central qua một kết nối WAN duy nhất. Cơ chế này giảm đáng kể chi phí mở kết nối đồng thời trên máy chủ trung tâm.
+\end{itemize}
+
+\subsection*{Phụ lục B: Kỹ thuật giả lập tải phòng máy quy mô lớn (LabGuard.Simulator)}
+Dự án \texttt{LabGuard.Simulator} là công cụ hỗ trợ kiểm thử tải dự kiến triển khai sau khi MVP Core hoàn tất:
+\begin{itemize}
+  \item \textbf{Mô hình VirtualAgent nhẹ nhàng:} Thay vì khởi tạo 50 Thread hệ điều hành gây lãng phí bộ nhớ và nghẽn CPU do chuyển ngữ cảnh (\textit{Context Switching}), Simulator tận dụng cơ chế I/O bất đồng bộ (\texttt{async/await}) kết hợp với \texttt{PeriodicTimer(5s)} để vận hành 50 máy ảo nhẹ trên chỉ vài luồng của hệ thống.
+  \item \textbf{Cơ chế bơm lỗi chủ động (Fault Injection):} Tích hợp bàn phím điều khiển nhằm chủ động tạo các tình huống bất thường:
+    \begin{itemize}
+      \item Bơm 3 mẫu CPU $95\%$ cho một máy ảo cụ thể để kiểm tra thuật toán phát hiện sự cố của Central.
+      \item Bơm chuỗi CPU hạ nhiệt $\le 75\%$ để kiểm chứng điều kiện phục hồi Hysteresis.
+      \item Ngắt kết nối socket đột ngột của một máy ảo để kiểm tra cơ chế cảnh báo mất nhịp tim $>20$s trên Admin Dashboard.
+    \end{itemize}
+\end{itemize}
 
 \begin{center}
   \vspace{10mm}
