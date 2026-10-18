@@ -23,7 +23,7 @@
   \vspace{8mm}
   {\bfseries\Large MÁY CHỦ TRUNG TÂM \& CƠ SỞ DỮ LIỆU\par}
   \vspace{4mm}
-  {\large Kiến trúc đa luồng TCP, động cơ quy tắc và giải quyết xung đột dữ liệu trên CSDL\par}
+  {\large Kiến trúc đa luồng TCP, bộ xử lý quy tắc và giải quyết xung đột dữ liệu trên CSDL\par}
   \vspace{12mm}
   {\color{lgTeal}\hrule height 1pt}
   \vspace{25mm}
@@ -47,7 +47,7 @@
 \begin{tcolorbox}[enhanced, colback=lgLightTeal, colframe=lgTeal, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
 {\bfseries\color{lgTeal} 1. BẠN LÀ AI?}\par
 \vspace{0.5mm}
-Bạn là người xây dựng "bộ não" trung tâm của toàn bộ hệ thống: phần mềm máy chủ (\textbf{Central Server}) và cơ sở dữ liệu (\textbf{Database}).
+Bạn phụ trách xử lý dữ liệu tập trung của hệ thống: phần mềm máy chủ (\textbf{Central Server}) và cơ sở dữ liệu (\textbf{Database}).
 \end{tcolorbox}
 \vspace{1.5mm}
 
@@ -69,7 +69,7 @@ Bạn là người xây dựng "bộ não" trung tâm của toàn bộ hệ th�
 \begin{itemize}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
   \item Bạn \textbf{không cần} lo đo phần cứng máy trạm hay bắt sự kiện hệ thống (việc của \textbf{Thành viên A}).
   \item Bạn \textbf{không cần} lo thiết kế giao diện WinForms hay vẽ biểu đồ (việc của \textbf{Thành viên C}).
-  \item Bạn \textbf{không cần} lo gom luồng Gateway hay chạy công cụ thử tải (việc của \textbf{Thành viên D}).
+  \item Ngọc giữ Công cụ kiểm thử truyền thông TCP và logic của chức năng hỗ trợ xử lý sự cố; bạn phối hợp cung cấp dữ liệu ngữ cảnh có thẩm quyền qua Central. Gateway/Collector là tùy chọn.
 \end{itemize}
 \end{tcolorbox}
 \vspace{1.5mm}
@@ -77,7 +77,7 @@ Bạn là người xây dựng "bộ não" trung tâm của toàn bộ hệ th�
 \begin{tcolorbox}[enhanced, colback=lgLightGreen, colframe=lgForestGreen, boxrule=0.8pt, arc=1.5mm, top=1.8mm, bottom=1.8mm, left=2.5mm, right=2.5mm]
 {\bfseries\color{lgForestGreen} 4. HÔM NAY BẮT ĐẦU Ở ĐÂU?}\par
 \vspace{0.5mm}
-Xem \texttt{database/schema.sql} và \texttt{database/seed.sql} để biết vị trí phần CSDL; hai file hiện chưa được hiện thực. Sau đó mở file \texttt{src/LabGuard.Central/Program.cs} để viết vòng lặp lắng nghe TCP đầu tiên bằng \texttt{TcpListener}.
+B-001 listener đã có trong CentralServer. DDL ba bảng ở \texttt{database/schema.sql} đã merge; seed chưa có dữ liệu. Tiếp theo là B-002 session/AUTH và hoàn thiện B-005 persistence; chưa có telemetry SQL/ACK toàn tuyến.
 \end{tcolorbox}
 \vspace{1.5mm}
 
@@ -86,9 +86,9 @@ Xem \texttt{database/schema.sql} và \texttt{database/seed.sql} để biết v�
 \vspace{0.5mm}
 \begin{enumerate}[leftmargin=1.5em, itemsep=0.5pt, parsep=0pt, topsep=1pt]
   \item \texttt{START\_HERE.md}: Tổng quan đồ án và cách khởi động hệ thống.
-  \item \texttt{database/schema.sql} và \texttt{database/seed.sql}: Nơi định nghĩa bảng CSDL trong tương lai (hiện là placeholder).
-  \item \texttt{src/LabGuard.Protocol/MessageTypes.cs}: Danh mục tên các loại thông điệp cần xử lý.
-  \item \texttt{src/LabGuard.Central/Program.cs}: Điểm khởi đầu của máy chủ trung tâm.
+  \item \texttt{database/schema.sql}: DDL ba bảng đã merge; \texttt{database/seed.sql}: placeholder chưa có dữ liệu. C\# persistence chưa nghiệm thu.
+  \item \path{src/LabGuard.Protocol/MessageTypes.cs}: Danh mục tên các loại thông điệp cần xử lý.
+  \item \path{src/LabGuard.Central/Program.cs}: Điểm khởi đầu của máy chủ trung tâm.
 \end{enumerate}
 \end{tcolorbox}
 
@@ -107,33 +107,38 @@ Xem \texttt{database/schema.sql} và \texttt{database/seed.sql} để biết v�
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
+\input{sync_status.tex}
 
 % ==============================================================================
 % PHAN 1: TONG QUAN VAI TRO THANH VIEN B
 % ==============================================================================
 \section{Tổng quan vai trò của Thành viên B}
 
+\subsection*{Phối hợp hỗ trợ xử lý sự cố: B-010 sau khi phần cốt lõi sẵn sàng}
+Quang giữ quyền truy cập SQL và dữ liệu/lệnh Central. B-010 ánh xạ dữ liệu thiết bị/sự cố bắt buộc, nguồn, độ mới, thiếu/không có giá trị để Ngọc/Vy dùng trong Admin; không cho Admin truy vấn SQL hoặc Agent trực tiếp. Hai giờ ghép bổ sung không bao gồm hoàn thành phiên kết nối/lưu dữ liệu/quy tắc cảnh báo/quy trình xử lý còn thiếu. Lịch sử SQL qua \texttt{GET\_METRICS} / \texttt{METRICS\_RESULT} là tùy chọn riêng; chưa chọn hoặc bộ xử lý chưa sẵn sàng thì hiện rõ thiếu bằng chứng, không tạo thời điểm/tình trạng SQL giả. Chỉ có ba bảng ProcessedBatches, MetricSamples, Incidents; không giả định có IncidentHistory hoặc thêm FK/schema mới.
+
+
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Bạn phụ trách phần mềm máy chủ (\textbf{Central Server}) và cơ sở dữ liệu (\textbf{Database}).
   \item Máy chủ mở duy nhất cổng TCP 5000 để đón nhận cả máy trạm Agent và ứng dụng Admin.
-  \item Đóng vai trò trọng tài: lưu trữ số liệu, phát hiện máy đứt mạng ($>20$s) và quá tải ($\ge 90\%$).
-  \item Toàn bộ phân hệ Central hiện là khung dự án để bạn tự tay xây dựng.
+  \item Nhiệm vụ dự kiến: lưu trữ số liệu, phát hiện máy đứt mạng ($>20$s) và quá tải ($\ge 90\%$).
+  \item Central đã có listener B-001; các phần nghiệp vụ còn lại là kế hoạch chưa hoàn tất.
 \end{itemize}
 \end{summarybox}
 
-Trong hệ thống LabGuard, bạn đóng vai trò là "trái tim" và "bộ não" điều phối toàn bộ luồng thông tin mạng. Mọi máy trạm Agent của sinh viên và phần mềm quản trị Admin đều phải kết nối về chương trình của bạn để gửi nhận dữ liệu:
+Trong hệ thống LabGuard, bạn phụ trách chương trình Central tiếp nhận, kiểm tra và xử lý các thông điệp mạng. Mọi máy trạm Agent của sinh viên và phần mềm quản trị Admin đều phải kết nối về chương trình của bạn để gửi nhận dữ liệu:
 
 \begin{conceptbox}
 \textbf{Trọng trách cốt lõi của Thành viên B:}
 \begin{enumerate}
   \item \textbf{Lập trình máy chủ Central Server (\texttt{src/LabGuard.Central/}):} Mở cổng TCP 5000 đón nhận kết nối đồng thời từ hàng chục máy tính mà không làm tắc nghẽn hệ thống.
   \item \textbf{Quản trị Cơ sở dữ liệu (\texttt{database/}):} Lưu trữ bền vững số liệu tài nguyên, danh mục thiết bị và nhật ký sự cố vào hệ quản trị Microsoft SQL Server.
-  \item \textbf{Trọng tài tự động (Rule Engine \& Liveness):} Tự động phát hiện khi một máy bị đứt mạng ($>20$ giây không có nhịp tim) hoặc bị quá tải CPU ($\ge 90\%$).
+  \item \textbf{Phát hiện mất kết nối và cảnh báo (Rule Engine \& Liveness):} Tự động phát hiện khi một máy bị đứt mạng ($>20$ giây không có nhịp tim) hoặc bị quá tải CPU ($\ge 90\%$).
 \end{enumerate}
 \end{conceptbox}
 
-Hình này chỉ cần nhìn từ trên xuống dưới: từ luồng mạng tiếp nhận (cổng 5000), định tuyến thông điệp, đến động cơ kiểm tra và lưu vào cơ sở dữ liệu.
+Hình này chỉ cần nhìn từ trên xuống dưới: từ luồng mạng tiếp nhận (cổng 5000), định tuyến thông điệp, đến bộ xử lý kiểm tra và lưu vào cơ sở dữ liệu.
 
 \begin{figure}[H]
   \centering
@@ -143,9 +148,9 @@ Hình này chỉ cần nhìn từ trên xuống dưới: từ luồng mạng ti�
   ]
     \node[box, fill=lgLightTeal, draw=lgTeal, minimum width=35mm] (listener) at (-4.5, 2) {TcpListener\\Cổng 5000\\(Central TCP Endpoint)};
     \node[box, fill=lgLightBlue, draw=lgDeepBlue, minimum width=45mm] (dispatcher) at (1.5, 2) {Bộ định tuyến thông điệp\\(Message Dispatcher)};
-    \node[box, fill=lgLightGreen, draw=lgForestGreen, minimum width=35mm] (liveness) at (-4.5, -0.5) {Động cơ Liveness\\(Kiểm tra sống còn $>20$s)};
-    \node[box, fill=lgLightRed, draw=lgCrimson, minimum width=35mm] (rule) at (1.5, -0.5) {Động cơ quy tắc\\(Rule Engine $\ge 90\%$)};
-    \node[box, fill=lgLightSlate, draw=lgSlate, minimum width=100mm] (db) at (-1.5, -2.5) {Cơ sở dữ liệu SQL Server (schema sẽ chốt ở B-005)};
+    \node[box, fill=lgLightGreen, draw=lgForestGreen, minimum width=35mm] (liveness) at (-4.5, -0.5) {Bộ xử lý Liveness\\(Kiểm tra nhịp tim $>20$s)};
+    \node[box, fill=lgLightRed, draw=lgCrimson, minimum width=35mm] (rule) at (1.5, -0.5) {Bộ xử lý quy tắc\\(Rule Engine $\ge 90\%$)};
+    \node[box, fill=lgLightSlate, draw=lgSlate, minimum width=100mm] (db) at (-1.5, -2.5) {Cơ sở dữ liệu SQL Server (DDL đã có; tích hợp C\# chưa xong)};
 
     \draw[arr] (listener) -- node[above, font=\scriptsize] {Khung tin} (dispatcher);
     \draw[arr] (dispatcher) -- (rule);
@@ -161,7 +166,7 @@ Hình này chỉ cần nhìn từ trên xuống dưới: từ luồng mạng ti�
 
 \begin{importantbox}
 \textbf{Hiện trạng mã nguồn thực tế:}
-Toàn bộ các tính năng của máy chủ Central hiện đang ở trạng thái \textbf{CHƯA LÀM / DỰ KIẾN}. Thư mục \texttt{src/LabGuard.Central/} hiện chỉ có file \texttt{Program.cs} rỗng. Bạn sẽ tự tay lập trình các tính năng theo lộ trình 7 chặng dưới đây.
+B-001 đã XONG qua PR \#7: listener đa client, framing và shutdown. B-005 ĐANG LÀM vì mới có DDL/package, chưa có pipeline persistence; các chặng session/AUTH, liveness, RBAC, rules và OCC sau đây là hướng dẫn hiện thực, không phải tính năng đã chạy.
 \end{importantbox}
 
 \begin{takeawaybox}
@@ -186,7 +191,7 @@ Toàn bộ các tính năng của máy chủ Central hiện đang ở trạng th
 \end{summarybox}
 
 % ------------------------------------------------------------------------------
-\subsection{VIỆC TIẾP THEO: Mở cổng TCP 5000 và tiếp nhận kết nối đa luồng}
+\subsection{ĐÃ CÓ B-001: Mở cổng TCP 5000 và tiếp nhận kết nối đa luồng}
 {\footnotesize\color{lgGray}\textit{Chặng 1 — Mã tác vụ nội bộ: LG-B-001, LG-B-002}}\par
 \vspace{2mm}
 
@@ -205,7 +210,7 @@ Trên cùng cổng 5000, Central phân biệt đối tác dựa vào bản tin �
 \end{itemize}
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới file: \texttt{src/LabGuard.Central/CentralServer.cs} và \texttt{ClientConnection.cs}.
+Tạo mới file: \path{src/LabGuard.Central/CentralServer.cs} và \texttt{ClientConnection.cs}.
 
 \subsubsection{Bạn cần làm những bước lớn nào?}
 \begin{enumerate}
@@ -234,7 +239,7 @@ while (!ct.IsCancellationRequested)
 
 \subsubsection{Làm sao thử?}
 Bật Central Server lên, mở PowerShell và gõ:
-$$\texttt{Test-NetConnection -ComputerName 127.0.0.1 -Port 5000}$$
+\begin{center}\texttt{Test-NetConnection -ComputerName 127.0.0.1 -Port 5000}\end{center}
 Nếu kết quả hiện \texttt{TcpTestSucceeded : True} nghĩa là máy chủ đã mở cổng thành công!
 
 \subsubsection{Khi nào coi là xong? (PASS Criteria)}
@@ -244,7 +249,7 @@ Nếu kết quả hiện \texttt{TcpTestSucceeded : True} nghĩa là máy chủ 
 \end{itemize}
 
 % ------------------------------------------------------------------------------
-\subsection{Chặng 2: VIỆC TIẾP THEO: Tiếp nhận và giải mã khung tin từ Agent}
+\subsection{Chặng 2: ĐÃ CÓ Ở LISTENER: Tiếp nhận khung tin; nghiệp vụ còn chờ}
 {\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-B-003}}\par
 \vspace{2mm}
 
@@ -252,10 +257,10 @@ Nếu kết quả hiện \texttt{TcpTestSucceeded : True} nghĩa là máy chủ 
 Dữ liệu truyền qua mạng là một dòng byte nhị phân liên tục. Central Server phải đọc chính xác 4 byte độ dài và tách đúng chuỗi JSON để chuyển thành đối tượng C\# có thể xử lý được.
 
 \subsubsection{Khi chạy, chuyện gì xảy ra?}
-Với mỗi kết nối, Central chạy vòng lặp đọc khung tin qua \texttt{FrameCodec.ReadFrameAsync}. Sau đó giải mã thành \texttt{WireEnvelope} và gọi bộ kiểm tra \texttt{EnvelopeValidator.Validate} để bảo đảm bản tin an toàn và đúng chuẩn.
+Với mỗi kết nối, Central chạy vòng lặp đọc khung tin qua \path{FrameCodec.ReadFrameAsync}. Sau đó giải mã thành \texttt{WireEnvelope} và gọi bộ kiểm tra \path{EnvelopeValidator.Validate} để bảo đảm bản tin an toàn và đúng chuẩn.
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới file: \texttt{src/LabGuard.Central/ClientConnection.cs}.
+Tạo mới file: \path{src/LabGuard.Central/ClientConnection.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -299,7 +304,7 @@ Nếu không lưu vào cơ sở dữ liệu, mọi thông số CPU/RAM và lịc
 Khi nhận gói tin \texttt{METRIC\_BATCH}, Central kiểm tra khóa \texttt{(DeviceId, BootId, BatchId)} để chống ghi trùng, rồi lưu CPU/RAM/Uptime vào bảng \texttt{MetricSamples}. Chỉ sau khi transaction commit thành công mới gửi \texttt{BATCH\_ACK}.
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới hoặc hoàn thiện: \texttt{database/schema.sql}, \texttt{database/seed.sql} và \texttt{src/LabGuard.Central/DatabaseRepository.cs}.
+Tạo mới hoặc hoàn thiện: \texttt{database/schema.sql}, \texttt{database/seed.sql} và \path{src/LabGuard.Central/DatabaseRepository.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -329,7 +334,7 @@ Dùng SQL Server Management Studio mở \texttt{MetricSamples} và \texttt{Proce
 \end{itemize}
 
 % ------------------------------------------------------------------------------
-\subsection{Chặng 4: VIỆC TIẾP THEO: Động cơ phát hiện máy tắt hoặc đứt mạng (Liveness Engine)}
+\subsection{Chặng 4: VIỆC TIẾP THEO: Bộ xử lý phát hiện máy tắt hoặc đứt mạng (Liveness Engine)}
 {\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-B-005}}\par
 \vspace{2mm}
 
@@ -340,7 +345,7 @@ Khi sinh viên rút dây mạng hoặc máy bị cúp điện đột ngột, soc
 Mỗi khi nhận gói \texttt{HEARTBEAT}, Central cập nhật mốc thời gian nhận tin cuối cùng bằng đồng hồ đơn điệu (\texttt{Stopwatch.GetTimestamp}). Một tác vụ nền quét định kỳ mỗi 5 giây; nếu một máy im lặng quá 20 giây ($> 20\text{s}$), Central chuyển trạng thái máy sang \texttt{OFFLINE} và tạo sự cố \texttt{DEVICE\_OFFLINE}.
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới file: \texttt{src/LabGuard.Central/LivenessMonitor.cs}.
+Tạo mới file: \path{src/LabGuard.Central/LivenessMonitor.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -377,7 +382,7 @@ Cho Agent kết nối vào Central rồi bấm \texttt{Ctrl+C} tắt ngang Agent
 \end{itemize}
 
 % ------------------------------------------------------------------------------
-\subsection{Chặng 5: VIỆC TIẾP THEO: Động cơ quy tắc phát hiện sự cố (Rule Engine)}
+\subsection{Chặng 5: VIỆC TIẾP THEO: Bộ xử lý quy tắc phát hiện sự cố (Rule Engine)}
 {\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-B-006}}\par
 \vspace{2mm}
 
@@ -385,19 +390,19 @@ Cho Agent kết nối vào Central rồi bấm \texttt{Ctrl+C} tắt ngang Agent
 Nếu sinh viên vừa bấm mở một phần mềm nặng khiến CPU vọt lên 90\% trong 1 giây rồi hạ xuống thì đó chưa phải sự cố. Nhưng nếu CPU duy trì $\ge 90\%$ liên tục nhiều chu kỳ thì chắc chắn máy tính đang bị treo hoặc chạy vòng lặp vô tận.
 
 \subsubsection{Khi chạy, chuyện gì xảy ra?}
-Động cơ quy tắc duy trì một cửa sổ trượt lưu 3 mẫu đo gần nhất của từng máy trạm:
+Bộ xử lý quy tắc duy trì một cửa sổ trượt lưu 3 mẫu đo gần nhất của từng máy trạm:
 \begin{itemize}
   \item \textbf{Kích hoạt sự cố:} Nếu CPU $\ge 90\%$ trong 3 mẫu đo liên tiếp, Central tạo sự cố \texttt{HIGH\_CPU}.
-  \item \textbf{Tự động phục hồi:} Nếu sau đó CPU hạ xuống $\le 75\%$ trong 3 mẫu liên tiếp, Central tự động đóng sự cố.
+  \item \textbf{Tự động phục hồi:} Nếu sau đó CPU hạ xuống $\le 75\%$ trong 3 mẫu liên tiếp, Central đánh dấu điều kiện RECOVERED, giữ nguyên quy trình xử lý để người có quyền xử lý.
 \end{itemize}
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới file: \texttt{src/LabGuard.Central/RuleEngine.cs}.
+Tạo mới file: \path{src/LabGuard.Central/RuleEngine.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Dùng hàng đợi 3 phần tử để lọc nhiễu cảnh báo giả (Debouncing).
-  \item Tự động đóng sự cố khi chỉ số đo hạ về mức an toàn $\le 75\%$.
+  \item Đánh dấu điều kiện RECOVERED khi đủ ba mẫu $\le 75\%$; không tự đóng quy trình xử lý.
 \end{itemize}
 \end{orientationbox}
 
@@ -410,16 +415,16 @@ if (window.Count > 3) window.Dequeue();
 if (window.Count == 3 && window.All(v => v >= 90.0))
     await RaiseIncidentAsync(deviceId, "HIGH_CPU", "WARNING");
 else if (window.Count == 3 && window.All(v => v <= 75.0))
-    await AutoResolveIncidentAsync(deviceId, "HIGH_CPU");
+    await MarkConditionRecoveredAsync(deviceId, "HIGH_CPU"); // workflow unchanged
 \end{lstlisting}
 
 \subsubsection{Làm sao thử?}
-Gửi 3 mẫu CPU 95\% liên tiếp: Central phải báo động có sự cố \texttt{HIGH\_CPU}. Gửi tiếp 3 mẫu CPU 50\%: sự cố được tự động chuyển sang trạng thái giải quyết!
+Gửi 3 mẫu CPU 95\% liên tiếp: Central phải báo động có sự cố \texttt{HIGH\_CPU}. Gửi tiếp 3 mẫu CPU 50\%: điều kiện chuyển RECOVERED, quy trình xử lý giữ nguyên; thao tác Resolve phải qua quyền/handler Central.
 
 \subsubsection{Khi nào coi là xong? (PASS Criteria)}
 \begin{itemize}
   \item Áp dụng cửa sổ trượt 3 mẫu liên tiếp để lọc nhiễu cảnh báo giả.
-  \item Tự động đóng sự cố khi giá trị đo hạ xuống dưới ngưỡng phục hồi ($75\%$).
+  \item Cập nhật RECOVERED sau đủ ba mẫu dưới ngưỡng phục hồi; không tự đóng quy trình xử lý.
 \end{itemize}
 
 % ------------------------------------------------------------------------------
@@ -439,7 +444,7 @@ Hệ thống sử dụng cơ chế kiểm soát tương tranh lạc quan (\textb
 \end{itemize}
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo mới file: \texttt{src/LabGuard.Central/AdminService.cs}.
+Tạo mới file: \path{src/LabGuard.Central/AdminService.cs}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -473,10 +478,10 @@ return newVersion is null ? 409 : 200;
 \vspace{2mm}
 
 \subsubsection{Tại sao cần phần này?}
-Central Server là trung tâm của toàn bộ hệ thống. Viết kiểm thử tự động giúp xác nhận động cơ quy tắc và bộ đếm nhịp tim hoạt động chính xác 100\% trước khi nộp bài.
+Central Server là trung tâm của toàn bộ hệ thống. Viết kiểm thử tự động giúp xác nhận bộ xử lý quy tắc và bộ đếm nhịp tim hoạt động chính xác 100\% trước khi nộp bài.
 
 \subsubsection{Bạn sẽ đụng file nào?}
-Tạo các tệp kiểm thử trong: \texttt{tests/LabGuard.Central.Tests/}.
+Tạo các tệp kiểm thử trong: \path{tests/LabGuard.Central.Tests/}.
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -485,7 +490,7 @@ Tạo các tệp kiểm thử trong: \texttt{tests/LabGuard.Central.Tests/}.
 \end{itemize}
 \end{orientationbox}
 
-\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn: Kiểm thử đơn vị cho động cơ quy tắc RuleEngine}]
+\begin{lstlisting}[language=CSharp, caption={Ví dụ rút gọn: Kiểm thử đơn vị cho bộ xử lý quy tắc RuleEngine}]
 // Vi du rut gon: Kiem tra RuleEngine kich hoat sau 3 mau CPU >= 90%
 [Fact]
 public async Task RuleEngine_When3SamplesAbove90_RaisesIncident()
@@ -537,12 +542,12 @@ await Task.Delay(5000, token); // Async non-blocking
 
 \begin{pitfallbox}
 \textbf{Bẫy 2: Dùng Dictionary thường thay vì ConcurrentDictionary}
-\newline Central Server có hàng chục kết nối đọc ghi danh sách máy trạm cùng lúc. Nếu dùng \texttt{Dictionary} thông thường sẽ ném ngoại lệ \texttt{InvalidOperationException} và làm sập máy chủ. Luôn dùng \texttt{ConcurrentDictionary}.
+\newline Central Server có hàng chục kết nối đọc ghi danh sách máy trạm cùng lúc. Nếu dùng \texttt{Dictionary} thông thường sẽ ném ngoại lệ \texttt{InvalidOperationException} và làm sập máy chủ. Luôn dùng \texttt{Concurrent\allowbreak{}Dictionary}.
 \end{pitfallbox}
 
 \begin{pitfallbox}
 \textbf{Bẫy 3: Cộng chuỗi SQL gây lỗ hổng SQL Injection}
-\newline Không bao giờ viết: \texttt{"WHERE DeviceId = '" + id + "'"}. Kẻ xấu có thể gửi chuỗi độc hại phá hủy toàn bộ cơ sở dữ liệu. Luôn dùng tham số hóa \texttt{cmd.Parameters.AddWithValue}.
+\newline Không bao giờ viết: \texttt{"WHERE DeviceId = '" + id + "'"}. Kẻ xấu có thể gửi chuỗi độc hại phá hủy toàn bộ cơ sở dữ liệu. Luôn dùng tham số hóa \path{cmd.Parameters.AddWithValue}.
 \end{pitfallbox}
 
 \begin{orientationbox}
@@ -592,25 +597,25 @@ Dưới đây là 20 câu hỏi trọng tâm thường gặp nhất khi bảo v�
   \item \textbf{Thuật toán Khóa lạc quan (OCC) trên cơ sở dữ liệu hoạt động ra sao?} \\
     \textit{Trả lời:} CSDL sử dụng cột \texttt{RowVersion} trong bảng \texttt{Incidents}. Khi cập nhật, câu lệnh SQL kiểm tra \texttt{WHERE IncidentId = @Id AND RowVersion = @ExpectedVersion}. Nếu số hàng bị ảnh hưởng bằng 1 thì thành công; nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi 409 Conflict.
   \item \textbf{Quy tắc cảnh báo CPU quá tải hoạt động như thế nào?} \\
-    \textit{Trả lời:} Động cơ quy tắc yêu cầu mức tải CPU $\ge 90\%$ trong 3 mẫu đo liên tiếp để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để tự động giải quyết sự cố.
+    \textit{Trả lời:} Bộ xử lý quy tắc yêu cầu mức tải CPU $\ge 90\%$ trong 3 mẫu đo liên tiếp để kích hoạt sự cố \texttt{HIGH\_CPU}, và yêu cầu CPU $\le 75\%$ liên tục trong 3 mẫu để đánh dấu điều kiện RECOVERED; không tự chuyển quy trình xử lý sang RESOLVED.
   \item \textbf{Cơ sở dữ liệu của em hiện tại đã hiện thực chưa và dự kiến gồm những gì?} \\
-    \textit{Trả lời:} CSDL hiện tại chưa được hiện thực. Số bảng cuối cùng sẽ được chốt khi thực hiện nhiệm vụ thiết kế schema (Task B-005). Kiến trúc đã chốt các yêu cầu cốt lõi như \texttt{MetricSamples}, \texttt{ProcessedBatches} và \texttt{Incidents.RowVersion}; số bảng đầy đủ sẽ được chốt khi B-005 được thực hiện.
+    \textit{Trả lời:} DDL hiện có ba bảng đóng băng: ProcessedBatches, MetricSamples, Incidents. Incidents có AssigneeId và RowVersion, chưa có IncidentHistory. Persistence/tích hợp SQL và seed chưa hoàn tất; không được xem DDL/package là bằng chứng đã commit telemetry. B-009 cũ cần đối chiếu kế hoạch riêng.
   \item \textbf{Làm thế nào để phòng tránh tấn công SQL Injection?} \\
-    \textit{Trả lời:} Luôn sử dụng truy vấn tham số hóa (Parameterized Queries) thông qua \texttt{SqlCommand.Parameters.AddWithValue}, tuyệt đối không bao giờ cộng chuỗi lệnh SQL.
+    \textit{Trả lời:} Luôn sử dụng truy vấn tham số hóa (Parameterized Queries) thông qua \path{SqlCommand.Parameters.AddWithValue}, tuyệt đối không bao giờ cộng chuỗi lệnh SQL.
   \item \textbf{Tại sao phải dùng ConcurrentDictionary để lưu danh sách kết nối?} \\
-    \textit{Trả lời:} Vì \texttt{Dictionary} thông thường không an toàn đa luồng. Khi nhiều luồng cùng thêm, xóa hoặc đọc kết nối cùng lúc sẽ ném ngoại lệ \texttt{InvalidOperationException}. \texttt{ConcurrentDictionary} giải quyết an toàn vấn đề này.
+    \textit{Trả lời:} Vì \texttt{Dictionary} thông thường không an toàn đa luồng. Khi nhiều luồng cùng thêm, xóa hoặc đọc kết nối cùng lúc sẽ ném ngoại lệ \texttt{InvalidOperationException}. \texttt{Concurrent\allowbreak{}Dictionary} giải quyết an toàn vấn đề này.
   \item \textbf{Khi nhận được một khung tin nhị phân, Central Server làm những bước gì?} \\
     \textit{Trả lời:} 1. Đọc đủ khung tin bằng \texttt{FrameCodec}; 2. Giải mã JSON thành \texttt{WireEnvelope}; 3. Kiểm tra tính hợp lệ bằng \texttt{EnvelopeValidator}; 4. Điều phối thông điệp tới bộ phận xử lý tương ứng.
   \item \textbf{Nếu hai Admin cùng xác nhận một sự cố cùng lúc thì chuyện gì xảy ra?} \\
     \textit{Trả lời:} Nhờ cơ chế khóa lạc quan (OCC), người gửi lệnh đến trước sẽ cập nhật thành công (nhận \texttt{200 OK}), người gửi đến sau sẽ bị từ chối (nhận \texttt{409 Conflict}) và màn hình sẽ yêu cầu tải lại dữ liệu mới nhất.
   \item \textbf{Làm thế nào để giới hạn số lượng kết nối tối đa vào Server?} \\
-    \textit{Trả lời:} Bằng cách kiểm tra số lượng phần tử trong \texttt{ConcurrentDictionary}. Nếu vượt quá ngưỡng (ví dụ 100 kết nối), máy chủ từ chối kết nối mới bằng cách đóng socket ngay lập tức.
+    \textit{Trả lời:} Bằng cách kiểm tra số lượng phần tử trong \texttt{Concurrent\allowbreak{}Dictionary}. Nếu vượt quá ngưỡng (ví dụ 100 kết nối), máy chủ từ chối kết nối mới bằng cách đóng socket ngay lập tức.
   \item \textbf{Bảng MetricSamples có cần tạo Index không? Tại sao?} \\
     \textit{Trả lời:} Cần tạo chỉ mục không phân cụm (Non-clustered Index) trên 2 cột \texttt{(DeviceId, RecordedAtUtc DESC)} để tối ưu hóa tốc độ truy vấn biểu đồ lịch sử và tìm kiếm số liệu mới nhất của từng máy trạm.
   \item \textbf{Nếu máy chủ SQL Server bị dừng đột ngột thì Central xử lý thế nào?} \\
     \textit{Trả lời:} Central Server duy trì kết nối TCP nếu có thể; nhịp tim \texttt{HEARTBEAT} và liveness vẫn hoạt động trên RAM. Central \textbf{không} duy trì hàng đợi đệm số liệu thứ hai trên RAM. Khi nhận \texttt{METRIC\_BATCH} lúc CSDL gián đoạn, server không commit và không gửi \texttt{BATCH\_ACK}; phía Agent giữ quyền sở hữu số liệu qua \texttt{ReplayBuffer} và sẽ gửi bù sau khi CSDL phục hồi. Các lệnh ghi của Admin sẽ nhận mã lỗi \texttt{ERR\_DATABASE\_UNAVAILABLE}.
   \item \textbf{Giới hạn kích thước gói tin mà Server chấp nhận là bao nhiêu?} \\
-    \textit{Trả lời:} Là 262,144 byte (256 KiB), quy định chặt chẽ trong \texttt{FrameCodec.MaxPayloadSize}.
+    \textit{Trả lời:} Là 262,144 byte (256 KiB), quy định chặt chẽ trong \path{FrameCodec.MaxPayloadSize}.
   \item \textbf{Khi tắt Server thì làm sao để các kết nối không bị lỗi dữ liệu dở dang?} \\
     \textit{Trả lời:} Kích hoạt \texttt{CancellationTokenSource}, ngừng đón nhận kết nối mới, đợi các tác vụ đọc ghi hiện tại hoàn tất (\texttt{Graceful Shutdown}) rồi mới đóng các socket.
   \item \textbf{Central Server lưu nhật ký hành vi quản trị vào đâu?} \\

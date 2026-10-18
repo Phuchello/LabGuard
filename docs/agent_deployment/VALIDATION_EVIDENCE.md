@@ -1,10 +1,12 @@
-# Validation evidence — 18/10/2026
+# Bằng chứng kiểm tra — 18/10/2026
+
+Hồ sơ kiểm tra của PR #11, đã merge vào main `70481fa`. Giữ các mốc nguồn và kết quả thực chạy trước merge dưới đây; xem [PROJECT_STATE.md](../../PROJECT_STATE.md) cho housekeeping/phân công hiện hành.
 
 **Kết luận:** launcher/configuration/local collection/TCP probe đã chạy trên Windows phát triển. Chưa có monitoring toàn tuyến. TCP connect/HELLO không chứng minh AUTH, telemetry đã lưu SQL hoặc application ACK.
 
 ## Phạm vi và nguồn
 
-Nhánh `review/agent-deployment-readiness-20261018` bắt đầu từ main `260759b23d960994f75c7b15455915b68d0c5f8d`, đã fetch lại trước khi tạo worktree riêng. Checkout gốc và thay đổi chưa commit của các phần việc khác được giữ nguyên. Người điều phối đã cho phép commit/push và Draft PR; chưa merge.
+Nhánh `review/agent-deployment-readiness-20261018` bắt đầu từ main `260759b23d960994f75c7b15455915b68d0c5f8d`, đã fetch lại trước khi tạo worktree riêng. Checkout gốc và thay đổi chưa commit của các phần việc khác được giữ nguyên trong lượt đó. PR #11 sau đó được merge thành `70481fa`; trạng thái task chưa hoàn tất không đổi theo việc merge launcher.
 
 Tám file Agent/test: Program.cs, AgentSettings.cs, AgentConsoleApplication.cs, AgentLog.cs, agentsettings.example.json, LabGuard.Agent.csproj; AgentStartupTests.cs và LabGuard.Agent.Tests.csproj. Có 30 test cases mới; test reference Central chỉ để kiểm tra listener thật. Không đổi AgentSocketClient, collector/services, Central, schema, protocol, WBS hoặc báo cáo/PPTX GK.
 
@@ -50,7 +52,7 @@ Bằng chứng cũ được giữ local, không xóa: console logs baseline/buil
 
 - Quang: TLS/session/authorization, identity binding, transaction SQL thật/dedup và BATCH_ACK sau commit. Agent nhận HELLO_ACK/AUTH_RESULT trước khi bật monitoring.
 - Phúc: session reader/liveness, reconnect, ACK/replay coordination; sau đó mới ghép MetricsService/HeartbeatService với config thực. Probe không có bypass monitoring chưa AUTH.
-- Vy kiểm tra góc nhìn Admin khi Central pipeline có thật; Ngọc kiểm tra lỗi mạng và Troubleshooting Assistant tích hợp trên dữ liệu Central có thẩm quyền. Không thêm tool độc lập hoặc bắt buộc Gateway/Collector.
+- Vy kiểm tra góc nhìn Admin khi Central pipeline có thật; Ngọc kiểm tra lỗi mạng và chức năng hỗ trợ phân tích và xử lý sự cố tích hợp trên dữ liệu Central có thẩm quyền. Không thêm tool độc lập hoặc bắt buộc Gateway/Collector.
 - Hai máy LAN, nhiều PC thật, máy sạch không runtime, PC phòng máy được cấp phép: NOT RUN. Windows Service: NOT INSTALLED/NOT TESTED.
 - .NET 10: NOT MIGRATED/NOT TESTED. Đánh giá toàn 13 csproj (12 trong solution, test_frame_codec ở ngoài), NuGet/WinForms/Designer và RID; không suy compatibility từ build net9. Xem `DEPENDENCY_AND_TEST_PLAN.md`.
 

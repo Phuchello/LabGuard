@@ -1,6 +1,6 @@
-# Kế hoạch triển khai Agent Windows
+# Kế hoạch triển khai Agent
 
-Một binary dùng lại cho nhiều máy, mỗi máy có một cấu hình riêng. Phúc phụ trách launcher/cấu hình/publish; Quang phụ trách phiên Central, lưu SQL và ACK; Vy kiểm tra góc nhìn Admin khi nguồn dữ liệu sẵn sàng; Ngọc kiểm tra tình huống lỗi mạng/trợ lý tích hợp và giữ TCP Tools. Đây là phối hợp phần việc; chưa gửi tin hoặc thay đổi GitHub thay các thành viên.
+Một binary dùng lại cho nhiều máy, mỗi máy có một cấu hình riêng. Phúc phụ trách launcher/cấu hình/publish; Quang phụ trách phiên Central, lưu SQL và ACK; Vy kiểm tra góc nhìn Admin khi nguồn dữ liệu sẵn sàng; Ngọc kiểm tra tình huống lỗi mạng/trợ lý tích hợp và giữ công cụ kiểm thử truyền thông TCP. Đây là phối hợp phần việc; chưa gửi tin hoặc thay đổi GitHub thay các thành viên.
 
 ## Cấu hình và khởi động tối thiểu
 

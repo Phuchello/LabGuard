@@ -1,8 +1,8 @@
-# Hiện trạng nguồn Agent và Central
+# Rà soát mức sẵn sàng của mã nguồn — 18/10/2026
 
 Đối chiếu GitHub **Phuchello/LabGuard**, main `260759b23d960994f75c7b15455915b68d0c5f8d`, ngày 18/10/2026. Đây là mốc rà soát trước sửa launcher, ban đầu chỉ đọc GitHub. [Nguồn main được pin](https://github.com/Phuchello/LabGuard/tree/260759b23d960994f75c7b15455915b68d0c5f8d). Nhánh review được tạo riêng từ chính main này sau khi người điều phối cho phép commit/push và Draft PR.
 
-Checkout gốc được giữ nguyên ở `docs/progress-sync-20261015` (`dab8dad`), có thay đổi tài liệu phân công trước lượt này; không checkout/reset hoặc ghi đè chúng. Mười một tệp mã/cấu hình trọng tâm đọc từ main giống local sau chuẩn hóa xuống dòng. WBS trên main có 34 task; local có 40 do bổ sung kế hoạch Assistant chưa push. Cả hai ghi 6 XONG/2 ĐANG LÀM; số chưa làm lần lượt 26/32. GitHub search các mục đang mở không trả issue/PR. Tracker và kết quả kiểm thử cũ không tự chứng minh deployment readiness.
+Checkout gốc được giữ nguyên ở `docs/progress-sync-20261015` (`dab8dad`), có thay đổi tài liệu phân công trước lượt này; không checkout/reset hoặc ghi đè chúng. Mười một tệp mã/cấu hình trọng tâm đọc từ main giống local sau chuẩn hóa xuống dòng. WBS trên main có 34 task; local có 40 do bổ sung kế hoạch hỗ trợ xử lý sự cố chưa push. Cả hai ghi 6 XONG/2 ĐANG LÀM; số chưa làm lần lượt 26/32. GitHub search các mục đang mở không trả issue/PR. Tracker và kết quả kiểm thử cũ không tự chứng minh deployment readiness.
 
 ## Nguồn thực tế trước sửa launcher
 

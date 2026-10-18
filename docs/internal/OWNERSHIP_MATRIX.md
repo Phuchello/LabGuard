@@ -1,7 +1,7 @@
 # LABGUARD NT106 — MA TRẬN PHÂN QUYỀN SỞ HỮU MÃ NGUỒN (OWNERSHIP MATRIX)
 
 > **Dự án:** LABGUARD — Hệ thống giám sát phòng máy tính tập trung thời gian thực  
-> **Phiên bản:** Phân bổ cho nhóm 4 thành viên (Sinh viên A, B, C, D)  
+> **Phiên bản:** Phân công chính thức theo quyết định trực tiếp của người điều phối ngày 17/10/2026; ánh xạ A/B/C/D tại [TEAM_ASSIGNMENTS.md](TEAM_ASSIGNMENTS.md)
 > **Nguyên tắc cốt lõi:** Phân chia ranh giới rõ ràng theo phân hệ (Module Ownership), bảo vệ hợp đồng dùng chung, chống sửa chéo gây conflict mã nguồn trong quá trình làm việc song song.
 
 ---
@@ -10,22 +10,43 @@
 
 | Đường dẫn thư mục / Tập tin | Chủ sở hữu chính (Primary Owner) | Người dự phòng (Backup / Reviewer) | Quyền hạn của Owner | Quyền hạn của thành viên khác | Mục đích & Trách nhiệm |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| `src/LabGuard.Protocol/**` | **Thành viên A** | **B, C, D** | Đọc / Đề xuất sửa *(Chế độ Đóng Băng)* | Chỉ đọc *(Read-only)* | Giao thức mạng phong bì thư `WireEnvelope`, `FrameCodec`, DTOs. Bất biến. |
+| `src/LabGuard.Protocol/**` | **Thành viên A** | **B, C, D** | Đọc / Đề xuất sửa *(Chế độ Đóng Băng)* | Chỉ đọc *(Read-only)* | Cấu trúc thông điệp `WireEnvelope`, `FrameCodec`, DTO. Hợp đồng đóng băng. |
 | `docs/spec/PROTOCOL_SPEC.md` | **Thành viên A** | **B, C, D** | Đọc / Cập nhật tài liệu | Chỉ đọc *(Read-only)* | Đặc tả giao thức mạng và danh mục 69 bản tin. |
 | `docs/spec/CONTRACT_MATRIX.md` | **Thành viên A** | **B, C, D** | Đọc / Cập nhật bảng đối soát | Chỉ đọc *(Read-only)* | Ma trận hợp đồng 69 bản tin và 16 canonical fixtures. |
 | `docs/spec/ARCHITECTURE_DECISIONS.md` | **Cả 4 thành viên** | **Nhóm trưởng** | Đọc / Tra cứu thông số | Chỉ đọc *(Read-only)* | Sổ ghi nhận 19 quyết định kiến trúc chuẩn (ADR). |
 | `src/LabGuard.Agent/**` | **Thành viên A** | **Thành viên B** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Thu thập CPU, RAM, Uptime, Service Probe, ReplayBuffer, TCP client. |
-| `src/LabGuard.Simulator/**` | **Thành viên A** | **Thành viên D** | Toàn quyền chỉnh sửa *(Full write)* | Có quyền chạy test tải | Ứng dụng console giả lập 10/20/50 socket client. |
+| `src/LabGuard.Simulator/**` | **Thành viên D** | **Thành viên A** | Toàn quyền chỉnh sửa *(Full write)* | Có quyền chạy test tải | P1 tùy chọn; hiện chỉ placeholder Simulator, chưa có logic sinh tải. |
 | `tests/LabGuard.Agent.Tests/**` | **Thành viên A** | **Thành viên B** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Unit test kiểm thử ReplayBuffer và logic Agent. |
 | `src/LabGuard.Central/**` | **Thành viên B** | **Thành viên C** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Ingress socket, SessionStore, AuthService, RuleEngine, IngestProcessor. |
 | `database/**` | **Thành viên B** | **Thành viên C** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Script CSDL `schema.sql`, `seed.sql`, migrations, chỉ mục SQL. |
 | `tests/LabGuard.Central.Tests/**` | **Thành viên B** | **Thành viên A** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Unit test cho RuleEngine, DB repo, OCC 409 conflict, ClientConnection. |
 | `src/LabGuard.Admin/**` | **Thành viên C** | **Thành viên B** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Giao diện WinForms Dashboard, Lab View, Incident View, UiDispatcher, RPC client. |
-| `src/LabGuard.Gateway/**` | **Thành viên D** | **Thành viên A** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Bộ cân bằng tải L4 Least-Connections, Duplex Relay, Health Poller. |
-| `src/LabGuard.Collector/**` | **Thành viên D** | **Thành viên B** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | Trạm trung chuyển L7 gom mẻ, multiplexing upstream socket, reply router. |
+| `src/LabGuard.Gateway/**` | **Thành viên D** | **Thành viên A** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | P1 tùy chọn, chưa có project. Kiến thức L4 Least-Connections/Duplex Relay được giữ để tham khảo. |
+| `src/LabGuard.Collector/**` | **Thành viên D** | **Thành viên B** | Toàn quyền chỉnh sửa *(Full write)* | Chỉ đọc *(Read-only)* | P1 tùy chọn, chưa có project. Kiến thức L7 gom mẻ/upstream/router chỉ để tham khảo. |
 | `docs/pdf/**` | **Cả 4 thành viên** | **Nhóm trưởng** | Tra cứu cẩm nang của mình | Review chéo | Bộ 5 cuốn cẩm nang PDF chuyên biệt và mã nguồn LaTeX. |
 | `docs/internal/**` | **Cả 4 thành viên** | **Nhóm trưởng** | Cập nhật tiến độ nhiệm vụ | Quản trị dự án | Bảng WBS, sơ đồ phụ thuộc và ma trận quyền sở hữu. |
 | `tools/**` | **Thành viên A, D** | **Thành viên B** | Cập nhật công cụ kiểm tra | Chạy thử nghiệm | Công cụ kiểm tra độc lập test_frame_codec và bài tập socket của D. |
+
+
+### Bổ sung phân công chính thức ngày 17/10/2026
+
+- A — Võ Trọng Phúc (25521452): Protocol & Agent.
+- B — Nguyễn Bá Quang (25521524): Central Server & SQL Server.
+- C — Lý Tuyết Vy (25522107): Admin WinForms.
+- D — Đỗ Minh Ngọc (25521203): Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard.
+
+Nguồn: quyết định trực tiếp của người điều phối dự án, ghi tại TEAM_ASSIGNMENTS.md; không phải chữ ký hoặc biên bản đồng thuận tập thể được tạo thêm. Chức năng hỗ trợ xử lý sự cố là công việc chính thức trong kế hoạch phát triển, chưa phải chức năng đã được lập trình.
+
+| Phần bổ sung | Chủ trì | Phối hợp | Ranh giới |
+|---|---|---|---|
+| `src/LabGuard.Troubleshooting/**` (đường dẫn thư viện dự kiến, chưa có mã) | D / Ngọc | B, C | Logic C# chuyển bằng chứng thành gợi ý kiểm tra, được Admin gọi; không tạo chương trình chẩn đoán độc lập |
+| Dữ liệu thiết bị/sự cố qua Central | B / Quang | D, C | B-010 ghép dữ liệu được phép khi phần cốt lõi sẵn sàng; Admin không truy vấn trực tiếp SQL/Agent |
+| Vùng chi tiết sự cố và bộ xử lý lệnh giao diện | C / Vy | D, B | C-012 nhúng logic của D và giữ quy trình xử lý/quyền hiện có |
+| Sáu ca A–F trong luồng Admin thật sau này | D / Ngọc | B, C | D-010 chỉ có bằng chứng sau khi thực hiện; GK trình bày ý tưởng/kế hoạch |
+
+D-001/002/003 giữ nguyên. Gateway/Collector/Simulator vẫn P1 có điều kiện; dòng Simulator đồng bộ owner chính D với WBS D-006, A hỗ trợ. Không thay điều kiện triển khai thành cam kết bắt buộc. B-010 (2 giờ) / C-012 (3 giờ) là công sức ghép bổ sung, không tính toàn bộ chức năng cốt lõi còn thiếu; mức sẵn sàng và công sức phần cốt lõi phải rà riêng.
+
+Không sửa schema/protocol trong quyết định phân công này. Giai đoạn 1 dùng dữ liệu Central được phép và hiện thiếu bằng chứng. Giai đoạn 2 lịch sử SQL qua GET_METRICS/METRICS_RESULT tùy chọn cần được duyệt và kiểm tra riêng.
 
 ---
 
@@ -38,7 +59,7 @@
      - Thành viên A: `feature/lane-a-agent` hoặc `task/LG-A-003-writer-queue`  
      - Thành viên B: `feature/lane-b-central` hoặc `task/LG-B-001-sql-schema`  
      - Thành viên C: `feature/lane-c-admin` hoặc `task/LG-C-001-winforms-shell`  
-     - Thành viên D: `feature/lane-d-scale` hoặc `task/LG-D-002-mock-harness`
+     - Thành viên D: `feature/lane-d-tools-assistant` hoặc `task/LG-D-003-tcp-relay`
 3. **Quy tắc 3: Kiểm thử tự động phải pass 100% trước khi tạo Pull Request.**  
    - Trước khi merge code vào nhánh chung, bắt buộc phải chạy:
      ```powershell

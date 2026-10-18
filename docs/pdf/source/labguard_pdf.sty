@@ -3,6 +3,8 @@
 \RequirePackage{fontspec}
 \setmainfont{Times New Roman}
 \setmonofont{Consolas}[Scale=0.92]
+% Allow paragraph reflow around long technical identifiers without shrinking text.
+\setlength{\emergencystretch}{3em}
 
 \RequirePackage[a4paper, top=22mm, bottom=20mm, left=25mm, right=20mm, headheight=25pt]{geometry}
 \RequirePackage{lastpage}
