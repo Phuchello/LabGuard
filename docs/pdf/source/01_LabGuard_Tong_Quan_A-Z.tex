@@ -886,7 +886,7 @@ Hình này chỉ cần nhìn theo các chặng từ trên xuống dưới: hoàn
     \node[stage] (c3) at (0, -2.6) {Chặng 3: Kết nối CSDL SQL Server \& Lưu trữ số liệu máy trạm định kỳ};
     \node[stage] (c4) at (0, -3.9) {Chặng 4: Tích hợp Bộ xử lý Liveness ($> 20$s) \& Rule Engine quá tải CPU $\ge 90\%$};
     \node[stage] (c5) at (0, -5.2) {Chặng 5: Xây dựng Giao diện WinForms Admin \& Xử lý xung đột khóa lạc quan (OCC)};
-    \node[stage] (c6) at (0, -6.5) {Chặng 6: Thử tải quy mô 30 máy trạm, bắt gói Wireshark \& Diễn tập bảo vệ};
+    \node[stage] (c6) at (0, -6.5) {Chặng 6: Kiểm thử tích hợp trên mạng LAN;\\thử tải mô phỏng (tùy chọn)};
 
     \draw[arrow] (c1) -- (c2);
     \draw[arrow] (c2) -- (c3);
@@ -898,7 +898,7 @@ Hình này chỉ cần nhìn theo các chặng từ trên xuống dưới: hoàn
   \label{fig:six_stages}
 \end{figure}
 
-Ý chính: Cách tiếp cận từng bước giúp cả nhóm luôn kiểm soát được tiến độ và không bị ngợp.
+Chặng 6 là kế hoạch kiểm thử tích hợp thực tế của nhóm, chỉ thực hiện khi các thành phần cốt lõi đã sẵn sàng. Thử tải mô phỏng là nội dung tùy chọn. Sơ đồ không phải bằng chứng đã kiểm thử LAN hoặc nhiều máy; kết quả chỉ được ghi nhận sau khi thực chạy và đối chiếu.
 
 \begin{takeawaybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
