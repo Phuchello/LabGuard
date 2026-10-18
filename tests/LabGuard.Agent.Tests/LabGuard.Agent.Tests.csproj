@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\LabGuard.Protocol\LabGuard.Protocol.csproj" />
     <ProjectReference Include="..\..\src\LabGuard.Agent\LabGuard.Agent.csproj" />
+    <ProjectReference Include="..\..\src\LabGuard.Central\LabGuard.Central.csproj" />
   </ItemGroup>
 
 </Project>

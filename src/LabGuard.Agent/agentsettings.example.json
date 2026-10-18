@@ -1,0 +1,13 @@
+{
+  "DeviceId": null,
+  "CentralHost": null,
+  "CentralPort": 5000,
+  "CollectionIntervalSeconds": 5,
+  "HeartbeatIntervalSeconds": 5,
+  "ConnectTimeoutSeconds": 5,
+  "ProbeDurationSeconds": 2,
+  "AuthenticationTokenEnvironmentVariable": "LABGUARD_AGENT_TOKEN",
+  "LogToConsole": true,
+  "LogFilePath": null,
+  "MaxLogFileBytes": 1048576
+}

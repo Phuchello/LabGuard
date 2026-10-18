@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LabGuard.Protocol\LabGuard.Protocol.csproj" />
+    <None Update="agentsettings.example.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <PropertyGroup>
