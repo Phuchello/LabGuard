@@ -1,0 +1,41 @@
+
+% Synchronized status for all five educational handbooks, 18/10/2026.
+\section*{Hiện trạng đối chiếu ngày 18/10/2026}
+\markboth{Hiện trạng dự án}{Hiện trạng dự án}
+\addcontentsline{toc}{section}{Hiện trạng đối chiếu ngày 18/10/2026}
+\begin{summarybox}
+\textbf{Mốc đối chiếu:} main \texttt{d4e20ad} sau PR \#13; PR \#14 đang Draft, nguồn đầu lượt sửa \texttt{64488a5}. PR \#11 là mốc bổ sung Agent, không phải thay đổi mới nhất. Đây là cẩm nang học và kế hoạch hiện thực; các mô tả tương lai/pseudocode không phải bằng chứng tính năng đã hoạt động.
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt]
+\item \textbf{Agent đã có:} chương trình Console, cấu hình JSON, DeviceId riêng cho mỗi bản cài đặt, đo CPU/RAM/thời gian hoạt động Windows tại máy, chế độ thử TCP/HELLO, hủy tác vụ và ghi nhật ký.
+\item \textbf{Chế độ giám sát bị chặn có chủ đích} tới khi TLS/phiên kết nối/AUTH sẵn sàng. MetricsService/HeartbeatService đã có thành phần và kiểm thử nhưng chưa được bật trong chương trình khởi chạy.
+\item \textbf{Chưa hoàn tất:} A-005 kết nối lại, A-006 ReplayBuffer, đọc phản hồi/kiểm tra mất kết nối, tích hợp SQL/ACK và Windows Service. B-001 đã có bộ tiếp nhận TCP; B-005 mới có DDL, còn đang làm. C-001 có bố cục 0.1, chưa nghiệm thu liên kết dữ liệu và quy trình xử lý.
+\item \textbf{Kiểm thử đã báo cáo từ PR \#11:} 195 bài đạt trên Windows tại máy: Protocol 107, Agent 64, Central 9, MockHarness 15. Đây \textbf{không phải kết quả GitHub CI}. Số 34/165 trong hồ sơ cũ là mốc lịch sử.
+\end{itemize}
+\end{summarybox}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Thành viên} & \textbf{Trách nhiệm chính thức} \\
+\midrule
+A --- Võ Trọng Phúc & Agent và Protocol. \\
+B --- Nguyễn Bá Quang & Central Server và SQL Server. \\
+C --- Lý Tuyết Vy & Admin Windows Forms. \\
+D --- Đỗ Minh Ngọc & Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Nguồn: quyết định trực tiếp của người điều phối dự án ngày 17/10/2026; không tự tạo biên bản họp hoặc chữ ký. Chức năng hỗ trợ xử lý sự cố là \textbf{phần việc chính thức trong kế hoạch}, chưa phải chức năng đã được lập trình. Logic nhúng trong quy trình xử lý sự cố của LabGuard Admin, dùng dữ liệu có thẩm quyền qua Central; D phối hợp B/C, không làm ứng dụng TCP độc lập.
+
+Gateway/Collector và Simulator là \textbf{mở rộng P1 tùy chọn} sau khi phần cốt lõi ổn định. Nội dung mở rộng được giữ để học, không phải cam kết chính của Ngọc. GK là một buổi trình bày đề xuất theo lịch giảng viên, không phải hạn hoàn thành đồ án; các chặng là kế hoạch tương đối toàn dự án.
+
+\textbf{B-009 cần đối chiếu kế hoạch:} WBS cũ nhắc AssignedToUserId/IncidentHistory nhưng schema hiện chỉ có AssigneeId và chưa có bảng lịch sử. Giữ bản ghi CHƯA LÀM để Quang/nhóm quyết định, không tự sửa schema hoặc coi bảng/cột cũ đã tồn tại.
+
+\textbf{Năm mốc khác nhau:} kết nối TCP; xác thực ứng dụng; nhận số liệu; ghi thành công SQL; nhận ACK ứng dụng. Chế độ thử trả exit 0 chỉ cho biết lệnh kết thúc; phía bên kia đóng kết nối có thể chưa được phát hiện. Nhật ký kết nối không chứng minh đã xác thực hoặc lưu SQL.
+
+\textbf{Bắt đầu đúng cách:} đọc \path{docs/agent_deployment/README.md} và \path{docs/internal/TEAM_ASSIGNMENTS.md}. WBS giữ 34 nhiệm vụ cũ và sáu nhiệm vụ bổ sung cho chức năng hỗ trợ xử lý sự cố, đều chưa làm. Nâng cấp .NET 10 là việc riêng toàn bộ dự án, chưa thực hiện trong lượt đồng bộ này.
+\newpage
+
+\begin{importantbox}
+\textbf{Windows-first:} P0 hướng đến Agent thu số liệu bằng Win32, Admin Windows Forms và môi trường SQL Server trên Windows. Linux/macOS chỉ là mở rộng sau khi P0 ổn định; chưa yêu cầu viết collector đa nền tảng hoặc thay kiến trúc. Dòng kế hoạch cũ nhắc Ubuntu cần nhóm đối chiếu phạm vi riêng; lượt này không sửa WBS.
+\end{importantbox}

@@ -46,7 +46,7 @@
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
-\input{sync_status.tex}
+\input{sync_status_pr14.tex}
 
 % ==============================================================================
 % CHUONG 1: LABGUARD GIAI QUYET VAN DE GI?
@@ -57,10 +57,12 @@
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Phòng máy 40--50 máy tính thường gặp sự cố: máy đơ cứng, rút lỏng cáp mạng, tắt nhầm phần mềm thi.
   \item Giảng viên không thể đi bộ kiểm tra thủ công từng máy; Ping chỉ phản ánh khả năng liên lạc cơ bản. LabGuard gom nhiều loại thông tin của phòng máy vào cùng một hệ thống giám sát.
-  \item LabGuard giải quyết bài toán: giám sát CPU/RAM thời gian thực, tự động phát hiện mất kết nối sau 20s.
+  \item LabGuard giải quyết bài toán: giám sát CPU/RAM thời gian thực, dự kiến phát hiện quá hạn nhịp tim bằng liveness Central ($>20$s).
   \item Cung cấp bảng điều khiển WinForms hiển thị bản đồ trực quan có màu sắc cảnh báo.
 \end{itemize}
 \end{summarybox}
+
+\textbf{Phạm vi nền tảng:} P0 ưu tiên Windows (collector Win32, Admin Windows Forms). Linux/macOS chỉ xét sau khi P0 ổn định. Agent hiện thu CPU/RAM/Uptime; P0 không có ProcessList. Các mô tả giám sát tích hợp dưới đây là thiết kế, không phải pipeline đang vận hành.
 
 \subsection{Bối cảnh thực tế tại phòng thực hành mạng}
 Hãy hình dung một buổi chiều thi thực hành môn học tại phòng máy của Trường Đại học Công nghệ Thông tin (UIT). Phòng thực hành có quy mô khoảng 40 đến 50 máy tính sinh viên hoạt động đồng thời dưới sự giám sát của một cán bộ quản trị hoặc giảng viên coi thi:
@@ -160,7 +162,7 @@ Bảng dưới đây tổng hợp các tiêu chí kỹ thuật giữa LabGuard v
 \subsection{Mục tiêu ra đời của hệ thống LabGuard}
 Đồ án LabGuard ra đời nhằm giải quyết triệt để bài toán trên bằng cách xây dựng một hệ thống chuyên biệt, gọn nhẹ, hoàn toàn tự chủ trong mạng nội bộ theo đúng chuẩn mực môn Lập trình mạng:
 \begin{enumerate}
-  \item \textbf{Giám sát thời gian thực:} Định kỳ thu thập các chỉ số phần cứng cốt lõi (CPU, RAM khả dụng, tiến trình) từ máy trạm gửi về máy chủ.
+  \item \textbf{Giám sát thời gian thực:} Định kỳ thu thập các chỉ số phần cứng cốt lõi (CPU, RAM và thời gian hoạt động) từ máy trạm gửi về máy chủ.
   \item \textbf{Phát hiện mất kết nối tự động:} Thông qua nhịp tim định kỳ 5 giây, nếu máy trạm im lặng quá 20 giây ($> 20\text{s}$), máy chủ tự động kích hoạt cảnh báo mất mạng.
   \item \textbf{Bộ xử lý cảnh báo (Rule Engine):} Tự động phát hiện hiện tượng quá tải phần cứng (ví dụ máy \texttt{LAB01-PC02} có CPU vượt ngưỡng $90\%$ trong 3 chu kỳ liên tiếp) để cảnh báo tức thời lên màn hình quản trị.
   \item \textbf{Bảng điều khiển trực quan (Admin Dashboard):} Giao diện đồ họa WinForms hiển thị bản đồ toàn bộ phòng máy với màu sắc rõ ràng.
@@ -303,7 +305,7 @@ Hình này chỉ cần nhìn theo các đường kết nối: Agent và Admin k�
 \begin{itemize}
   \item \textbf{Bản chất:} Ứng dụng chạy ngầm trên từng máy tính sinh viên, không chiếm dụng màn hình làm bài.
   \item \textbf{Cơ chế hoạt động:} Là TCP Client chủ động mở kết nối ra Central Server tại cổng 5000.
-  \item \textbf{Nhiệm vụ hiện tại:} Định kỳ thu thập CPU/RAM và phát \texttt{HEARTBEAT}. Khả năng lưu \texttt{METRIC\_BATCH} khi mất mạng và gửi bù bằng \texttt{ReplayBuffer} thuộc A-006, hiện CHƯA TRIỂN KHAI.
+  \item \textbf{Nhiệm vụ thiết kế:} Định kỳ thu CPU/RAM và phát \texttt{HEARTBEAT}; launcher hiện mới cho collect cục bộ/probe, chưa bật monitoring. Khả năng lưu \texttt{METRIC\_BATCH} khi mất mạng và gửi bù bằng \texttt{ReplayBuffer} thuộc A-006, hiện CHƯA TRIỂN KHAI.
 \end{itemize}
 
 \subsection{LabGuard.Central (Máy chủ trung tâm)}
@@ -402,7 +404,7 @@ Central Server là thực thể duy nhất kết nối trực tiếp với CSDL 
 
 \begin{takeawaybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Central Server là nguồn chân lý duy nhất (Single Source of Truth) quyết định trạng thái của phòng máy.
+  \item Central Server là nguồn có thẩm quyền quyết định trạng thái của phòng máy.
   \item Mọi kết nối của Agent và Admin đều quy về cổng TCP 5000 của Central Server.
 \end{itemize}
 \end{takeawaybox}
@@ -489,7 +491,7 @@ var envelope = WireEnvelope<MetricBatchPayload>.Create(
 \end{lstlisting}
 
 \subsection{Tuần tự hóa đối tượng C\# thành mảng byte JSON UTF-8}
-Đối tượng \texttt{WireEnvelope} được chuyển đổi thành chuỗi JSON UTF-8 (ví dụ kích thước 185 byte):
+Đối tượng \texttt{WireEnvelope} được chuyển đổi thành chuỗi JSON UTF-8 (giả sử kích thước 185 byte để minh họa phép cộng; không phải số byte đo từ đoạn mã/JSON rút gọn bên dưới):
 
 \begin{orientationbox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
@@ -680,7 +682,7 @@ Nhiệm vụ A-001 đã đóng băng 16 mẫu bản tin JSON đại diện cho c
     \hline
     \texttt{BATCH\_ACK} & Central $\rightarrow$ Agent & 5000 & Máy chủ xác nhận đã lưu lô số liệu đo đạc. \\
     \hline
-    \texttt{SERVICE\_STATUS} & Agent $\rightarrow$ Central & 5000 & Báo cáo trạng thái tiến trình phần mềm trọng yếu. \\
+    \texttt{SERVICE\_STATUS} & Agent $\rightarrow$ Central & 5000 & Báo cáo kết quả probe TCP cổng dịch vụ trong allowlist; không phải danh sách tiến trình. \\
     \hline
     \texttt{HELLO\_AGENT} & Agent $\rightarrow$ Central & 5000 & Máy trạm chào hỏi khi mở kết nối ban đầu. \\
     \hline
@@ -871,7 +873,7 @@ Nhóm 4 sinh viên phối hợp chặt chẽ trên nền tảng kiến trúc Cli
     \hline
     \textbf{Lý Tuyết Vy} (C) & \texttt{Admin} (WinForms) & Thiết kế Dashboard 40--50 máy trạm; an toàn đa luồng UI (\texttt{BeginInvoke}); điều phối \texttt{WorkflowState}; gửi lệnh cập nhật kèm khóa lạc quan (OCC). \\
     \hline
-    \textbf{Đỗ Minh Ngọc} (D) & TCP Tools \& Troubleshooting & Công cụ kiểm thử TCP (\texttt{TcpEcho}, \texttt{TcpRelay}); thư viện phân tích sự cố nhúng nội bộ Admin (\textbf{không làm ứng dụng riêng}, không truy cập CSDL/Agent). \\
+    \textbf{Đỗ Minh Ngọc} (D) & \makecell[l]{Kiểm thử TCP\\Hỗ trợ phân tích sự cố} & Công cụ kiểm thử TCP (\texttt{TcpEcho}, \texttt{TcpRelay}); thư viện phân tích sự cố nhúng nội bộ Admin (\textbf{không làm ứng dụng riêng}, không truy cập CSDL/Agent). \\
     \hline
   \end{tabularx}
 \end{table}
@@ -882,29 +884,23 @@ Nhóm 4 sinh viên phối hợp chặt chẽ trên nền tảng kiến trúc Cli
 
 \begin{figure}[H]
   \centering
-  \scalebox{0.92}{%
   \begin{tikzpicture}[
-    memberbox/.style={rectangle, draw=lgDeepBlue, fill=lgLightBlue, rounded corners=2mm, thick, align=center, font=\footnotesize\bfseries, minimum width=38mm, minimum height=15mm},
-    dlibbox/.style={rectangle, draw=lgTeal, fill=lgLightTeal, rounded corners=2mm, thick, align=center, font=\footnotesize\bfseries, minimum width=40mm, minimum height=15mm},
-    dbbox/.style={rectangle, draw=lgSlate, fill=lgLightSlate, rounded corners=1.5mm, thick, align=center, font=\scriptsize\bfseries, minimum width=36mm, minimum height=10mm},
-    arrow/.style={-{Stealth[scale=0.9]}, thick, color=lgDeepBlue},
-    biarrow/.style={{Stealth[scale=0.85]}-{Stealth[scale=0.85]}, thick, color=lgTeal},
-    callarrow/.style={{Stealth[scale=0.85]}-{Stealth[scale=0.85]}, thick, dashed, color=lgForestGreen}
-  ]
-    % Nodes
-    \node[memberbox] (agent) at (0, 0) {Phân hệ Agent (Phúc)\\Phát nhịp tim 5s, số đo 5s\\Hàng đợi BoundedChannel};
-    \node[memberbox] (central) at (5.2, 0) {Máy chủ Central (Quang)\\Lắng nghe TCP 5000\\Quét Liveness ($> 20.0$s)\\RuleEngine (Hysteresis)};
-    \node[dbbox] (db) at (5.2, -2.4) {SQL Server (Quang)\\Batches, Metrics,\\Incidents (AssigneeId, OCC)};
-    \node[memberbox] (admin) at (10.6, 0) {Ứng dụng Admin (Vy)\\WinForms Dashboard\\Quản lý WorkflowState\\Điều phối thao tác OCC};
-    \node[dlibbox] (engine) at (10.6, -2.4) {Thư viện Hỗ trợ (Ngọc)\\\texttt{LabGuard.Troubleshooting}\\(Nhúng nội tiến trình Admin)\\Kiểm tra dữ liệu \& Gợi ý};
-
-    % Connections
-    \draw[arrow] (agent.east) -- node[above=1mm, font=\tiny\bfseries, align=center] {TCP 5000\\(\texttt{HEARTBEAT}\\\texttt{METRIC\_BATCH})} (central.west);
-    \draw[biarrow] (central.south) -- node[right=1mm, font=\tiny, align=left] {Lưu trữ \& Truy vấn\\(ADO.NET)} (db.north);
-    \draw[biarrow] (central.east) -- node[above=1mm, font=\tiny\bfseries, align=center] {TCP 5000\\(\texttt{DEVICE\_UPDATE}\\\texttt{INCIDENT\_*})} (admin.west);
-    \draw[callarrow] (admin.south) -- node[right=1mm, font=\tiny, align=left] {Gọi hàm trực tiếp C\#\\Truyền Context\\Nhận Assessment} (engine.north);
+    part/.style={draw=lgDeepBlue,fill=lgLightBlue,rounded corners=2mm,text width=3.5cm,minimum height=1.9cm,align=center,font=\small},
+    db/.style={draw=lgSlate,fill=lgLightSlate,text width=3.5cm,minimum height=1.4cm,align=center,font=\small},
+    local/.style={draw=lgTeal,fill=lgLightTeal,rounded corners=2mm,text width=4.1cm,minimum height=1.6cm,align=center,font=\small},
+    net/.style={<->,>=stealth,thick,color=lgDeepBlue},
+    call/.style={<->,>=stealth,thick,dashed,color=lgTeal}]
+    \node[part] (a) at (0,0) {\textbf{Agent (Phúc)}\\Thu số liệu Windows\\Gửi heartbeat, metric};
+    \node[part] (b) at (5.2,0) {\textbf{Central (Quang)}\\Phiên và liveness\\Quy tắc, dữ liệu};
+    \node[part] (c) at (10.4,0) {\textbf{Admin (Vy)}\\Windows Forms\\Xem và xử lý sự cố};
+    \node[db] (sql) at (5.2,-3.2) {\textbf{SQL Server (Quang)}\\Ba bảng đóng băng\\Giao dịch và RowVersion};
+    \node[local] (d) at (10.4,-3.2) {\textbf{Thư viện hỗ trợ (Ngọc)}\\Trong tiến trình Admin\\Nhận bằng chứng, trả gợi ý};
+    \draw[net] (a.east) -- node[above,font=\footnotesize]{TCP}(b.west);
+    \draw[net] (b.east) -- node[above,font=\footnotesize]{TCP}(c.west);
+    \draw[net] (b.south) -- node[left,font=\footnotesize,align=right]{Đọc/ghi\\SQL}(sql.north);
+    \draw[call] (c.south) -- node[right,font=\footnotesize,align=left]{Gọi C\#\\nội bộ}(d.north);
   \end{tikzpicture}
-  }
+  \par\smallskip\footnotesize Luồng dự kiến: Agent gửi HEARTBEAT/METRIC\_BATCH; Central cấp DEVICE\_UPDATE/INCIDENT\_* cho Admin. Chỉ Central truy cập SQL.
   \caption{Sơ đồ luồng dữ liệu phối hợp toàn diện giữa 4 thành viên trong LabGuard}
   \label{fig:four_members_data_flow}
 \end{figure}
@@ -912,7 +908,7 @@ Nhóm 4 sinh viên phối hợp chặt chẽ trên nền tảng kiến trúc Cli
 \begin{importantbox}
 \textbf{Nguyên tắc bất biến trong phân định luồng dữ liệu:}
 \begin{itemize}[leftmargin=1.2em, itemsep=2pt]
-  \item Central Server là \textbf{nguồn chân lý duy nhất (Single Source of Truth)} về trạng thái thiết bị và dữ liệu sự cố kỹ thuật.
+  \item Central Server là \textbf{nguồn có thẩm quyền} về trạng thái thiết bị và dữ liệu sự cố kỹ thuật.
   \item Thư viện \texttt{LabGuard.Troubleshooting} của Ngọc \textbf{không phải phần mềm độc lập}, không mở kết nối mạng riêng và không can thiệp CSDL.
   \item Admin triệu gọi thư viện hỗ trợ bằng lời gọi hàm nội bộ (In-Process Method Call), nhận kết quả phân tích để hiển thị trợ giúp cán bộ coi thi.
 \end{itemize}
@@ -920,24 +916,22 @@ Nhóm 4 sinh viên phối hợp chặt chẽ trên nền tảng kiến trúc Cli
 
 \subsection{Nguyên lý cốt lõi của chức năng hỗ trợ phân tích sự cố (Mức khái niệm)}
 
-Chức năng hỗ trợ phân tích và xử lý sự cố do Đỗ Minh Ngọc phụ trách được thiết kế như một động cơ phân tích luật thuần túy (Deterministic Rule-Based Engine). Hệ thống tuân thủ 5 nguyên lý cốt lõi:
+Chức năng hỗ trợ phân tích và xử lý sự cố do Đỗ Minh Ngọc phụ trách được thiết kế như một thư viện quy tắc có thể kiểm chứng. Hệ thống tuân thủ 5 nguyên lý cốt lõi:
 
 \begin{enumerate}
-  \item \textbf{Đánh giá chất lượng bằng chứng trước khi kết luận:}
-  Thư viện không tiếp nhận dữ liệu một cách mù quáng mà kiểm tra tính toàn vẹn và độ tươi mới của thông tin theo 4 trạng thái:
-  \begin{itemize}
-    \item \textit{Mới (Fresh):} Dữ liệu thu nhận trong khung thời gian hợp lệ ($\le 20.0$s so với thời điểm đánh giá).
-    \item \textit{Cũ (Stale):} Dữ liệu quá hạn ($> 20.0$s) do trễ mạng hoặc mất liên lạc, không đủ độ tin cậy để đánh giá tức thời.
-    \item \textit{Thiếu (Insufficient):} Chưa tích lũy đủ số mẫu cần thiết (ví dụ $< 3$ mẫu đo định kỳ để khẳng định xu hướng tải tài nguyên).
-    \item \textit{Mâu thuẫn (Conflicting):} Xuất hiện xung đột giữa các nguồn dữ liệu (ví dụ nhịp tim vẫn báo bình thường nhưng số đo tài nguyên ngưng cập nhật).
-  \end{itemize}
+  \item \textbf{Chất lượng bằng chứng là thiết kế nội bộ, không phải enum wire:}
+  Dùng cùng bốn giá trị với sổ tay D: \texttt{Missing} (thiếu nguồn/định danh bắt buộc), \texttt{Stale} (bằng chứng cũ theo chính sách độ mới riêng), \texttt{Insufficient} (chưa đủ mẫu/tính liên tiếp/nguồn), \texttt{Fresh} (đủ và đã xác minh nguồn, độ mới). Đề xuất ưu tiên một giá trị theo thứ tự trên, đồng thời ghi đầy đủ lý do. Đây là hợp đồng C\# nội bộ dự kiến, chưa phải DTO hiện thực. Mâu thuẫn dữ liệu là lý do cần kiểm tra, không tự thêm enum Conflicting. OFFLINE hoặc ``đang chuyển tiếp'' không phải DataQuality.
+
+  P0 \texttt{DEVICE\_PAGE/DEVICE\_UPDATE} chỉ cung cấp giá trị gần nhất, không có chuỗi ba mẫu với thời điểm đo. Admin không được coi ba lần poll/event là ba mẫu liên tiếp. Giai đoạn đầu hiển thị số liệu/sự cố Central báo và phần bằng chứng còn thiếu. \texttt{GET\_METRICS/METRICS\_RESULT} là tùy chọn: chỉ xét sau khi nhóm chấp thuận và B/C xác minh hợp đồng/handler lịch sử. LG-B-010/LG-C-012 là phần ghép bổ sung khi lõi sẵn sàng, không bao gồm toàn bộ công xây lịch sử SQL hoặc sửa protocol/schema.
+
+  \texttt{RecordedAtUtc} là giờ lấy mẫu phía Agent; \texttt{LastSeenUtc} là trường UTC quan sát trong DTO, không được mặc định là heartbeat hợp lệ cuối. \texttt{UpdatedAtUtc} của event cũng không phải thời điểm đo. Central dự kiến quyết định liveness bằng thời gian đơn điệu kể từ heartbeat hợp lệ trong phiên hiện hành ($>20$ giây, quét 2,5 giây); Admin dùng kết quả Central, không dùng timestamp client/UTC để thay quyết định này. Ngưỡng cũ metric và dung sai lệch đồng hồ cần nhóm thống nhất riêng.
 
   \item \textbf{Phân định rõ ràng 3 tầng trạng thái độc lập:}
   Kiến trúc hệ thống tách bạch tuyệt đối 3 không gian trạng thái, không để xảy ra nhầm lẫn:
   \begin{itemize}
     \item \textit{Trạng thái kết nối thiết bị (\texttt{Status}):} \texttt{ONLINE}, \texttt{OFFLINE}, \texttt{DEGRADED} (do Central cập nhật dựa trên tầng Socket TCP và nhịp tim).
-    \item \textit{Trạng thái điều kiện kỹ thuật (\texttt{ConditionState}):} \texttt{ACTIVE} (đang vi phạm ngưỡng), \texttt{RECOVERED} (đã phục hồi dưới ngưỡng dung sai), \texttt{UNKNOWN} (chưa đủ dữ liệu). Trạng thái này do máy chủ Central tự động tính toán.
-    \item \textit{Trạng thái quy trình quản trị (\texttt{WorkflowState}):} \texttt{OPEN}, \texttt{ACKNOWLEDGED}, \texttt{INVESTIGATING} (hoặc \texttt{IN\_PROGRESS} theo giao thức), \texttt{RESOLVED}. Trạng thái này thuộc thẩm quyền duy nhất của người quản trị thao tác trên Admin.
+    \item \textit{Trạng thái điều kiện kỹ thuật (\texttt{ConditionState}):} \texttt{ACTIVE} (đang vi phạm ngưỡng), \texttt{RECOVERED} (đã phục hồi dưới ngưỡng dung sai), \texttt{UNKNOWN} (chưa đủ dữ liệu). UNKNOWN là thiết kế theo ADR, chưa được chú thích trong IncidentSummaryDto; B/C cần xác minh ánh xạ trước tích hợp, không tự thêm wire state.
+    \item \textit{Trạng thái quy trình quản trị (\texttt{WorkflowState}):} \texttt{OPEN}, \texttt{ACKNOWLEDGED}, \texttt{INVESTIGATING} (hoặc \texttt{IN\_PROGRESS} theo giao thức), \texttt{RESOLVED}. DTO đang chú thích INVESTIGATING còn đặc tả dùng IN\_PROGRESS: B/C phải chốt ánh xạ, không tự chấp nhận hai nhãn là cùng wire enum. Thao tác hợp lệ do Central kiểm tra quyền và trạng thái.
   \end{itemize}
 
   \item \textbf{Giải thích cảnh báo có căn cứ kỹ thuật, không đoán mò nguyên nhân gốc:}
@@ -951,20 +945,20 @@ Chức năng hỗ trợ phân tích và xử lý sự cố do Đỗ Minh Ngọc 
   Danh mục gợi ý kiểm tra luôn tuân theo nguyên tắc từ nhẹ đến nặng, ưu tiên các bước quan sát thụ động trước khi can thiệp:
   \begin{itemize}
     \item \textit{Mức 1 (Quan sát thụ động \& kiểm tra mạng):} Thử nghiệm thông tuyến bằng lệnh Ping (ICMP Echo), kiểm tra trạng thái cổng TCP 5000, kiểm tra độ tươi của bản tin nhịp tim cuối.
-    \item \textit{Mức 2 (Quan sát tiến trình):} Kiểm tra danh sách tiến trình chiếm dụng tài nguyên (khi có nguồn dữ liệu hỗ trợ).
+    \item \textit{Mức 2 (Quan sát tiến trình):} Người có quyền quan sát Task Manager tại máy trạm. ProcessList không có trong P0 hoặc collector hiện tại; không giả định Admin đã nhận danh sách tiến trình.
     \item \textit{Mức 3 (Can thiệp vật lý hoặc dịch vụ):} Khuyến nghị cán bộ coi thi đến tận bàn máy quan sát màn hình hoặc khởi động lại dịch vụ Agent khi có sự chấp thuận của quản trị viên.
   \end{itemize}
 
   \item \textbf{Giữ trọn vẹn quyền quyết định cho người quản trị:}
-  Hệ thống hỗ trợ xử lý sự cố chỉ đóng vai trò tư vấn kỹ thuật (\textit{Decision Support}). Mọi hành động can thiệp, chuyển trạng thái sự cố sang \texttt{RESOLVED}, hoặc gửi lệnh khởi động lại đều bắt buộc phải do Quản trị viên chủ động xác nhận trên giao diện và được bảo vệ bằng cơ chế Khóa lạc quan (OCC).
+  Hệ thống hỗ trợ xử lý sự cố chỉ đóng vai trò tư vấn kỹ thuật (\textit{Decision Support}). Mọi hành động can thiệp, chuyển trạng thái sự cố sang \texttt{RESOLVED}, phải do người có quyền thao tác qua Central với kiểm soát OCC. Khởi động lại máy/dịch vụ là gợi ý kiểm tra thủ công có xác nhận, không phải lệnh điều khiển từ xa đã có trong P0.
 \end{enumerate}
 
 \subsection{Hiện trạng hiện thực và ranh giới kiểm thử}
 
 Để đảm bảo tính minh bạch và liêm chính học thuật, tình trạng hiện thực hóa của các phân hệ tại thời điểm hiện tại được phân định rõ ràng như sau:
 \begin{itemize}
-  \item \textbf{Mã nguồn đã hoàn tất và kiểm thử nghiêm ngặt:} Thư viện giao thức \texttt{LabGuard.Protocol} (A-001, A-002: 107/107 tests PASS); phân hệ Agent thu thập CPU/RAM/Uptime và hàng đợi gửi TCP (A-001..A-004 đã kiểm thử trên Windows đạt 195 tests cục bộ); công cụ \texttt{TcpEcho} (D-002).
-  \item \textbf{Đang hoàn thiện:} Bộ tiếp nhận lắng nghe Central (B-001); khung giao diện Admin Dashboard (C-001); công cụ chuyển tiếp \texttt{TcpRelay} (D-003).
+  \item \textbf{Mã nguồn đã hoàn tất và kiểm thử nghiêm ngặt:} Thư viện giao thức \texttt{LabGuard.Protocol} (A-001, A-002: 107/107 tests PASS); phân hệ Agent thu thập CPU/RAM/Uptime và hàng đợi gửi TCP (Agent 64 tests ở mốc PR \#11; 195 là tổng solution Windows local, không phải riêng Agent hoặc GitHub CI); công cụ \texttt{TcpEcho} (D-002).
+  \item \textbf{Đang hoàn thiện:} Khung giao diện Admin (C-001); SQL persistence (B-005). Central B-001 đã có listener và 9 tests ở mốc lịch sử; Relay D-003 chưa nghiệm thu, không nâng trạng thái WBS.
   \item \textbf{Đề xuất theo kế hoạch (Chưa triển khai mã nguồn):} Tự động kết nối lại (A-005) và bộ đệm ReplayBuffer (A-006); lưu trữ CSDL SQL Server và bộ xử lý liveness/rule engine (B-005..B-008); xử lý sự kiện mạng và khóa OCC trên Admin (C-002..C-005); thư viện \texttt{LabGuard.Troubleshooting} tích hợp quy tắc phân tích (D-007..D-010).
   \item \textbf{Chu kỳ 3 mẫu đo và thời gian phản ứng:} Chu kỳ lấy mẫu định kỳ của Agent là 5 giây/mẫu. Chuỗi 3 mẫu đo liên tiếp vi phạm ngưỡng phản ánh khoảng thời gian duy trì tối thiểu $\approx 10$ giây giữa mẫu đầu và mẫu thứ ba của chuỗi, khác biệt rõ rệt với tiêu chí độ tươi mới của dữ liệu (tính theo thời điểm trôi qua so với mốc hiện tại). Các ngưỡng thời gian (như 20.0s Liveness Timeout) và ngưỡng quá tải (CPU $\ge 90\%$, phục hồi $\le 75\%$) là chuẩn thiết kế kỹ thuật của đồ án; không sử dụng các ngưỡng tự phát chưa được nhóm thông qua.
 \end{itemize}
@@ -1098,7 +1092,7 @@ Passed!  - Failed: 0, Passed: 107, Skipped: 0, Total: 107, Duration: 412 ms
 \begin{summarybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item 4 biểu đồ tuần tự trực quan thể hiện toàn bộ kịch bản vận hành của đồ án.
-  \item Luồng 1: Thu thập số liệu định kỳ; Luồng 2: Phát hiện mất kết nối sau 20s.
+  \item Luồng 1: Thu thập số liệu định kỳ; Luồng 2: Dự kiến phát hiện quá hạn nhịp tim bằng thời gian đơn điệu tại Central.
   \item Luồng 3: Bộ xử lý quy tắc quá tải CPU; Luồng 4: Giải quyết xung đột khóa lạc quan OCC.
 \end{itemize}
 \end{summarybox}
@@ -1328,7 +1322,7 @@ WHERE IncidentId = @Id AND RowVersion = @ExpectedVer;
 \end{lstlisting}
     Nếu số dòng cập nhật được bằng 1 thì thành công (\texttt{200 OK}). Nếu bằng 0 nghĩa là đã có người sửa trước, server trả về mã lỗi \texttt{409 Conflict} để giao diện tải lại dữ liệu mới nhất.
   \item \textbf{Hiện tại mã nguồn của dự án đã làm được những gì?} \\
-    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} (A-001 \& A-002, 107/107 tests PASS) và các chặng A-003, A-004 của Agent (\texttt{AgentSocketClient.cs} hàng đợi Single-Writer 256, \texttt{MetricsCollector.cs} đo CPU/RAM qua Win32 P/Invoke, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests ở mốc A-004 (lịch sử), đối soát Windows reference 10/10 PASS). Tác vụ tiếp theo của Agent là A-005 (Tự động kết nối lại / Reconnect). Central có listener B-001, Admin có layout C-001. Phân hệ của Thành viên D đã hoàn thành công cụ \texttt{TcpEcho} (D-002), đang hoàn thiện \texttt{TcpRelay} (D-003) và thiết kế thư viện hỗ trợ phân tích sự cố (D-007..D-010). PR \#11 thêm startup/config/probe cho Agent, tổng 195 tests Windows local; chưa có session/AUTH hoặc monitoring toàn tuyến.
+    \textit{Trả lời:} Nhóm đã hoàn thành $100\%$ phân hệ giao thức dùng chung \texttt{LabGuard.Protocol} (A-001 \& A-002, 107/107 tests PASS) và các chặng A-003, A-004 của Agent (\texttt{AgentSocketClient.cs} hàng đợi Single-Writer 256, \texttt{MetricsCollector.cs} đo CPU/RAM qua Win32 P/Invoke, \texttt{MetricsService.cs}, \texttt{HeartbeatService.cs}, 34/34 tests ở mốc A-004 (lịch sử), đối soát Windows reference 10/10 PASS). Tác vụ tiếp theo của Agent là A-005 (Tự động kết nối lại / Reconnect). Central có listener B-001, Admin có layout C-001. Phân hệ của Thành viên D đã hoàn thành công cụ \texttt{TcpEcho} (D-002), Relay (D-003) chưa nghiệm thu và thiết kế thư viện hỗ trợ phân tích sự cố (D-007..D-010). PR \#11 thêm startup/config/probe cho Agent, tổng 195 tests Windows local; chưa có session/AUTH hoặc monitoring toàn tuyến.
   \item \textbf{Tại sao toàn bộ code mẫu viết sẵn trước đây lại bị dọn dẹp khỏi dự án?} \\
     \textit{Trả lời:} Để bảo đảm tính liêm chính học thuật, giúp 4 bạn sinh viên tự tay lập trình từng dòng lệnh, hiểu sâu môn học và chịu trách nhiệm độc lập trên phân hệ của mình.
   \item \textbf{Máy chủ Central lắng nghe trên cổng nào?} \\
