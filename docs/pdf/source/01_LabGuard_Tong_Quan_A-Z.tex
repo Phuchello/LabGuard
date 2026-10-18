@@ -140,23 +140,29 @@ Bảng dưới đây tổng hợp các tiêu chí kỹ thuật giữa LabGuard v
   \centering
   \caption{Bảng so sánh kỹ thuật giữa LabGuard và các công cụ giám sát khác}
   \label{tab:comparison_tools}
-  \small
-  \begin{tabularx}{\textwidth}{|l|c|c|c|X|}
+  \begingroup
+  \fontsize{10.5}{12.6}\selectfont
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{0.17\textwidth}|>{\raggedright\arraybackslash}p{0.13\textwidth}|>{\raggedright\arraybackslash}p{0.15\textwidth}|>{\raggedright\arraybackslash}p{0.15\textwidth}|>{\raggedright\arraybackslash}X|}
     \hline
     \rowcolor{lgDeepBlue}
-    \color{white}\textbf{Tiêu chí} & \color{white}\textbf{Ping/ICMP} & \color{white}\textbf{SNMP v2c/v3} & \color{white}\textbf{SSH/WinRM} & \color{white}\textbf{LabGuard NT106} \\
+    \color{white}\textbf{Tiêu chí} & \color{white}\textbf{Ping/ICMP} & \color{white}\textbf{SNMP v2c/v3} & \color{white}\textbf{SSH/WinRM} & \color{white}\textbf{LabGuard NT106 (thiết kế)} \\
     \hline
-    Tầng mạng hoạt động & Tầng 3 (IP) & Tầng 7 (UDP) & Tầng 7 (TCP) & Tầng 7 (TCP tự định nghĩa) \\
+    Tầng và giao thức & ICMP trên IP & Ứng dụng trên UDP & Ứng dụng trên TCP & Ứng dụng trên TCP; JSON và tiền tố độ dài \\
     \hline
-    Vượt tường lửa máy trạm & Có (ICMP) & Khó (mở UDP in) & Rất khó (mở TCP in) & Dễ dàng (Agent gọi ra ngoài) \\
+    Quy tắc tường lửa cần có & Cho phép ICMP & Cho phép UDP vào & Cho phép TCP vào & Agent mở kết nối ra Central; cần quy tắc cho phép tương ứng \\
     \hline
-    Đo đạc CPU/RAM sâu & Không & Có & Có & Có (thu thập thời gian thực) \\
+    Dữ liệu CPU/RAM & Không cung cấp & Theo MIB/agent hỗ trợ & Qua lệnh hoặc bộ đếm & Dự kiến thu CPU/RAM từ Agent \\
     \hline
-    Độ trễ phát hiện sự cố & Chậm (thăm dò) & Trung bình & Chậm (nặng) & Nhanh (Heartbeat 5s) \\
+    Phát hiện mất liên lạc & Theo chu kỳ thăm dò và timeout & Theo chu kỳ truy vấn và timeout & Theo cơ chế kiểm tra và timeout & Heartbeat mỗi 5 giây; Central xác định OFFLINE khi quá 20 giây không có heartbeat hợp lệ (quét mỗi 2,5 giây) \\
     \hline
-    Tính học thuật môn mạng & Rất thấp & Trung bình & Thấp & Tối đa (tự viết Socket, Framing) \\
+    Nội dung thực hành mạng & ICMP, thăm dò & MIB, truy vấn & Lệnh quản trị & Socket TCP, đóng khung và vòng đời phiên \\
     \hline
   \end{tabularx}
+  \par\smallskip\raggedright
+  So sánh theo cơ chế; kết quả phụ thuộc cấu hình, công cụ và môi trường thực tế. Đây không phải bảng đo hiệu năng.
+  \endgroup
 \end{table}
 
 \subsection{Mục tiêu ra đời của hệ thống LabGuard}
