@@ -62,7 +62,7 @@ Chức năng hỗ trợ xử lý sự cố là logic gợi ý dựa bằng chứ
 | Excel | Mở được bằng Excel Desktop read-only; năm trang tính giữ nguyên tên/thứ tự, 40 task/status khớp CSV; không có công thức trước/sau; đã xem render năm trang tính, không đổi ô ngoài phạm vi |
 | Liên kết/phạm vi | 23 Markdown được kiểm tra file/anchor: không link hỏng; không tracked build outputs/cache hoặc secret-pattern match; schema/protocol/TFM/Simulator/tools/tests giữ nguyên |
 | Bảo toàn | 14 file gốc local đối chiếu hash không đổi, gồm WBS/phân công/Excel gốc, SQL report và bộ GK đã duyệt |
-| Handbook | Năm PDF đã build từ nguồn cuối và kiểm tra ảnh render đủ 98 trang: tổng quan 28, A 23, B 17, C 15, D 15; không lỗi glyph/tham chiếu hoặc chữ bị cắt. A có một cảnh báo vượt dòng 0,63 pt, đã kiểm tra không ảnh hưởng nội dung |
+| Sổ tay hướng dẫn | Bộ hiện tại 99 trang: tổng quan 29, A 23, B 17, C 15, D 15. Bản sửa cuối PR #12 biên dịch lại tổng quan/D và kiểm tra 44 trang render, mục lục, bảng/hình, dấu tiếng Việt; không lỗi glyph, tham chiếu thiếu hoặc khung chữ vượt lề. A/B/C giữ nguyên bản đã kiểm tra trước đó; cảnh báo vượt dòng 0,63 pt ở A không ảnh hưởng nội dung |
 
 Năm PDF trong `docs/pdf/` đã được thay đồng bộ với nguồn LaTeX cuối sau khi kiểm tra. Script build tạo bản mới ở staging, dừng khi compiler lỗi và không tự ghi đè PDF chính thức. Chỉ dọn hai tài nguyên WinForms không dùng; không sửa logic ứng dụng, schema, giao thức hoặc phiên bản .NET.
 

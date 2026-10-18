@@ -323,7 +323,8 @@ Hình này chỉ cần nhìn theo các đường kết nối: Agent và Admin k�
 \begin{takeawaybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
   \item Thư viện \texttt{LabGuard.Protocol} là hợp đồng bất biến gắn kết 3 phân hệ lại với nhau.
-  \item Phân chia rõ ràng: Bạn A làm Agent, Bạn B làm Central, Bạn C làm Admin, Bạn D làm Gateway/Thử tải.
+  \item Thành viên A phụ trách giao thức và chương trình giám sát máy trạm; B phụ trách máy chủ trung tâm và cơ sở dữ liệu; C phụ trách giao diện quản trị; D phụ trách công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard.
+  \item Gateway/Collector và thử tải nhiều máy là nội dung mở rộng tùy chọn, không phải nhiệm vụ chính bắt buộc của D.
 \end{itemize}
 \end{takeawaybox}
 

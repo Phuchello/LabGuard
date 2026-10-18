@@ -64,6 +64,6 @@ Công cụ kiểm thử truyền thông TCP kiểm tra kết nối, gửi, nhậ
 - [FILE_MAP.md](FILE_MAP.md): file đang có và thành phần còn dự kiến.
 - [TODO.md](TODO.md), [WBS 40 task](docs/internal/WBS_TASKS.csv), [tracker Excel](LabGuard_Task_Tracker.xlsx): kế hoạch/trạng thái; không nâng A-005/A-006 thành DONE do có launcher.
 - [Ownership](docs/internal/OWNERSHIP_MATRIX.md), [dependencies](docs/internal/DEPENDENCY_MAP.md).
-- [Năm handbook và cách rebuild PDF](docs/pdf/README.md): tài liệu học/triển khai; các ví dụ tương lai không phải bằng chứng đã chạy.
+- [Bộ năm sổ tay hướng dẫn và cách biên dịch PDF](docs/pdf/README.md): tài liệu học/triển khai; các ví dụ tương lai không phải bằng chứng đã chạy.
 
 .NET 10 là công việc migration riêng cho toàn solution. PR housekeeping này giữ .NET 9, schema và giao thức hiện tại.

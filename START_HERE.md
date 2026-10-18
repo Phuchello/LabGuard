@@ -48,6 +48,6 @@ Giai đoạn đầu dùng dữ liệu thiết bị/sự cố bắt buộc qua Ce
 
 Các giai đoạn là tương đối; WBS giữ dependencies/offsets lịch sử, không biến 19–26/10 thành nhật ký báo cáo hằng ngày. Theo dõi 40 task trong [Excel](LabGuard_Task_Tracker.xlsx); [dependency map](docs/internal/DEPENDENCY_MAP.md) nêu điều kiện tích hợp.
 
-## Handbook
+## Bộ năm sổ tay hướng dẫn LabGuard
 
 [Master](docs/pdf/LabGuard_Tong_Quan_A-Z.pdf), [Phúc](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_A.pdf), [Quang](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_B.pdf), [Vy](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_C.pdf), [Ngọc](docs/pdf/LabGuard_Huong_Dan_Thanh_Vien_D.pdf). Tài liệu giáo dục phân biệt hiện trạng với kế hoạch; nguồn và hướng dẫn build ở [docs/pdf](docs/pdf/README.md).

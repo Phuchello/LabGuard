@@ -21,7 +21,7 @@
 - [Agent deployment](docs/agent_deployment/README.md): hướng dẫn chạy thật, [verification script](docs/agent_deployment/verify_agent.ps1) và [bằng chứng](docs/agent_deployment/VALIDATION_EVIDENCE.md).
 - [WBS](docs/internal/WBS_TASKS.csv), [Excel](LabGuard_Task_Tracker.xlsx), [phân công](docs/internal/TEAM_ASSIGNMENTS.md), [ownership](docs/internal/OWNERSHIP_MATRIX.md), [dependency map](docs/internal/DEPENDENCY_MAP.md).
 - [Protocol spec](docs/spec/PROTOCOL_SPEC.md), [contract matrix](docs/spec/CONTRACT_MATRIX.md), [architecture decisions](docs/spec/ARCHITECTURE_DECISIONS.md): hợp đồng đã đóng băng, housekeeping không sửa.
-- [PDF handbook index/build](docs/pdf/README.md), [LaTeX source](docs/pdf/source), [build.ps1](docs/pdf/build.ps1).
+- [Bộ năm sổ tay hướng dẫn LabGuard và cách biên dịch PDF](docs/pdf/README.md), [nguồn LaTeX](docs/pdf/source), [build.ps1](docs/pdf/build.ps1).
 - [Hồ sơ kỹ thuật lịch sử](docs/evidence): giữ bằng chứng cũ và mốc nghiệm thu, không dùng số test cũ làm hiện trạng mới.
 
 ## Tên còn dự kiến

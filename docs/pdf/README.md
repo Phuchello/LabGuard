@@ -1,8 +1,8 @@
-# Năm handbook LabGuard
+# Bộ năm sổ tay hướng dẫn LabGuard
 
 Cập nhật nguồn/PDF sau PR #11 (main `70481fa`) và quyết định phân công 17/10/2026. Đây là tài liệu học và kế hoạch triển khai, không phải báo cáo GK đã duyệt; GK/PPTX không được sửa trong housekeeping.
 
-**Bộ PDF đã đồng bộ với nguồn cuối:** build thành công và kiểm tra ảnh render đủ 98 trang (tổng quan 28, A 23, B 17, C 15, D 15). Không có lỗi glyph/tham chiếu hoặc chữ bị cắt; một cảnh báo vượt dòng 0,63 pt ở A đã được kiểm tra. Kết quả và giới hạn tại [PROJECT_STATE.md](../../PROJECT_STATE.md).
+**Bộ PDF đã đồng bộ với nguồn cuối:** bộ hiện tại có 99 trang (tổng quan 29, A 23, B 17, C 15, D 15). Bản sửa cuối PR #12 chỉ biên dịch lại tổng quan và D, kiểm tra ảnh render đủ 44 trang, mục lục, bảng/hình và dấu tiếng Việt; không có lỗi glyph, tham chiếu thiếu hoặc khung chữ vượt lề. Ba PDF A/B/C giữ nguyên bản đã kiểm tra trước đó; cảnh báo vượt dòng 0,63 pt ở A đã được kiểm tra không ảnh hưởng nội dung. Kết quả và giới hạn tại [PROJECT_STATE.md](../../PROJECT_STATE.md).
 
 | Tập | PDF | Người/phần việc |
 |---|---|---|

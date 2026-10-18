@@ -162,7 +162,7 @@ Khi hệ thống LabGuard được nhân rộng cho cả một dãy phòng máy 
 \begin{enumerate}
   \item \textbf{Collector L7 tùy chọn:} Gom các bản tin số liệu từ các máy trong phòng, đưa vào hàng đợi an toàn và chuyển tiếp về máy chủ trung tâm.
   \item \textbf{Môi trường giả lập độc lập (FakeAgent / FakeCentral):} Giúp nhóm kiểm thử sớm mà không phải đợi nhau viết xong code.
-  \item \textbf{Bộ giả lập phòng máy (Simulator):} Tạo 30--50 máy ảo gửi nhịp tim định kỳ 5s và tích hợp phím bấm bơm sự cố để trình diễn.
+  \item \textbf{Bộ giả lập phòng máy (Simulator):} Hướng mở rộng tùy chọn để mô phỏng nhiều máy trạm và tình huống lỗi. Hiện chỉ có bản khung; chưa có bằng chứng sinh tải hoặc hiển thị số liệu/cảnh báo trên Admin.
   \item \textbf{Phân tích gói tin qua Wireshark:} Soi dòng byte nhị phân để chứng minh hệ thống đóng khung 4 byte Big-Endian chuẩn xác.
 \end{enumerate}
 \end{conceptbox}
@@ -385,36 +385,37 @@ Wireshark hỗ trợ kiểm chứng dữ liệu thực tế trên đường truy
 \end{table}
 
 % ------------------------------------------------------------------------------
-\subsection{Chặng 6: THAM KHẢO TÙY CHỌN: Diễn tập kịch bản bảo vệ ngắn ấn tượng}
-{\footnotesize\color{lgGray}\textit{Mã tác vụ nội bộ: LG-D-006}}\par
+\subsection{Kịch bản kiểm thử dự kiến cho nhiệm vụ chính của Ngọc}
 \vspace{2mm}
+
+Đây là \textbf{kế hoạch kiểm thử}, không phải kết quả trình diễn đã đạt. Các bước dưới tập trung công cụ kiểm thử TCP và chức năng hỗ trợ xử lý sự cố trong Admin, không yêu cầu triển khai Gateway/Collector. Chỉ thực hiện từng bước khi có đủ mã, nguồn dữ liệu và điều kiện tích hợp tương ứng. Nếu chưa sẵn sàng, chỉ giải thích thiết kế hoặc dùng dữ liệu giả định có nhãn minh họa; không mô tả như phần mềm đã hoạt động.
 
 \begin{table}[H]
   \centering
-  \caption{Kịch bản trình diễn nghiệm thu ngắn thuyết phục trước hội đồng thi}
+  \caption{Các bước kiểm thử dự kiến và điều kiện thực hiện}
   \small
-  \begin{tabularx}{\textwidth}{|l|l|X|X|}
+  \begin{tabularx}{\textwidth}{|p{0.16\textwidth}|X|X|}
     \hline
     \rowcolor{lgDeepBlue}
-    \color{white}\textbf{Thời gian} & \color{white}\textbf{Người thực hiện} & \color{white}\textbf{Hành động trên màn hình} & \color{white}\textbf{Ý nghĩa kỹ thuật} \\
+    \color{white}\textbf{Nội dung} & \color{white}\textbf{Điều kiện thực hiện} & \color{white}\textbf{Dự kiến kiểm tra và ghi nhận} \\
     \hline
-    Phút 0--1 & Bạn B \& Bạn C & Khởi động Central Server trên cổng 5000 và mở Admin Dashboard. & Máy chủ đã mở cổng TCP sẵn sàng tiếp nhận. \\
+    Kết nối, gửi và nhận TCP & Có chương trình gửi/nhận chạy được, địa chỉ và cổng được phép; có thể dùng TcpEcho hoặc bộ mô phỏng độc lập đã có. & Gửi dữ liệu xác định trước, đối chiếu byte nhận và nhật ký kết nối/đóng kết nối. Ghi rõ chương trình và nguồn dữ liệu đã dùng. \\
     \hline
-    Phút 1--2 & Bạn D & Chạy \texttt{LabGuard.Simulator} kích hoạt 30 máy trạm ảo. & Màn hình Dashboard lập tức sáng 30 dòng xanh lá rực rỡ. \\
+    Chuyển tiếp TCP & Chỉ chạy khi phần chuyển tiếp D-003 đã được viết và kiểm tra; không coi Gateway tùy chọn là điều kiện bắt buộc. & Đối chiếu dữ liệu ở hai đầu và cả hai chiều; kiểm tra đọc từng phần, ngắt kết nối và giải phóng tài nguyên. Chưa có mã thì ghi chưa thực hiện. \\
     \hline
-    Phút 2--3 & Bạn D & Bấm phím [1] bơm CPU $95\%$ lên máy ảo 05. & Sau 3 chu kỳ đo liên tiếp, Dashboard báo động đỏ \texttt{HIGH\_CPU}. \\
+    Dữ liệu sự cố có nguồn & Central và Admin đã hiện thực, tích hợp và kiểm chứng luồng dữ liệu/quyền; có dữ liệu sự cố được phép qua Central. & Đối chiếu thiết bị/sự cố đang chọn với dữ liệu Central. Hiện rõ nguồn, giá trị có thật và phần chưa được cung cấp; không tạo thời điểm hoặc lịch sử giả. \\
     \hline
-    Phút 3--4 & Bạn D & Bấm phím [3] ngắt mạng máy ảo 12. & Sau hơn 20 giây ($> 20\text{s}$), hệ thống báo máy \texttt{OFFLINE}. \\
-    \hline
-    Phút 4--5 & Bạn D & Mở Wireshark soi gói tin với bộ lọc \texttt{tcp.port == 5000}. & Chỉ rõ tiêu đề 4 byte Big-Endian và phong bì 6 trường chuẩn. \\
+    Bằng chứng và gợi ý & Có logic giải thích, bộ chuyển đổi dữ liệu và vùng hỗ trợ trong Admin đã được tích hợp; có ca dữ liệu đủ, thiếu và cũ được kiểm soát. & Phân biệt bằng chứng hiện có/thiếu/cũ; trình bày nhận định có giới hạn và đề xuất bước kiểm tra. Người có quyền quyết định thao tác; không tự kết luận nguyên nhân hoặc sửa máy. \\
     \hline
   \end{tabularx}
 \end{table}
 
+\textbf{Mở rộng tùy chọn:} chỉ xem xét thử nhiều máy giả lập sau khi Simulator và các phần thu/lưu số liệu, nhịp tim, phát hiện sự cố, liên kết dữ liệu Admin đã được hiện thực, tích hợp và kiểm chứng. Hiện chưa cam kết Dashboard hiển thị một số lượng máy cụ thể, cảnh báo CPU hay OFFLINE. Kết quả chỉ được ghi sau khi thực chạy; không suy từ kịch bản dự kiến.
+
 \begin{takeawaybox}
 \begin{itemize}[leftmargin=1.5em, itemsep=1pt]
-  \item Dùng Bounded Channel để bảo vệ bộ nhớ RAM không bị tràn khi mạng chậm.
-  \item Nắm vững thao tác mở Wireshark lọc cổng 5000 để kiểm chứng dữ liệu thực tế trên đường truyền.
+  \item Mỗi kiểm tra TCP cần đối chiếu dữ liệu gửi/nhận và ghi đúng phần đã chạy; mô phỏng riêng không chứng minh toàn bộ LabGuard hoạt động.
+  \item Chức năng hỗ trợ xử lý sự cố dùng dữ liệu có thẩm quyền qua Central, hiện giới hạn bằng chứng và gợi ý bước kiểm tra trong Admin.
 \end{itemize}
 \end{takeawaybox}
 
@@ -477,6 +478,8 @@ if (payload != null)
 % ==============================================================================
 \section{Câu hỏi tham khảo TCP và mở rộng tùy chọn (20 câu)}
 
+Các câu về Gateway/Collector/Simulator bên dưới là kiến thức tham khảo cho mở rộng tùy chọn, không chứng minh đã có mã hoặc kết quả kiểm thử. Nhiệm vụ chính của Ngọc vẫn là công cụ kiểm thử TCP và hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard.
+
 \begin{enumerate}[label=\textbf{\arabic*.}]
   \item \textbf{Tại sao phải dùng Wireshark để soi gói tin thay vì chỉ đọc log trên console?} \\
     \textit{Trả lời:} Wireshark hỗ trợ kiểm chứng dữ liệu thực tế trên đường truyền ở tầng truyền vận (TCP/IP), chứng minh hệ thống tuân thủ chặt chẽ tiêu chuẩn đóng khung 4 byte Big-Endian và mô hình kết nối tin cậy.
@@ -516,8 +519,8 @@ if (payload != null)
     \textit{Trả lời:} Mỗi thông điệp đều sinh mã \path{Guid.NewGuid().ToString("D")} độc lập, bảo đảm tính duy nhất tuyệt đối trên toàn hệ thống.
   \item \textbf{Khi tắt đột ngột chương trình Simulator, chuyện gì xảy ra trên máy chủ?} \\
     \textit{Trả lời:} Hệ điều hành Windows sẽ tự động gửi gói tin cờ \texttt{RST} hoặc \texttt{FIN} tới máy chủ, máy chủ lập tức giải phóng toàn bộ tài nguyên socket của các máy ảo đó.
-  \item \textbf{Thành công lớn nhất trong vai trò của Thành viên D là gì?} \\
-    \textit{Trả lời:} Là làm chủ được năng lực mở rộng hệ thống theo chiều ngang, tư duy kiến trúc phân tầng mạng và khả năng dùng công cụ chuẩn quốc tế (Wireshark) để bảo vệ giải pháp trước hội đồng thi.
+  \item \textbf{Mục tiêu chính trong phần việc của Thành viên D là gì?} \\
+    \textit{Trả lời:} Kiểm tra kết nối, gửi, nhận và chuyển tiếp TCP; phát triển chức năng hỗ trợ phân tích, xử lý sự cố trong Admin bằng dữ liệu qua Central. Phân biệt bằng chứng hiện có, thiếu và cũ để gợi ý bước kiểm tra; không tự kết luận nguyên nhân hoặc sửa máy. Đây là mục tiêu phát triển, không phải tuyên bố đã hoàn thành. Gateway/Collector chỉ là mở rộng tùy chọn.
 \end{enumerate}
 
 \begin{center}
