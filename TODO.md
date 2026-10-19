@@ -22,11 +22,13 @@ Nguồn kế hoạch: [WBS 40 task](docs/internal/WBS_TASKS.csv), [tracker Excel
 - [ ] B-006..B-009: quy tắc cảnh báo, quản lý sự cố/kiểm tra xung đột cập nhật (OCC) và kiểm tra SQL.
 - [ ] Trước B-009: giải quyết yêu cầu lịch sử AssignedToUserId/IncidentHistory không khớp schema AssigneeId hiện tại; không tự thêm cột/bảng hoặc đánh dấu DONE.
 - [ ] B-010: dữ liệu ngữ cảnh có thẩm quyền cho chức năng hỗ trợ xử lý sự cố; 2 giờ ghép bổ sung không bao gồm phần cốt lõi chưa sẵn sàng.
+- [ ] B-008/B-005 — Testcontainers (`Testcontainers.MsSql`, bản tham chiếu 4.16.0): nền kiểm thử schema SQL Server 2022 cô lập; chỉ bổ sung persistence/chống trùng/rollback/ACK sau commit khi B-005 có mã. Chạy opt-in ở môi trường dev/test, không chạm `LabGuardDb`; thiếu runtime ghi **NOT RUN**, unit test không phụ thuộc Docker. Xem [chi tiết kế hoạch](docs/internal/DEPENDENCY_MAP.md#công-nghệ-đã-duyệt--chưa-hiện-thực).
 
 ## Vy — Admin WinForms
 
 - [ ] C-001 đang làm; C-002 kết nối Central; C-003..C-008, C-010/C-011 bảng hiển thị/quy trình xử lý/quyền/kiểm tra xung đột cập nhật.
 - [ ] C-012: nhúng chức năng hỗ trợ xử lý sự cố trong chi tiết sự cố; 3 giờ ghép không bao gồm kết nối/quy trình xử lý còn thiếu.
+- [ ] C-003/C-004 — ScottPlot 5 (`ScottPlot.WinForms`, bản tham chiếu 5.1.59): A) thành phần biểu đồ CPU/RAM dùng lại được, mẫu có nhãn; B) gắn chọn máy và dữ liệu thật sau C-002/xác thực, nguồn telemetry hợp lệ và binding/quy trình cốt lõi. Không thay DataGridView hoặc tự thêm bản tin/lịch sử SQL; xem [mốc, nghiệm thu và điều kiện hoãn](docs/internal/DEPENDENCY_MAP.md#công-nghệ-đã-duyệt--chưa-hiện-thực).
 
 ## Ngọc — Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard
 
