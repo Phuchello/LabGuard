@@ -47,7 +47,6 @@ docs/pdf/source/*.pdf
 scratch/
 docs/pdf/qa_images/
 *.zip
-*.log
 *.tmp
 *.bak
 

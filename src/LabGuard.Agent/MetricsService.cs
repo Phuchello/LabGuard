@@ -162,8 +162,14 @@ public sealed class MetricsService : IDisposable
     {
         ObjectDisposedException.ThrowIf(_isDisposed, this);
 
+        if (_cts != null)
+        {
+            throw new InvalidOperationException("Service is already started. Await StopAsync before starting again.");
+        }
+
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        _executingTask = Task.Run(() => RunAsync(_cts.Token), _cts.Token);
+        var token = _cts.Token;
+        _executingTask = Task.Run(() => RunAsync(token), token);
     }
 
     /// <summary>
