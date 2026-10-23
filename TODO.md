@@ -22,13 +22,13 @@ Nguồn kế hoạch: [WBS 40 task](docs/internal/WBS_TASKS.csv), [tracker Excel
 - [ ] B-006..B-009: quy tắc cảnh báo, quản lý sự cố/kiểm tra xung đột cập nhật (OCC) và kiểm tra SQL.
 - [ ] Trước B-009: giải quyết yêu cầu lịch sử AssignedToUserId/IncidentHistory không khớp schema AssigneeId hiện tại; không tự thêm cột/bảng hoặc đánh dấu DONE.
 - [ ] B-010: dữ liệu ngữ cảnh có thẩm quyền cho chức năng hỗ trợ xử lý sự cố; 2 giờ ghép bổ sung không bao gồm phần cốt lõi chưa sẵn sàng.
-- [ ] B-008/B-005 — Testcontainers (`Testcontainers.MsSql`, bản tham chiếu 4.16.0): nền kiểm thử schema SQL Server 2022 cô lập; chỉ bổ sung persistence/chống trùng/rollback/ACK sau commit khi B-005 có mã. Chạy opt-in ở môi trường dev/test, không chạm `LabGuardDb`; thiếu runtime ghi **NOT RUN**, unit test không phụ thuộc Docker. Xem [chi tiết kế hoạch](docs/internal/DEPENDENCY_MAP.md#công-nghệ-đã-duyệt--chưa-hiện-thực).
+- [ ] B-008 — TC-01/TC-02/TC-03 **CHƯA LÀM**: môi trường Testcontainers opt-in, schema SQL Server 2022 cô lập, rồi persistence/chống trùng/rollback/commit-before-ACK sau mã B-005. `Testcontainers.MsSql` 4.16.0 là bản tham chiếu chờ kiểm tra tương thích. Unit test thường không cần Docker; production không dùng Docker. Bổ sung **7–10 giờ công chờ Quang rà soát**, không thay 2,5 giờ lịch sử. Mốc và tiêu chí tại [kế hoạch](docs/internal/DEPENDENCY_MAP.md#công-nghệ-đã-duyệt--chưa-hiện-thực), đã gắn vào WBS/Excel; schema test không hoàn thành B-005.
 
 ## Vy — Admin WinForms
 
-- [ ] C-001 đang làm; C-002 kết nối Central; C-003..C-008, C-010/C-011 bảng hiển thị/quy trình xử lý/quyền/kiểm tra xung đột cập nhật.
+- [ ] C-001 đang làm: DashboardForm 0.1 là prototype có thể bỏ; nhóm dự kiến thiết kế lại Admin WinForms, không phải giữ bố cục/control cũ. UI mới chưa hiện thực. C-002 kết nối Central; C-003..C-008, C-010/C-011 giữ chức năng thiết bị/sự cố/quyền/kiểm tra xung đột cập nhật.
 - [ ] C-012: nhúng chức năng hỗ trợ xử lý sự cố trong chi tiết sự cố; 3 giờ ghép không bao gồm kết nối/quy trình xử lý còn thiếu.
-- [ ] C-003/C-004 — ScottPlot 5 (`ScottPlot.WinForms`, bản tham chiếu 5.1.59): A) thành phần biểu đồ CPU/RAM dùng lại được, mẫu có nhãn; B) gắn chọn máy và dữ liệu thật sau C-002/xác thực, nguồn telemetry hợp lệ và binding/quy trình cốt lõi. Không thay DataGridView hoặc tự thêm bản tin/lịch sử SQL; xem [mốc, nghiệm thu và điều kiện hoãn](docs/internal/DEPENDENCY_MAP.md#công-nghệ-đã-duyệt--chưa-hiện-thực).
+- [ ] C-003/C-004 — SC-01/SC-02/SC-03 **CHƯA LÀM**: thành phần ScottPlot CPU/RAM dùng lại, tích hợp Admin thiết kế lại, rồi telemetry thật sau C-002/xác thực và nguồn Central hợp lệ. `ScottPlot.WinForms` 5.1.59 là bản tham chiếu chờ kiểm tra tương thích. Giữ chức năng danh sách thiết bị/quản lý sự cố, tách render khỏi nhận TCP; không tự thêm bản tin/API lịch sử hoặc lệnh điều khiển ngoài phạm vi. Bổ sung **6–9 giờ công chung chờ Vy rà soát**, không cộng hai lần hoặc thay 3 + 3 giờ lịch sử; xem [mốc và nghiệm thu](docs/internal/DEPENDENCY_MAP.md#công-nghệ-đã-duyệt--chưa-hiện-thực).
 
 ## Ngọc — Công cụ kiểm thử truyền thông TCP và chức năng hỗ trợ phân tích, xử lý sự cố tích hợp trong LabGuard
 
