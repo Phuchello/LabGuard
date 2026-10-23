@@ -1,0 +1,54 @@
+# LabGuard RFC-01 — Ma trận tác động và kiểm thử dự kiến
+
+**Cơ sở:** main tại a90ef8d1fcab0f1c18e363cbcd77d61e1d8dd2dc. Các thay đổi dưới đây đều là **PROPOSAL**, chưa được duyệt và chưa triển khai. Không có test nào trong ma trận này được tuyên bố đã chạy.
+
+## 1. Truy vết thay đổi
+
+| Thay đổi đề xuất | Yêu cầu / phần contract | DTO | Agent | Central | SQL | Admin | Test / fixture cần bổ sung | Chủ trì / reviewer | Phụ thuộc |
+|---|---|---|---|---|---|---|---|---|---|
+| Registry CPU/RAM/Disk/Network/Temperature/Uptime, unit và miền giá trị | PROTOCOL_SPEC 2.4; CONTRACT_MATRIX 6; ADR CP2-017 | TelemetryDtos.cs | MetricsCollector, MetricsService | Kiểm tra metric allowlist | MetricSamples | DeviceSummary / chart | Registry, unit/range, fixture, payload giới hạn | A Phúc / B Quang, C Vy, D Ngọc | Quyết định metric và P0 scope; A-004 |
+| Disk system volume, used %, free bytes; trạng thái thiếu | METRIC_BATCH và dedup giữ nguyên; metric names mới cần RFC | MetricSampleDto; status candidate | Bộ thu Disk mới | Xác thực value/state | Cột nullable hoặc readings | Hiển thị thiếu/cũ rõ ràng | Không có system volume, ổ read lỗi, số 0 hợp lệ, dung lượng biên | A / B, C | Windows API/source; freeze approval; B-005 |
+| Network RX/TX B/s tổng hợp | METRIC_BATCH; không đổi TCP/replay | MetricSampleDto; status baseline/reset candidate | Bộ thu counter interface | Validate rate/time/state | Nullable RX/TX + state | Hiển thị B/s và timestamp | Mẫu đầu, zero traffic, counter reset, interface mất/thêm, elapsed time bằng 0 | A / B, C, D | Phê duyệt adapter filter; A-004; payload review |
+| Network theo từng adapter nếu chọn | DTO không có ResourceId | ResourceId cần bổ sung | Thu counter theo adapter | Validate identity/coverage | Option B hoặc mở rộng dimension | Nhãn adapter và dữ liệu theo adapter | Hai adapter cùng metric, adapter đổi tên/mất, counter reset riêng | A / B, C | Nhóm chọn per-adapter; RFC-001 Option B |
+| CPU temperature best-effort | Yêu cầu sản phẩm; hiện chưa có metric | Status collection candidate | Windows sensor provider cần thử | Validate nhiệt độ/status | Nullable temperature + status | Hiển thị °C hoặc unsupported/unavailable | Unsupported hardware, WMI không có reading, permission/driver error; không phát số giả | A / B, C, D | Chọn nguồn cảm biến đáng tin; thiết bị Windows kiểm thử |
+| Timestamp và SampleCount | TelemetryDtos.cs:20,27-30; BATCH_ACK | RecordedAtUtc / SampleCount hiện có | Cùng timestamp hiện dùng CPU/RAM | Giữ thời điểm nhận riêng; batch validate | RecordedAtUtc | Hiển thị đo lúc nào | Timestamp lệch, malformed/future, row/sample count mapping | A / B, C | Chốt wide-vs-normalized mapping |
+| Option A — mở rộng hàng wide | schema.sql:25-39; ADR CP2-017 | MetricName/value + optional status | Một system volume, aggregate network | Ánh xạ metric → cột | MetricSamples thêm nullable columns/status | Query snapshot đơn giản | Missing field không thành zero; một metric lặp; timestamp chung; batch rollback | B / A, C | Nhóm giữ phạm vi một ổ/máy; migration decision |
+| Option B — readings chuẩn hóa | schema.sql:25-39; nhiều resource cần ID | ResourceId/status candidate | Một sample per resource/metric | Validate, transaction nhiều hàng | MetricReadings candidate hoặc chuyển đổi có migration | Group by metric/resource/time | Resource ID lặp, grouping, pagination, retention/index | B / A, C, D | Nhóm yêu cầu từng volume/NIC hoặc sensor |
+| Batch durable ACK | PROTOCOL_SPEC 1.4, 4.1; ADR CP2-003/009/014 | MetricBatch/BatchAck hiện có | ReplayBuffer A-006 chưa làm | Transaction + dedup cần triển khai | ProcessedBatches PK hiện có | Không liên quan trực tiếp | SQL rollback/mất kết nối: không ACK thành công; retry cùng batch: không duplicate; DeviceId khác cùng BatchId không collision | B / A | Auth, B-005; A-006 50-batch replay |
+| Lịch sử telemetry | GET_METRICS/METRICS_RESULT P0 OPTIONAL | MessageTypes có; handler/DTO history chưa có | Không đổi producer | Cần handler SQL, auth/RBAC, query giới hạn | Index/retention theo quyết định | Admin chart theo dữ liệu Central | Device/range/page authorization, empty/stale, no SQL history | B / C, A, D | Nhóm bật optional request; B-005; C-002; SC-03 |
+| Numeric assignee ID | WBS LG-B-009; login/incident DTO; idempotency docs | LoginResult.UserId int?; AssignedToUserId int?; CommandParams dictionary | Không đổi Agent | Session identity + target validation | Candidate AssigneeUserId INT, Users, ProcessedCommands UserId INT | Chọn target user | ID thiếu/sai type, target không tồn tại/inactive, gán user hợp lệ | B / A, C, D | Account source / B-004, SQL B-005 |
+| String assignee alternative | WBS B-009; schema AssigneeId NVARCHAR(64); ProcessedCommands docs | Đổi UserId/AssignedToUserId và digest types nếu chọn | Không đổi Agent | Session string identity | Candidate string Users key / FK | Selector dùng stable ID | Case/whitespace, duplicate display name, mutable username, ID > length | B / A, C | Nhóm chọn Option II; đồng bộ toàn wire/SQL |
+| Role check cho Assign | PROTOCOL_SPEC 4.3; INCIDENT_ASSIGN | IncidentCommandPayload | Không đổi Agent | Admin-only, identity từ session | Không mutation khi denied | Disable UI theo role nhưng không thay server check | Viewer/Operator denied; payload giả actor; expired session; không đổi row/history | B / A, C | Auth/session/RBAC B-004 |
+| OCC assignment | PROTOCOL_SPEC 4.2; CONTRACT_MATRIX 10; RowVersion | ExpectedRowVersion; CommandResult | Không đổi Agent | Atomic conditional UPDATE; trả 409 nếu stale | Incidents.RowVersion hiện có | Reload latest state khi 409 | Hai Admin cùng V1: một thành công, một conflict; affected rows 0/1 | B / A, C | B-007 handler, B-005 repository |
+| IncidentHistory nguyên tử | WBS B-009 yêu cầu, DDL thiếu | CommandId/response correlation | Không đổi Agent | Ghi đúng actor/server UTC | IncidentHistory candidate, FK candidate | Hiện lịch sử sau khi Central trả | Rollback giữa UPDATE/history; retry dedup không tạo history lần hai; previous/new values | B / A, C, D | Users/Incidents schema; transaction; B-007/B-009 |
+| Phản hồi và cập nhật Admin | AdminDtos CommandResult hiện không có assignee; IncidentUpdate thiếu assignee | Có thể mở rộng response/event hoặc refresh query | Không đổi Agent | Trả RowVersion và state có thẩm quyền | Nguồn Incidents | Refresh sau success/conflict; chỉ cho phép theo role | Success phản ánh target mới; stale row được tải lại; duplicate response idempotent | C / B, A | Central handler; quyết định response; C-002/C-008 |
+| Hỗ trợ phân tích sự cố | TEAM_ASSIGNMENTS; D-007..D-010, B-010, C-012 | Dữ liệu nội bộ từ Admin/Central | Không đổi Agent | Cấp dữ liệu đã xác thực và có nguồn | Chỉ qua Central | Panel nằm trong Admin, nêu evidence/missing/stale | Không dùng SQL/Agent trực tiếp; không tự chẩn đoán/sửa; telemetry unavailable rõ ràng | D Ngọc / B Quang, C Vy | B/C core readiness; RFC decisions |
+
+## 2. Danh sách ca kiểm thử âm và biên
+
+| Ca | Kỳ vọng đề xuất | Thành phần chính | Trạng thái |
+|---|---|---|---|
+| Unsupported CPU temperature | Không phát số nhiệt độ; state UNSUPPORTED/UNAVAILABLE có nguồn trạng thái rõ ràng. Không gán sensor bo mạch thành CPU. | Agent → Central → Admin | TEST PLAN — NOT RUN |
+| Lỗi đọc CPU temperature | Không phát stale value như giá trị mới; báo READ_ERROR/UNAVAILABLE. | Agent | TEST PLAN — NOT RUN |
+| Network sample đầu tiên | Lưu counter baseline; không tạo tốc độ từ một counter duy nhất. | Agent | TEST PLAN — NOT RUN |
+| Counter reset/giảm hoặc adapter thay đổi | Không tính delta âm; lấy baseline mới và đánh dấu RESET/PARTIAL/UNAVAILABLE theo lựa chọn được duyệt. | Agent → Central | TEST PLAN — NOT RUN |
+| Zero traffic và measurement unavailable | Zero chỉ khi có hai lần đọc hợp lệ và delta bằng 0; unavailable không được lưu/hiển thị như zero. | Agent, SQL, Admin | TEST PLAN — NOT RUN |
+| Hai thiết bị dùng cùng BatchId | Hai DeviceId khác nhau phải độc lập theo khóa composite. | Central, SQL | TEST PLAN — NOT RUN |
+| Replay đúng batch | Không thêm bản ghi lần hai; sau durable commit gửi lại ACK theo contract. | Agent, Central, SQL | TEST PLAN — NOT RUN |
+| SQL rollback / lỗi commit | Không có ACK thành công; retry không tạo duplicate sau lần commit hợp lệ. | Central, SQL | TEST PLAN — NOT RUN |
+| Assignment target không tồn tại/inactive | Không cập nhật Incidents, không ghi history; trả lỗi đã được chốt trong error catalog. | Central, SQL | TEST PLAN — NOT RUN |
+| Unauthorized INCIDENT_ASSIGN | Viewer/Operator bị từ chối tại Central; không có mutation/history dù UI bị sửa để bật nút. | Central, Admin | TEST PLAN — NOT RUN |
+| Stale RowVersion đồng thời | Một cập nhật thành công; cập nhật stale nhận 409, tải state mới; chỉ có một event thành công. | Central, SQL, Admin | TEST PLAN — NOT RUN |
+| Lỗi giữa assignment và history insert | Transaction rollback toàn bộ; không có assignment success thiếu history. | Central, SQL | TEST PLAN — NOT RUN |
+| Duplicate CommandId cùng digest | Trả lại response đã lưu, không tạo assignment/history lần hai. | Central, SQL | TEST PLAN — NOT RUN |
+| Duplicate CommandId khác digest | Từ chối theo ERR_IDEMPOTENCY_KEY_REUSE; không mutation. | Central, SQL | TEST PLAN — NOT RUN |
+
+## 3. Giới hạn xác nhận
+
+- Ma trận chỉ mô tả yêu cầu/đường dẫn test nếu RFC được duyệt; không phải báo cáo chạy test.
+- PR #16 và #18 là thay đổi kế hoạch; Testcontainers và ScottPlot chưa được cài hoặc triển khai bởi các PR đó.
+- PR #15 còn là PR Draft riêng và không được lấy làm trạng thái mã nguồn trên main.
+- Không có mã Central xử lý SQL/auth/assignment tại baseline. Chỉ khi có handler và repository thật mới chạy các ca transaction/RBAC/OCC.
+- Không sửa contract, schema, task tracker, fixture hoặc cấu hình trong lượt RFC này.
+
+Liên kết: [RFC-001 — telemetry](RFC-001-EXTENDED-TELEMETRY-DRAFT.md), [RFC-002 — phân công sự cố](RFC-002-INCIDENT-ASSIGNMENT-DRAFT.md), [bảng quyết định](DECISION_CHECKLIST.md).
