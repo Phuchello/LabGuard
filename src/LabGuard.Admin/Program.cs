@@ -7,6 +7,6 @@ internal static class Program
     static void Main()
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new global::LabGuard.Admin.DashboardForm());
+        Application.Run(new DashboardFormNew());
     }
 }
