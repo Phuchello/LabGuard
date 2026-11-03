@@ -121,6 +121,18 @@ Theo [quyết định trực tiếp của người điều phối ngày 17/10/20
 
 Ngọc phối hợp với Quang để nhận dữ liệu qua Central và với Vy để tích hợp chức năng hỗ trợ xử lý sự cố vào Admin. Đây là trách nhiệm phát triển chính thức, chưa phải chức năng đã hoàn thành. Chi tiết phạm vi và phụ thuộc ở [ma trận trách nhiệm](docs/internal/OWNERSHIP_MATRIX.md) và [bản đồ phụ thuộc](docs/internal/DEPENDENCY_MAP.md).
 
+## Cập nhật bằng chứng và hồ sơ GK — 03/11/2026
+
+> **Đọc trước khi diễn giải tiến độ:** `main` tại `90562c5` khác working tree Windows `f5144ed` có file tracked/untracked chưa commit. Kết quả secure workspace và Diagnostics local **không tự xuất hiện trên `main`**.
+
+- Trên GitHub `main`: 195 bài kiểm thử Windows **lịch sử** theo PR #11, không phải GitHub CI hoặc nghiệm thu E2E.
+- Gói export secure working tree: có source Agent/Central/SQL và 15 TRX Checkpoint 4.1, với **ba lượt 276/276 PASS lịch sử**. Chưa khẳng định fresh clean rebuild, toàn tuyến Admin hoặc 40–50 máy.
+- Windows QA ngày **03/11/2026**: pure `LabGuard.Diagnostics` / Evidence Evaluator đạt **89/89 unit tests PASS** (28 acceptance + 61 supplemental), 0 FAIL, 0 SKIP. TRX SHA-256 `62dc8a83d181f2bd9792da00388684d86dd0147acadd4b346a0acd2fa0300003`. Đây là kết quả **local**, không phải bộ test trên `main`.
+- **Định hướng nghiên cứu chưa tích hợp:** Explainable Incident Navigator có bằng chứng DNS/TCP/TLS/HTTPS nhiều điểm, UNKNOWN khi thiếu/cũ và xác minh phục hồi. E0 Runner, E0 live hai máy, authenticated Admin read và incident E2E **chưa nghiệm thu**.
+- Các quyết định DB-01, C3/C4, C1/C2 và phạm vi probing còn chờ nhóm duyệt. Không tự thay contract/schema hoặc trạng thái 40 nhiệm vụ WBS chỉ vì có kết quả QA mới.
+
+Chi tiết: [snapshot tiến độ GK](docs/gk/STATUS_2026-11-03.md), [dự thảo báo cáo GK](docs/gk/REPORT_DRAFT_2026-11-03.md), [checklist nhóm duyệt](docs/internal/GK_TEAM_REVIEW_2026-11-03.md), [nhật ký cập nhật sổ tay PDF](docs/pdf/GK_HANDOOK_UPDATE_2026-11-03.md). **README hiện hành bên dưới vẫn mô tả trạng thái source trên main**; không được thay bằng local QA khi chưa merge đúng source.
+
 ## 5 sổ tay hướng dẫn LabGuard
 
 Các sổ tay giải thích thiết kế, kiến thức và kế hoạch triển khai; ví dụ về chức năng dự kiến không phải bằng chứng chức năng đã chạy.
