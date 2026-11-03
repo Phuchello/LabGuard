@@ -2,6 +2,15 @@
 
 Nguồn kế hoạch: [WBS 40 task](docs/internal/WBS_TASKS.csv), [tracker Excel](LabGuard_Task_Tracker.xlsx), [dependencies](docs/internal/DEPENDENCY_MAP.md). Tên người phụ trách theo [quyết định 17/10/2026](docs/internal/TEAM_ASSIGNMENTS.md). [PROJECT_STATE](PROJECT_STATE.md) giữ lịch sử nghiệm thu.
 
+## Việc điều phối thêm từ QA 03/11/2026 (đề xuất; không đổi WBS)
+
+- [ ] Nhóm xác định baseline source local/secure và review hashes, contract trước khi đưa vào nhánh tích hợp.
+- [ ] A/B/C chốt DB-01, C3, C4; C1/C2 trước các lệnh incident có mutation.
+- [ ] A/B/C tiếp tục Foundations: Agent TLS/AUTH → SQL COMMIT/ACK → Admin authorized read và P0 NIC/SERVICE_STATUS.
+- [x] **Evidence riêng**: Windows QA chạy 89/89 unit tests EvidenceEvaluator ngày 03/11; không dùng dấu x này để tự đánh dấu D-009 hoặc các task chính thức hoàn thành.
+- [ ] D/A/B/C xin duyệt scope E0 Runner + 2 máy lab + DNS/HTTPS test + fault rollback; chưa chạy probes.
+- [ ] Nhóm review [dự thảo GK](docs/gk/REPORT_DRAFT_2026-11-03.md), [bằng chứng](docs/gk/STATUS_2026-11-03.md) và [checklist](docs/internal/GK_TEAM_REVIEW_2026-11-03.md).
+
 ## Đã có, không mở lại task để ghi tiến độ giả
 
 - [x] A-001..A-004: giao thức, đóng khung, truyền dữ liệu/hàng đợi gửi và thu/gửi số liệu định kỳ ở cấp thành phần.
