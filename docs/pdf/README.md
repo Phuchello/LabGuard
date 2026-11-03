@@ -18,6 +18,10 @@ P0 ưu tiên Windows; Linux/macOS chỉ xét sau khi P0 ổn định. Dữ liệ
 
 Chức năng hỗ trợ xử lý sự cố nhúng trong quy trình xử lý sự cố Admin, dùng dữ liệu Central có thẩm quyền, phối hợp B/C. Nội dung Gateway/Collector trong tập D chỉ là kiến thức P1 tùy chọn; Simulator vẫn placeholder. Các ví dụ/pseudocode và tiêu chí kiểm tra tương lai không chứng minh tính năng đã hoàn tất. Xem [trạng thái dự án](../../PROJECT_STATE.md), [phân công](../internal/TEAM_ASSIGNMENTS.md), [Agent deployment](../agent_deployment/README.md).
 
+## Phụ lục trạng thái 03/11/2026 — KHÔNG thay thế 5 PDF chính thức
+
+Năm tập PDF/LaTeX hiện có được viết cho các baseline trước đây. Bản QA ngày 03/11 phát sinh sau đó, vì thế cần đọc [nhật ký cập nhật GK](GK_HANDOOK_UPDATE_2026-11-03.md) và [snapshot GK](../gk/STATUS_2026-11-03.md). Có phụ lục PDF draft ngoài Git cho Tổng quan/A/B/C/D; **chưa được thay nội dung của 5 PDF tracked trên main hoặc trong nhánh này**. Chỉ thay khi có review bản nguồn, dựng XeLaTeX từ staging, render đầy đủ và nhóm duyệt.
+
 ## Rebuild và kiểm tra
 
 Cần XeLaTeX với font Times New Roman/Consolas và các package trong [labguard_pdf.sty](source/labguard_pdf.sty). Dùng PATH hoặc biến môi trường `LABGUARD_XELATEX` để chọn chương trình chạy riêng, không hardcode đường dẫn cá nhân.
