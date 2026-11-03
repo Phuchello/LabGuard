@@ -2,6 +2,18 @@
 
 Cập nhật tài liệu ngày 18/10/2026 trên main sau [PR #11](https://github.com/Phuchello/LabGuard/pull/11), merge commit `70481faf6c04d2862815e2f3fb3c38de759c459f`. Không dùng nhãn task để suy luận toàn hệ thống đã chạy.
 
+## Đối chiếu bổ sung 03/11/2026 — GitHub và source local
+
+**Không sửa/xóa lịch sử trạng thái 18/10 trong phần dưới.** Lưu ý 2 baseline:
+
+- `main` tại `90562c5` (23/10): GitHub source và tài liệu; trạng thái task giữ theo WBS lịch sử.
+- Local working tree tại HEAD `f5144ed`: checkpoint secure source + các thay đổi tracked/untracked, chưa có trên main. Export gốc được thu hồi để review; 15 TRX lịch sử ghi ba lượt 276/276 Passed. Không đồng nhất với 195 tests trên main.
+- QA Windows 03/11: `LabGuard.Diagnostics` EvidenceEvaluator **89/89 PASS**, TRX đã cung cấp và đối chiếu SHA-256; 28 AT và 61 supplemental. Đây là module pure/independent, **không** nghiệm thu DNS/TCP/TLS live hay Central/SQL/Admin E2E.
+- E0 Runner và live multi-vantage vẫn là đề xuất chưa được duyệt/coding. SQL target/authority/canonical telemetry/incident workflow còn điểm quyết định (DB-01, C3/C4, C1/C2).
+- Chưa có kết quả capacity thật 40–50 Agent và chưa nghiệm thu Windows Service, NIC/SERVICE_STATUS toàn tuyến.
+
+Nguồn và giới hạn: [snapshot GK](docs/gk/STATUS_2026-11-03.md). Mọi trạng thái `XONG` ở bảng lịch sử bên dưới vẫn thể hiện **trạng thái WBS tại thời điểm đó**, không phải phép đo mới.
+
 ## Đã hiện thực và phần còn thiếu
 
 | Phần | Trạng thái đúng phạm vi |
