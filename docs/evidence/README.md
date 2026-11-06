@@ -9,3 +9,8 @@ Giải nén cả gói rồi mở workbook cạnh thư mục docs.
 5. Dashboard đếm riêng task có tư liệu, số tư liệu đã gắn, đã kiểm tra và sẵn sàng. Một tệp đang cần bổ sung vẫn là tệp đã gắn. Việc chọn trước khi reviewer kiểm tra chưa làm tệp sẵn sàng. Mỗi dòng cần có mã, Task ID hợp lệ, đường dẫn, phân loại và câu mô tả trước khi dùng cho báo cáo.
 
 Ảnh LG-C-001 là prototype Admin 0.1 với dữ liệu PC-DEMO. Nút khởi động lại chỉ xuất hiện trong bố cục mẫu. LG-A-003 vẫn chờ log hoặc trace kết nối. Với link Drive/OneDrive, kiểm tra quyền đọc của nhóm trước khi đưa vào báo cáo.
+
+
+## Tra cứu lịch sử
+
+Nhấp phải vào tab sheet, chọn Unhide và chọn sheet có tiền tố LƯU TRỮ. Toàn bộ mười sheet archive nằm trong cùng workbook. Chỉ bốn sheet chính hiển thị khi mở.
