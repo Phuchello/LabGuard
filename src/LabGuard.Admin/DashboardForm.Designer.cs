@@ -40,7 +40,6 @@ namespace LabGuard.Admin
             panel2 = new Panel();
             splitter1 = new Splitter();
             pictureBox2 = new PictureBox();
-            button3 = new Button();
             button2 = new Button();
             button1 = new Button();
             panel4 = new Panel();
@@ -77,7 +76,6 @@ namespace LabGuard.Admin
             panel1.Name = "panel1";
             panel1.Size = new Size(1363, 100);
             panel1.TabIndex = 0;
-            panel1.Paint += panel1_Paint;
             // 
             // pictureBox1
             // 
@@ -89,7 +87,6 @@ namespace LabGuard.Admin
             pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
-            pictureBox1.Click += pictureBox1_Click;
             // 
             // label1
             // 
@@ -102,12 +99,12 @@ namespace LabGuard.Admin
             label1.TabIndex = 0;
             label1.Text = "LabGuard";
             label1.TextAlign = ContentAlignment.MiddleCenter;
-            label1.Click += label1_Click_2;
             // 
             // btDangNhap
             // 
             btDangNhap.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btDangNhap.BackColor = Color.FromArgb(185, 81, 24);
+            btDangNhap.Enabled = false;
             btDangNhap.Cursor = Cursors.Hand;
             btDangNhap.FlatAppearance.BorderColor = Color.FromArgb(233, 212, 195);
             btDangNhap.FlatStyle = FlatStyle.Flat;
@@ -119,7 +116,6 @@ namespace LabGuard.Admin
             btDangNhap.TabIndex = 0;
             btDangNhap.Text = "Login";
             btDangNhap.UseVisualStyleBackColor = false;
-            btDangNhap.Click += btDangNhap_Click;
             // 
             // lblServerIP
             // 
@@ -131,7 +127,6 @@ namespace LabGuard.Admin
             lblServerIP.Size = new Size(150, 19);
             lblServerIP.TabIndex = 1;
             lblServerIP.Text = "Máy chủ: IP:5000";
-            lblServerIP.Click += lblServerIP_Click;
             // 
             // lblConnectionStatus
             // 
@@ -142,8 +137,7 @@ namespace LabGuard.Admin
             lblConnectionStatus.Name = "lblConnectionStatus";
             lblConnectionStatus.Size = new Size(160, 19);
             lblConnectionStatus.TabIndex = 0;
-            lblConnectionStatus.Text = "Status: Connecting";
-            lblConnectionStatus.Click += label1_Click;
+            lblConnectionStatus.Text = "Demo: Chưa kết nối";
             // 
             // panel2
             // 
@@ -151,7 +145,6 @@ namespace LabGuard.Admin
             panel2.BorderStyle = BorderStyle.FixedSingle;
             panel2.Controls.Add(splitter1);
             panel2.Controls.Add(pictureBox2);
-            panel2.Controls.Add(button3);
             panel2.Controls.Add(button2);
             panel2.Controls.Add(button1);
             panel2.Dock = DockStyle.Bottom;
@@ -159,7 +152,6 @@ namespace LabGuard.Admin
             panel2.Name = "panel2";
             panel2.Size = new Size(1363, 74);
             panel2.TabIndex = 1;
-            panel2.Paint += panel2_Paint;
             // 
             // splitter1
             // 
@@ -182,25 +174,11 @@ namespace LabGuard.Admin
             pictureBox2.TabIndex = 1;
             pictureBox2.TabStop = false;
             // 
-            // button3
-            // 
-            button3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            button3.BackColor = Color.FromArgb(19, 39, 63);
-            button3.FlatStyle = FlatStyle.Flat;
-            button3.Font = new Font("Segoe UI Semibold", 10F);
-            button3.ForeColor = Color.FromArgb(233, 212, 195);
-            button3.Location = new Point(1192, 9);
-            button3.Name = "button3";
-            button3.Size = new Size(159, 57);
-            button3.TabIndex = 2;
-            button3.Text = "Khởi động lại máy";
-            button3.UseVisualStyleBackColor = false;
-            button3.Click += button3_Click;
-            // 
             // button2
             // 
             button2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button2.BackColor = Color.FromArgb(54, 73, 46);
+            button2.Enabled = false;
             button2.FlatStyle = FlatStyle.Flat;
             button2.Font = new Font("Segoe UI Semibold", 10F);
             button2.ForeColor = Color.FromArgb(233, 212, 195);
@@ -210,12 +188,12 @@ namespace LabGuard.Admin
             button2.TabIndex = 1;
             button2.Text = "Giải quyết xong";
             button2.UseVisualStyleBackColor = false;
-            button2.Click += button2_Click;
             // 
             // button1
             // 
             button1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button1.BackColor = Color.FromArgb(79, 0, 5);
+            button1.Enabled = false;
             button1.FlatStyle = FlatStyle.Flat;
             button1.Font = new Font("Segoe UI Semibold", 10F);
             button1.ForeColor = Color.FromArgb(233, 212, 195);
@@ -225,7 +203,6 @@ namespace LabGuard.Admin
             button1.TabIndex = 0;
             button1.Text = "Tiếp nhận sự cố";
             button1.UseVisualStyleBackColor = false;
-            button1.Click += button1_Click_1;
             // 
             // panel4
             // 
@@ -263,7 +240,6 @@ namespace LabGuard.Admin
             dgvPhongMay.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvPhongMay.Size = new Size(964, 529);
             dgvPhongMay.TabIndex = 0;
-            dgvPhongMay.CellContentClick += dgvPhongMay_CellContentClick;
             dgvPhongMay.CellFormatting += dgvPhongMay_CellFormatting;
             // 
             // CotTenMay
@@ -320,7 +296,6 @@ namespace LabGuard.Admin
             dgvSuCo.ShowRowErrors = false;
             dgvSuCo.Size = new Size(399, 529);
             dgvSuCo.TabIndex = 2;
-            dgvSuCo.CellContentClick += dataGridView1_CellContentClick;
             // 
             // CotThoiGian
             // 
@@ -397,7 +372,6 @@ namespace LabGuard.Admin
         private DataGridViewTextBoxColumn CotChiTietSuCo;
         private Button button1;
         private Button button2;
-        private Button button3;
         private DataGridViewTextBoxColumn CotTenMay;
         private DataGridViewTextBoxColumn CotCPU;
         private DataGridViewTextBoxColumn CotRAM;

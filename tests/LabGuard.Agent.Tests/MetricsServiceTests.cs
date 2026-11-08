@@ -11,6 +11,42 @@ namespace LabGuard.Agent.Tests;
 /// </summary>
 public class MetricsServiceTests
 {
+    [Fact]
+    public async Task StopAsync_IsRepeatable_AndAllowsRestart()
+    {
+        using var client = new AgentSocketClient();
+        var collector = new WindowsMetricsCollector(new FakeNativeMetricsProvider());
+        using var service = new MetricsService(client, collector, period: TimeSpan.FromHours(1));
+
+        await service.StopAsync();
+        service.Start();
+        await service.StopAsync();
+        await service.StopAsync();
+        service.Start();
+        await service.StopAsync();
+    }
+
+    [Fact]
+    public async Task Start_WhenAlreadyStarted_RejectsDuplicateLoop()
+    {
+        using var client = new AgentSocketClient();
+        var collector = new WindowsMetricsCollector(new FakeNativeMetricsProvider());
+        using var service = new MetricsService(client, collector, period: TimeSpan.FromHours(1));
+        using var cancellation = new CancellationTokenSource();
+
+        service.Start(cancellation.Token);
+        try
+        {
+            Assert.Throws<InvalidOperationException>(() => service.Start(cancellation.Token));
+        }
+        finally
+        {
+            // Also cancel the first loop if testing the unfixed implementation.
+            cancellation.Cancel();
+            await service.StopAsync();
+        }
+    }
+
     // =========================================================================
     // TEST 6: Một lần thu thập tạo ra một frame METRIC_BATCH hợp lệ gửi qua AgentSocketClient thật
     // =========================================================================
